@@ -37,7 +37,7 @@
  * PA14 - input with pull-up.
  * PA15 - Push pull output   (USB 1:ON 0:OFF)
  */
-#define VAL_GPIO_USB_ODR            0xFFFFE7FF
+#define VAL_GPIO_USB_ODR            0xFFFFE77F
 #define VAL_GPIO_USB_CRL            0x34444488      /*  PA7...PA0 */
 #define VAL_GPIO_USB_CRH            0x38811444      /* PA15...PA8 */
 
