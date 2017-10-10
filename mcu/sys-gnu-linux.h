@@ -7,6 +7,12 @@ extern const uint8_t sys_board_name[];
 # define SYS_BOARD_ID BOARD_ID
 #endif
 
+#define DEBUG_LED	(1 << 1)
+#define DEBUG_FLASH	(1 << 2)
+#define DEBUG_USB	(1 << 3)
+
+extern int debug;
+
 static inline const uint8_t *
 unique_device_id (void)
 {

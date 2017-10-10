@@ -1,5 +1,9 @@
 2017-10-09  NIIBE Yutaka  <gniibe@fsij.org>
 
+	* mcu/sys-gnu-linux.h (debug): New.
+	* mcu/sys-gnu-linux.c: Use debug.
+	* mcu/usb-usbip.c: Use debug.
+
 	* example-cdc/sample.ld (.process_stack, .main_stack): Add NOLOAD.
 
 2017-09-29  NIIBE Yutaka  <gniibe@fsij.org>

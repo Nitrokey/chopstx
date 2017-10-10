@@ -11,6 +11,7 @@
 #include <sys/mman.h>
 
 #include "board.h"
+#include "sys.h"
 
 const uint8_t sys_version[8] = {
   3*2+2,	     /* bLength */
@@ -24,10 +25,13 @@ const uint32_t sys_board_id = BOARD_ID;
 const uint8_t sys_board_name[] = BOARD_NAME;
 #endif
 
+int debug;
+
 void
 set_led (int on)
 {
-  puts (on ? "*": "");
+  if ((debug & DEBUG_LED))
+    puts (on ? "*": "");
 }
 
 static const char *flash_path;
@@ -95,7 +99,9 @@ flash_program_halfword (uintptr_t addr, uint16_t data)
   off_t offset;
   char buf[2];
 
-  fprintf (stderr, "flash_program_halfword: addr=%016lx, data=%04x\n", addr, data);
+  if ((debug & DEBUG_FLASH))
+    fprintf (stderr, "flash_program_halfword: addr=%016lx, data=%04x\n",
+	     addr, data);
   offset = (off_t)(addr - (uintptr_t)flash_addr);
   if (offset < 0 || offset >= (off_t)flash_size)
     {
@@ -126,7 +132,8 @@ flash_erase_page (uintptr_t addr)
 {
   off_t offset;
 
-  fprintf (stderr, "flash_erase_page: addr=%016lx\n", addr);
+  if ((debug & DEBUG_FLASH))
+    fprintf (stderr, "flash_erase_page: addr=%016lx\n", addr);
 
   offset = (off_t)(addr - (uintptr_t)flash_addr);
   if (offset < 0 || offset >= (off_t)flash_size)
@@ -174,7 +181,9 @@ flash_write (uintptr_t dst_addr, const uint8_t *src, size_t len)
 {
   off_t offset;
 
-  fprintf (stderr, "flash_write: addr=%016lx, %p, %zd\n", dst_addr, src, len);
+  if ((debug & DEBUG_FLASH))
+    fprintf (stderr, "flash_write: addr=%016lx, %p, %zd\n",
+	     dst_addr, src, len);
 
   offset = (off_t)(dst_addr - (uintptr_t)flash_addr);
   if (offset < 0 || offset >= (off_t)flash_size)
@@ -201,7 +210,8 @@ flash_write (uintptr_t dst_addr, const uint8_t *src, size_t len)
 int
 flash_protect (void)
 {
-  fprintf (stderr, "flash_protect\n");
+  if ((debug & DEBUG_FLASH))
+    fprintf (stderr, "flash_protect\n");
   return 0;
 }
 
