@@ -1,3 +1,7 @@
+2017-10-09  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* example-cdc/sample.ld (.process_stack, .main_stack): Add NOLOAD.
+
 2017-09-29  NIIBE Yutaka  <gniibe@fsij.org>
 
 	* mcu/sys-stm32f103.c (flash_program_halfword, flash_erase_page)

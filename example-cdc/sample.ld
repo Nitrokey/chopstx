@@ -73,7 +73,7 @@ SECTIONS
     _etext = .;
     _textdata = _etext;
 
-    .process_stack :
+    .process_stack (NOLOAD) :
     {
         . = ALIGN(8);
         *(.process_stack.3)
@@ -83,7 +83,7 @@ SECTIONS
         . = ALIGN(8);
     } > ram
 
-    .main_stack :
+    .main_stack (NOLOAD) :
     {
         . = ALIGN(8);
         *(.main_stack)
