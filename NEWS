@@ -1,6 +1,21 @@
 NEWS - Noteworthy changes
 
 
+* Major changes in Chopstx 1.5
+
+  Released 2017-10-10
+
+** Stack size definition by stack-def.h
+Stack size of each thread was used to be defined in ldscript.
+While emulation on GNU/Linux doesn't use ldscript, it is better
+to put those definitions in independent header file.  Please see
+example-cdc/stack-def.h and example-cdc/sample.ld.
+
+** More support for emulation on GNU/Linux
+We have SYS driver for emulation on GNU/Linux.  It has flash ROM
+emulation.
+
+
 * Major changes in Chopstx 1.4
 
   Released 2017-08-11
