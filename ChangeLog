@@ -1,5 +1,7 @@
 2017-10-09  NIIBE Yutaka  <gniibe@fsij.org>
 
+	* example-cdc-gnu-linux/sample.c (main): Support debug option.
+
 	* mcu/sys-gnu-linux.h (debug): New.
 	* mcu/sys-gnu-linux.c: Use debug.
 	* mcu/usb-usbip.c: Use debug.

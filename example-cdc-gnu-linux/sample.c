@@ -98,8 +98,8 @@ main (int argc, const char *argv[])
   uint8_t count;
   uintptr_t addr;
 
-  (void)argc;
-  (void)argv;
+  if (argc >= 2 && !strncmp (argv[1], "--debug=", 8))
+    debug = strtol (&argv[1][8], NULL, 10);
 
   chopstx_mutex_init (&mtx);
   chopstx_cond_init (&cnd0);
