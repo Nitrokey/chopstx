@@ -187,6 +187,7 @@ enum {
   USB_INTR_DATA_TRANSFER,
   USB_INTR_RESET,
   USB_INTR_SUSPEND,
+  USB_INTR_SHUTDOWN
 };
 
 struct usb_controller {
@@ -457,6 +458,7 @@ usbip_handle_data_urb (struct urb *urb)
 }
 
 static int fd;
+static int shutdown_notify_fd;
 static pthread_mutex_t fd_mutex;
 
 static void unlink_urb (struct urb *urb);
@@ -801,7 +803,8 @@ usbip_process_cmd (void)
 
   if (recv (fd, (char *)&msg, sizeof (msg), 0) != sizeof (msg))
     {
-      perror ("msg recv");
+      if (errno)
+	perror ("msg recv");
       return -1;
     }
 
@@ -1039,6 +1042,9 @@ usbip_run_server (void *arg)
   const int one = 1;
   struct pollfd pollfds[16];
   int i;
+  int r = 0;
+
+  (void)arg;
 
   pthread_mutex_init (&usbc.mutex, NULL);
   pthread_cond_init (&usbc.cond, NULL);
@@ -1046,7 +1052,6 @@ usbip_run_server (void *arg)
   pthread_mutex_init (&fd_mutex, NULL);
   pthread_mutex_init (&urb_mutex, NULL);
 
-  (void)arg;
   if ((sock = socket (PF_INET, SOCK_STREAM, 0)) < 0)
     {
       perror ("socket");
@@ -1075,9 +1080,7 @@ usbip_run_server (void *arg)
       exit (1);
     }
 
-  /* FIXME: We don't use this pollstruct as EP0 is handled
-     synchronously.  */
-  pollfds[1].fd = usbc_ep0.eventfd;
+  pollfds[1].fd = shutdown_notify_fd;
   pollfds[1].events = POLLIN;
   pollfds[1].revents = 0;
 
@@ -1097,14 +1100,15 @@ usbip_run_server (void *arg)
       exit (1);
     }
 
+  /* Since EP0 is handled synchronously, we don't poll on
+   * usbc_ep0.eventfd.  We poll on socket and shutdown request.
+   */
   pollfds[0].fd = fd;
   pollfds[0].events = POLLIN;
   pollfds[0].revents = 0;
 
   for (;;)
     {
-      int r;
-
       for (i = 1; i < 8; i++)
 	{
 	  if (usbc_ep_in[i].urb)
@@ -1124,7 +1128,7 @@ usbip_run_server (void *arg)
       if (poll (pollfds, 16, -1) < 0)
 	{
 	  if (errno == EINTR)
-	    goto again;
+	    continue;
 
 	  perror ("poll");
 	  exit (1);
@@ -1144,6 +1148,20 @@ usbip_run_server (void *arg)
 	    break;
 	  if (r)
 	    goto again;
+	}
+
+      if ((pollfds[1].revents & POLLNVAL)
+	  || (pollfds[1].revents & POLLERR))
+	{
+	  fprintf (stderr, "Error on USBIP client socket: %d\n",
+		   pollfds[1].revents);
+	  exit (1);
+	}
+      if ((pollfds[1].revents & POLLIN))
+	{
+	  /* Shutdown request */
+	  r = 0;
+	  break;
 	}
 
       for (i = 1; i < 8; i++)
@@ -1178,9 +1196,41 @@ usbip_run_server (void *arg)
 	}
     }
 
+  {
+    struct urb *urb;
+
+    pthread_mutex_lock (&urb_mutex);
+    if ((urb = urb_list))
+      {
+	do
+	  {
+	    unlink_urb (urb);
+	    unlink_urb_ep (urb);
+	    free (urb);
+	  }
+	while ((urb = urb_list));
+      }
+    pthread_mutex_unlock (&urb_mutex);
+  }
+
   close (fd);
   close (sock);
-  exit (0);
+
+  close (shutdown_notify_fd);
+  close (usbc_ep0.eventfd);
+
+  for (i = 1; i < 8; i++)
+    {
+      close (usbc_ep_in[i].eventfd);
+      close (usbc_ep_out[i].eventfd);
+    }
+
+  attached = 0;
+
+  if (r < 0)
+    /* It was detach request from client.  */
+    exit (0);
+
   return NULL;
 }
 
@@ -1445,6 +1495,13 @@ usb_lld_init (struct usb_dev *dev, uint8_t feature)
 
   pthread_sigmask (SIG_BLOCK, &sigset, NULL);
 
+  shutdown_notify_fd = eventfd (0, EFD_CLOEXEC);
+  if (shutdown_notify_fd < 0)
+    {
+      perror ("eventfd");
+      exit (1);
+    }
+
   pthread_mutex_init (&usbc_ep0.mutex, NULL);
   usbc_ep0.urb = NULL;
   usbc_ep0.eventfd = eventfd (0, EFD_CLOEXEC);
@@ -1506,12 +1563,14 @@ usb_lld_prepare_shutdown (void)
 void
 usb_lld_shutdown (void)
 {
+  const uint64_t l = 1;
+
   /* 
-   * Stop USBIP server thread.
+   * Tell USBIP server thread about shutdown.
    */
-  pthread_cancel (tid_usbip);
+  write (shutdown_notify_fd, &l, sizeof (l));
   pthread_join (tid_usbip, NULL);
-  /* FIXME: Cancel all URB in the list here.  */
+  notify_device (USB_INTR_SHUTDOWN, 0, 0);
 }
 
 static void
@@ -1550,6 +1609,11 @@ usb_lld_event_handler (struct usb_dev *dev)
     return USB_MAKE_EV (handle_setup0 (dev));
   else if (intr == USB_INTR_DATA_TRANSFER)
     return usb_handle_transfer (dev, dir, ep_num);
+  else if (intr == USB_INTR_SHUTDOWN)
+    {
+      if ((debug & DEBUG_USB))
+	puts ("USB shutdown");
+    }
 
   return USB_EVENT_OK;
 }
