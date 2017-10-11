@@ -1,3 +1,7 @@
+2017-10-11  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* mcu/sys-stm32f103.h (nonreturn_handler0, nonreturn_handler1): New.
+
 2017-10-10  NIIBE Yutaka  <gniibe@fsij.org>
 
 	* mcu/usb-usbip.c (usbip_run_server): Shutdown support.

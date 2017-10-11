@@ -21,6 +21,8 @@ extern const uint8_t sys_board_name[];
 #endif
 
 typedef void (*handler)(void);
+typedef void (*nonreturn_handler0)(void)__attribute__((noreturn));
+typedef void (*nonreturn_handler1)(void *)__attribute__((noreturn));
 extern handler vector[16];
 
 static inline const uint8_t *
@@ -90,10 +92,9 @@ flash_protect (void)
 static inline void __attribute__((noreturn))
 flash_erase_all_and_exec (void (*entry)(void))
 {
-  void (*func) (void (*)(void)) = (void (*)(void (*)(void)))vector[9];
+  nonreturn_handler1 func = (nonreturn_handler1) vector[9] ;
 
   (*func) (entry);
-  for (;;);
 }
 
 static inline void
@@ -111,7 +112,9 @@ usb_lld_sys_shutdown (void)
 static inline void __attribute__((noreturn))
 nvic_system_reset (void)
 {
-  (*vector[12]) ();
+  nonreturn_handler0 func = (nonreturn_handler0)vector[12];
+
+  (func) ();
 }
 
 #ifdef REQUIRE_CLOCK_GPIO_SETTING_IN_SYS
