@@ -2,6 +2,10 @@ Aidan Thornton:
     Added Maple Mini support.
 	board/board-maple-mini.h
 
+Jeremy Drake:
+    Modified STM32F103 support.
+	mcu/sys-stm32f103.c
+
 Kaz Kojima:
     Added STM32 Primer2 support.
 	board/board-stm32-primer2.h
@@ -41,6 +45,9 @@ NIIBE Yutaka:
 	board-stm32f0-discovery.h, board-fsm-55.h,
 
 	board-fs-bb48.h
+
+    Under contract of g10 Code GmbH, wrote:
+        mcu/usb-usbip.c
 
 Paul Fertser:
     Added Blue Pill support.

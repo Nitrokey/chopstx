@@ -21,6 +21,8 @@ extern const uint8_t sys_board_name[];
 #endif
 
 typedef void (*handler)(void);
+typedef void (*nonreturn_handler0)(void)__attribute__((noreturn));
+typedef void (*nonreturn_handler1)(void *)__attribute__((noreturn));
 extern handler vector[16];
 
 static inline const uint8_t *
@@ -47,17 +49,17 @@ flash_unlock (void)
 }
 
 static inline int
-flash_program_halfword (uint32_t addr, uint16_t data)
+flash_program_halfword (uintptr_t addr, uint16_t data)
 {
-  int (*func) (uint32_t, uint16_t) = (int (*)(uint32_t, uint16_t))vector[4];
+  int (*func) (uintptr_t, uint16_t) = (int (*)(uintptr_t, uint16_t))vector[4];
 
   return (*func) (addr, data);
 }
 
 static inline int
-flash_erase_page (uint32_t addr)
+flash_erase_page (uintptr_t addr)
 {
-  int (*func) (uint32_t) = (int (*)(uint32_t))vector[5];
+  int (*func) (uintptr_t) = (int (*)(uintptr_t))vector[5];
 
   return (*func) (addr);
 }
@@ -71,10 +73,10 @@ flash_check_blank (const uint8_t *p_start, size_t size)
 }
 
 static inline int
-flash_write (uint32_t dst_addr, const uint8_t *src, size_t len)
+flash_write (uintptr_t dst_addr, const uint8_t *src, size_t len)
 {
-  int (*func) (uint32_t, const uint8_t *, size_t)
-    = (int (*)(uint32_t, const uint8_t *, size_t))vector[7];
+  int (*func) (uintptr_t, const uint8_t *, size_t)
+    = (int (*)(uintptr_t, const uint8_t *, size_t))vector[7];
 
   return (*func) (dst_addr, src, len);
 }
@@ -90,10 +92,9 @@ flash_protect (void)
 static inline void __attribute__((noreturn))
 flash_erase_all_and_exec (void (*entry)(void))
 {
-  void (*func) (void (*)(void)) = (void (*)(void (*)(void)))vector[9];
+  nonreturn_handler1 func = (nonreturn_handler1) vector[9] ;
 
   (*func) (entry);
-  for (;;);
 }
 
 static inline void
@@ -108,10 +109,12 @@ usb_lld_sys_shutdown (void)
   (*vector[11]) ();
 }
 
-static inline void
+static inline void __attribute__((noreturn))
 nvic_system_reset (void)
 {
-  (*vector[12]) ();
+  nonreturn_handler0 func = (nonreturn_handler0)vector[12];
+
+  (func) ();
 }
 
 #ifdef REQUIRE_CLOCK_GPIO_SETTING_IN_SYS

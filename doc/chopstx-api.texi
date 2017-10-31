@@ -9,7 +9,7 @@ stop further execution of code.  It never returns.
 
 @subheading chopstx_create
 @anchor{chopstx_create}
-@deftypefun {chopstx_t} {chopstx_create} (uint32_t @var{flags_and_prio}, uint32_t @var{stack_addr}, size_t @var{stack_size}, voidfunc @var{thread_entry}, void * @var{arg})
+@deftypefun {chopstx_t} {chopstx_create} (uint32_t @var{flags_and_prio}, uintptr_t @var{stack_addr}, size_t @var{stack_size}, voidfunc @var{thread_entry}, void * @var{arg})
 @var{flags_and_prio}: Flags and priority
 
 @var{stack_addr}: Stack address

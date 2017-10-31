@@ -272,43 +272,7 @@ kl27z_ep_clear_dtog (int rx, uint8_t n)
   kl27z_ep_clear_stall (n);
 }
 
-#define USB_MAX_PACKET_SIZE 64	/* For FS device */
-
-enum STANDARD_REQUESTS {
-  GET_STATUS = 0,
-  CLEAR_FEATURE,
-  RESERVED1,
-  SET_FEATURE,
-  RESERVED2,
-  SET_ADDRESS,
-  GET_DESCRIPTOR,
-  SET_DESCRIPTOR,
-  GET_CONFIGURATION,
-  SET_CONFIGURATION,
-  GET_INTERFACE,
-  SET_INTERFACE,
-  SYNCH_FRAME,
-  TOTAL_REQUEST  /* Total number of Standard request */
-};
-
-
-enum FEATURE_SELECTOR {
-  FEATURE_ENDPOINT_HALT=0,
-  FEATURE_DEVICE_REMOTE_WAKEUP=1
-};
-
-
-/* The state machine states of a control pipe */
-enum {
-  WAIT_SETUP,
-  IN_DATA,
-  OUT_DATA,
-  LAST_IN_DATA,
-  WAIT_STATUS_IN,
-  WAIT_STATUS_OUT,
-  STALLED,
-  PAUSE
-};
+#include "usb_lld_driver.h"
 
 static int handle_transaction (struct usb_dev *dev, uint8_t stat);
 
@@ -445,7 +409,7 @@ handle_datastage_in (struct usb_dev *dev, uint8_t stat)
 	{
 	  /* No more data to send, proceed to receive OUT acknowledge.  */
 	  dev->state = WAIT_STATUS_OUT;
-	  kl27z_prepare_ep0_out (&dev->dev_req, 8, DATA1);
+	  kl27z_prepare_ep0_out (&dev->dev_req, 0, DATA1);
 	}
 
       return;
@@ -470,12 +434,13 @@ std_none (struct usb_dev *dev)
   return -1;
 }
 
+static uint16_t status_info;
+
 static int
 std_get_status (struct usb_dev *dev)
 {
   struct device_req *arg = &dev->dev_req;
   uint8_t rcp = arg->type & RECIPIENT;
-  uint16_t status_info = 0;
 
   if (arg->value != 0 || arg->len != 2 || (arg->index >> 8) != 0
       || USB_SETUP_SET (arg->type))
@@ -1000,8 +965,7 @@ usb_lld_ctrl_send (struct usb_dev *dev, const void *buf, size_t buflen)
       dev->state = IN_DATA;
     }
 
-  if (len)
-    kl27z_prepare_ep0_in (data_p->addr, len, DATA1);
+  kl27z_prepare_ep0_in (data_p->addr, len, DATA1);
 
   data_p->len -= len;
   data_p->addr += len;

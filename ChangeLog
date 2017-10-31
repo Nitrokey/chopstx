@@ -1,3 +1,143 @@
+2017-10-11  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* mcu/sys-stm32f103.h (nonreturn_handler0, nonreturn_handler1): New.
+
+2017-10-10  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* mcu/usb-usbip.c (usbip_run_server): Shutdown support.
+	(usb_lld_shutdown): Shutdown glace-fully.
+
+2017-10-10  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* VERSION: 1.5.
+	* doc/chopstx.texi (VERSION): 1.5.
+	* doc/chopstx-api.texi: Regenerated.
+
+2017-10-09  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* example-cdc-gnu-linux/sample.c (main): Support debug option.
+
+	* mcu/sys-gnu-linux.h (debug): New.
+	* mcu/sys-gnu-linux.c: Use debug.
+	* mcu/usb-usbip.c: Use debug.
+
+	* example-cdc/sample.ld (.process_stack, .main_stack): Add NOLOAD.
+
+2017-09-29  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* mcu/sys-stm32f103.c (flash_program_halfword, flash_erase_page)
+	(flash_write, flash_erase_all_and_exec): Use uintptr_t.
+
+2017-09-08  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* mcu/sys-gnu-linux.c: Flash emulation implemented.
+
+2017-09-05  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* example-cdc: Use stack-def.h.
+	* example-cdc/stack-def.h: New.
+
+2017-09-04  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* mcu/sys-stm32f103.h (nvic_system_reset): Add noreturn attribute.
+
+	* sys.h: Add mcu/sys-gnu-linux.h.
+
+	* mcu/sys-gnu-linux.c: New.
+	* mcu/sys-gnu-linux.h: New.
+
+2017-08-11  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* VERSION: 1.4.
+	* doc/chopstx.texi (VERSION): 1.4.
+
+2017-08-03  Jeremy Drake <jeremydrake+gnuk@eacceleration.com>
+
+	* mcu/sys-stm32f103.c (flash_write): Allow compile time
+	flash size definition by STM32F103_OVERRIDE_FLASH_SIZE_KB.
+
+2017-08-02  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* contrib/adc-gnu-linux.c: New.
+
+2017-07-07  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* mcu/usb-usbip.c (usbip_handle_data_urb): Fix error return value.
+	(notify_hostcontroller): New.
+	(usb_lld_stall_tx, usb_lld_stall_rx): Notify host controller side.
+
+2017-07-06  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* mcu/usb-usbip.c (hc_handle_data_urb): Fix the condition of the
+	end of transaction.
+	(read_data_transaction): Allow partial read by host.
+
+2017-07-05  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* example-fraucheky: New.
+
+2017-06-28  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* mcu/usb-usbip.c (struct usbip_msg_cmd, struct usbip_msg_rep):
+	Use different struct for command and reply.
+
+2017-06-27  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* example-cdc-gnu-linux/README: New.
+
+2017-06-26  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* board/board-gnu-linux.h: New.
+
+	* mcu/usb-usbip.c: New.
+
+	* rules.mk: Support EMULATION.
+
+	* entry.c (main): Support GNU_LINUX_EMULATION.
+
+2017-06-23  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* chopstx-gnu-linux.c, chopstx-gnu-linux.h: New.
+
+	* chopstx.c (chx_init): Use chx_init_arch.
+	(chopstx_create): Use chopstx_create_arch.
+	(chx_systick_reset, chx_systick_reload, chx_systick_get)
+	(usec_to_ticks, chx_enable_intr, chx_clr_intr, chx_disable_intr)
+	(chx_set_intr_prio, chx_prio_init, chx_cpu_sched_lock)
+	(chx_cpu_sched_unlock, idle, chx_handle_intr)
+	(chx_request_preemption, chx_sched, preempt, svc): Move to...
+	* chopstx-cortex-m.c: ... here.
+	(chx_init_arch, chopstx_create_arch): New.
+	* chopstx-cortex-m.h: New for tcontext_t.
+
+2017-06-22  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* chopstx.c (chx_sched): Use ->V for return value.
+	(svc): Ditto.
+	(chx_wakeup): Set -> for the return value of chx_sched.
+	(chopstx_mutex_lock, chopstx_cancel): Likewise.
+	(chopstx_exit): Remove naked attribute.
+
+2017-06-21  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* chopstx.c (struct chx_pq): Use uintptr_t for V.
+	(struct chx_px): Likewise.
+	(struct chx_thread): Likewise.
+	(chx_sched): Use uintptr_t for the return value.
+	(chx_exit): Use the field V for holding exit value.
+	(chopstx_create): Use uintptr_t for STACK_ADDR.
+	(chopstx_join): Use the field V for exit value.
+
+2017-06-16  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* chopstx.c (chx_wakeup): Fix for RUNNING==NULL.
+
+	* mcu/usb-mkl27z.c (std_get_status): Use staic var, not auto.
+
+2017-05-18  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* chopstx.c (chx_wakeup): Fix access to REG_R0.
+
 2017-02-02  NIIBE Yutaka  <gniibe@fsij.org>
 
 	* VERSION: 1.3.

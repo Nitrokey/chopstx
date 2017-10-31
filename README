@@ -1,6 +1,6 @@
 Chopstx - Threads and only Threads
-							 Version 1.3
-							  2017-02-02
+							 Version 1.5
+							  2017-10-10
 							Niibe Yutaka
 					     Flying Stone Technology
 
@@ -8,13 +8,21 @@ What's Chopstx?
 ===============
 
 Chopstx is an RT thread library for STM32F103 (ARM Cortex-M3),
-STM32F030 (ARM Cortex-M0), and MKL27Z (ARM Cortex-M0plus).
+STM32F030 (ARM Cortex-M0), MKL27Z (ARM Cortex-M0plus), and
+emulation on GNU/Linux.
 
-While most RTOSes come with many features, drivers, and stacks,
-Chopstx just offers a simple RT thread library.
+While most RTOSes come with many features, drivers, and protocol
+stacks, Chopstx just offers a simple RT thread library.
 
 With Chopstx, interrupt handling is also done by a thread.  This
 enables coherent code for ease of maintenance.
+
+This library is _not_ related to the hand game:
+
+    https://en.wikipedia.org/wiki/Chopsticks_(hand_game)
+
+Thanks to Yao Wei and Enrico Zini for giving me the opportunity
+visiting the wiki page.
 
 
 License
@@ -29,8 +37,8 @@ Example code
 ============
 
 We have some examples in this distribution; Useful ones are LED
-blinker and USB CDC-ACM function.  For STM32F103, you can build it
-USB CDC-ACM demo by:
+blinker and USB CDC-ACM device.  For STM32F103, you can build it USB
+CDC-ACM demo by:
 
    $ cd example-cdc
    $ ln -sf ../board/board-olimex-stm32-h103.h board.h
@@ -46,7 +54,7 @@ Future Works
 ============
 
 Convenience function to determine the bottom of thread stack,
-configuration of thread size by comiler's output would be next things
+configuration of thread size by compiler's output would be next things
 to be done.
 
 Experimental SMP port for Cortex-A7 is under development.  For SMP,
