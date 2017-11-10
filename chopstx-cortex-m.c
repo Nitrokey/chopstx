@@ -309,8 +309,7 @@ chx_sched (uint32_t yield)
 
 #if defined(__ARM_ARCH_7M__)
   asm volatile (
-	"svc	#0\n\t"
-	"bx	lr"
+	"svc	#0"
 	: "=r" (tp) : "0" (yield): "memory");
 #else
   register uint32_t arg_yield asm ("r1");
@@ -323,11 +322,11 @@ chx_sched (uint32_t yield)
    * r3:  0                     scratch
    * r12: 0                     scratch
    * lr   as-is
-   * pc:  return address (= lr)
+   * pc:  return address (= .L_CONTEXT_SWITCH_FINISH)
    * psr: INITIAL_XPSR          scratch
    */
-  asm ("mov	r1, lr\n\t"
-       "mov	r2, r1\n\t"
+  asm ("ldr	r1, =.L_CONTEXT_SWITCH_FINISH\n\t"
+       "mov	r2, lr\n\t"
        "mov	r3, #128\n\t"
        "lsl	r3, #17\n\t"
        "push	{r1, r2, r3}\n\t"
@@ -391,11 +390,7 @@ chx_sched (uint32_t yield)
 
 		/* Normal context switch */
 	"0:\n\t"
-		"add	r0, #16\n\t" /* ->V */
-		"ldr	r1, [r0]\n\t"
-		"str	r1, [sp]\n\t"
-		/**/
-		"add	r0, #4\n\t"
+		"add	r0, #20\n\t"
 		"ldm	r0!, {r4, r5, r6, r7}\n\t"
 		"ldm	r0!, {r1, r2, r3}\n\t"
 		"mov	r8, r1\n\t"
@@ -455,12 +450,17 @@ chx_sched (uint32_t yield)
 		"mov	r12, r0\n\t"
 		"pop	{r0, r1, r2, r3}\n\t"
 		"add	sp, #12\n\t"
-		"pop	{pc}"
+		"pop	{pc}\n\t"
+	".L_CONTEXT_SWITCH_FINISH:"
 		: "=r" (tp)		/* Return value in R0 */
 		: "0" (tp)
 		: "memory");
 #endif
 
+  asm volatile ("bx	lr"
+		: "=r" (tp)
+		: "0" (tp->v)
+		: "memory");
   return (uintptr_t)tp;
 }
 
@@ -675,7 +675,8 @@ svc (void)
        "mov	r5, r11\n\t"
        "mrs	r6, PSP\n\t" /* r13(=SP) in user space.  */
        "stm	r1!, {r2, r3, r4, r5, r6}\n\t"
-       "ldr	r1, [r6]"
+       "ldr	r1, [r6]\n\t"
+       "str	r0, [r6]"
        : "=r" (tp), "=r" (orig_r0)
        : /* no input */
        : "r2", "r3", "r4", "r5", "r6", "memory");
@@ -697,10 +698,6 @@ svc (void)
     }
 
   asm volatile (
-	"cbz	r0, 0f\n\t"
-	"ldr	r1, [r0, #16]\n\t" /* ->V */
-	"str	r1, [sp]\n\t"
-    "0:\n\t"
 	"b	.L_CONTEXT_SWITCH"
 	: /* no output */ : "r" (tp) : "memory");
 }

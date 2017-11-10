@@ -1,5 +1,8 @@
 2017-11-10  NIIBE Yutaka  <gniibe@fsij.org>
 
+	* chopstx-cortex-m.c (svc): Replace stack top to TP.
+	(chx_sched): Return ->v correctly.
+
 	* chopstx.c (chx_timer_expired): Fix timeout.
 
 2017-10-11  NIIBE Yutaka  <gniibe@fsij.org>
