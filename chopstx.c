@@ -382,6 +382,7 @@ chx_timer_expired (void)
     {
       uint32_t next_tick = tp->v;
 
+      tp->v = (uintptr_t)0;
       chx_ready_enqueue (tp);
       if (tp == running)	/* tp->flag_sched_rr == 1 */
 	prio = MAX_PRIO;

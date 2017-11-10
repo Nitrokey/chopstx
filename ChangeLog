@@ -1,3 +1,7 @@
+2017-11-10  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* chopstx.c (chx_timer_expired): Fix timeout.
+
 2017-10-11  NIIBE Yutaka  <gniibe@fsij.org>
 
 	* mcu/sys-stm32f103.h (nonreturn_handler0, nonreturn_handler1): New.
