@@ -164,7 +164,6 @@ static void usb_tx_done (uint8_t ep_num, uint16_t len);
 static void usb_rx_ready (uint8_t ep_num, uint16_t len);
 
 
-#define INTR_REQ_USB SIGUSR1
 #define PRIO_USB 3
 
 static void *

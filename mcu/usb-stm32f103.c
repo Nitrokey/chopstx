@@ -339,7 +339,8 @@ void usb_lld_init (struct usb_dev *dev, uint8_t feature)
 
   /* Clear Interrupt Status Register, and enable interrupt for USB */
   st103_set_istr (0);
-  st103_set_cntr (CNTR_CTRM | CNTR_RESETM);
+  st103_set_cntr (CNTR_CTRM | CNTR_OVRM | CNTR_ERRM
+		  | CNTR_RESETM);
 }
 
 void usb_lld_prepare_shutdown (void)

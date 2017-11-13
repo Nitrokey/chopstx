@@ -629,8 +629,6 @@ usb_rx_ready (uint8_t ep_num, uint16_t len)
 
 static void *tty_main (void *arg);
 
-#include <signal.h>
-#define INTR_REQ_USB SIGUSR1
 #define PRIO_TTY      4
 
 static char __process3_stack_base__[4096];

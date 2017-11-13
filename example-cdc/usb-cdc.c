@@ -639,7 +639,6 @@ usb_rx_ready (uint8_t ep_num, uint16_t len)
 
 static void *tty_main (void *arg);
 
-#define INTR_REQ_USB 20
 #define PRIO_TTY      4
 
 #define STACK_PROCESS_3

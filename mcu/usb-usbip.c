@@ -1458,9 +1458,8 @@ read_data_transaction (struct usb_control *usbc_p,
   return count;
 }
 
-void chx_handle_intr (uint32_t irq_num);
+extern void chx_handle_intr (uint32_t irq_num);
 
-#define INTR_REQ_USB SIGUSR1
 
 static void
 usb_intr (int signum, siginfo_t *siginfo, void *arg)

@@ -626,7 +626,6 @@ usb_rx_ready (uint8_t ep_num, uint16_t len)
 
 static void *tty_main (void *arg);
 
-#define INTR_REQ_USB 24
 #define PRIO_TTY      4
 
 extern uint8_t __process3_stack_base__[], __process3_stack_size__[];

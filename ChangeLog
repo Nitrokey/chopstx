@@ -1,3 +1,13 @@
+2017-11-13  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* mcu/usb-stm32f103.c (usb_lld_init): Set up interrupt on errors.
+
+	* usb_lld.h (USB_EVENT_DEVICE_WAKEUP): New.
+	(INTR_REQ_USB): Define here.
+	* mcu/usb-usbip.c, example-cdc/usb-cdc.c,
+	example-fraucheky/main.c, example-fs-bb48/usb-cdc.c: Change
+	for INTR_REQ_USB.
+
 2017-11-10  NIIBE Yutaka  <gniibe@fsij.org>
 
 	* chopstx-cortex-m.c (svc): Replace stack top to TP.
