@@ -1,6 +1,23 @@
 NEWS - Noteworthy changes
 
 
+* Major changes in Chopstx 1.6
+
+  Released 2017-11-XX
+
+** Fix cancellation
+In Chopstx 1.4 and 1.5, cancellation doesn't work for real MCU.  This
+is due to the change of chx_sched interface, introduced for GNU/Linux
+emulation.  This bug is fixed.
+
+** USB API changes
+INTR_REQ_USB is now defined by usb_lld.h.  Enumeration type of
+DEVICE_STATE now has USB_DEVICE_STATE_ prefix.
+
+** USB driver change
+USB suspend/resume is supported for STM32F103.
+
+
 * Major changes in Chopstx 1.5
 
   Released 2017-10-10

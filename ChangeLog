@@ -10,6 +10,7 @@
 	* example-cdc-gnu-linux/usb-cdc.c: Ditto.
 	* example-fs-bb48/usb-cdc.c: Ditto.
 	* example-fraucheky/main.c: Ditto.
+	* example-fraucheky/Makefile (USE_SYS): Add for debug.
 
 2017-11-13  NIIBE Yutaka  <gniibe@fsij.org>
 

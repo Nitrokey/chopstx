@@ -9,7 +9,7 @@ LDSCRIPT=
 
 CSRC = main.c
 CHIP=gnu-linux
-USE_SYS =
+USE_SYS = yes
 USE_USB = yes
 EMULATION=yes
 # USE_ADC = yes
