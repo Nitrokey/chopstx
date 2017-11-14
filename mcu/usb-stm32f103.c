@@ -340,7 +340,7 @@ void usb_lld_init (struct usb_dev *dev, uint8_t feature)
   /* Clear Interrupt Status Register, and enable interrupt for USB */
   st103_set_istr (0);
   st103_set_cntr (CNTR_CTRM | CNTR_OVRM | CNTR_ERRM
-		  | CNTR_RESETM);
+		  | CNTR_WKUPM | CNTR_SUSPM | CNTR_RESETM);
 }
 
 void usb_lld_prepare_shutdown (void)
@@ -367,6 +367,18 @@ usb_lld_event_handler (struct usb_dev *dev)
     {
       st103_set_istr (CLR_RESET);
       return USB_MAKE_EV (USB_EVENT_DEVICE_RESET);
+    }
+  else if ((istr_value & ISTR_WKUP))
+    {
+      st103_set_istr (CLR_WKUP);
+      *CNTR &= ~CNTR_FSUSP;
+      return USB_MAKE_EV (USB_EVENT_DEVICE_WAKEUP);
+    }
+  else if ((istr_value & ISTR_SUSP))
+    {
+      st103_set_istr (CLR_SUSP);
+      *CNTR |= (CNTR_FSUSP | CNTR_LPMODE);
+      return USB_MAKE_EV (USB_EVENT_DEVICE_SUSPEND);
     }
   else
     {

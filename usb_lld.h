@@ -84,12 +84,13 @@ enum {
 };
 
 enum DEVICE_STATE {
-  UNCONNECTED,
-  ATTACHED,
-  POWERED,
-  SUSPENDED,
-  ADDRESSED,
-  CONFIGURED
+  USB_DEVICE_STATE_UNCONNECTED = 0,  /* No USB */
+  USB_DEVICE_STATE_ATTACHED    = 1,
+  USB_DEVICE_STATE_POWERED     = 2,
+  USB_DEVICE_STATE_DEFAULT     = 3,
+  USB_DEVICE_STATE_ADDRESSED   = 4,
+  USB_DEVICE_STATE_CONFIGURED  = 5,
+  USB_DEVICE_STATE_SUSPEND     = 128 /* Or-ed to other states */
 };
 
 void usb_lld_init (struct usb_dev *dev, uint8_t feature);

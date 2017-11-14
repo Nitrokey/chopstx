@@ -1,3 +1,16 @@
+2017-11-14  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* usb_lld.h (DEVICE_STATE): Add prefix USB_DEVICE_STATE_.
+	(USB_DEVICE_STATE_DEFAULT): New.
+
+	* mcu/usb-stm32f103.c (usb_lld_init): Suspend/resume init.
+	(usb_lld_event_handler): Add suspend/resume support.
+
+	* example-cdc/usb-cdc.c: Follow the change of usb_lld.h.
+	* example-cdc-gnu-linux/usb-cdc.c: Ditto.
+	* example-fs-bb48/usb-cdc.c: Ditto.
+	* example-fraucheky/main.c: Ditto.
+
 2017-11-13  NIIBE Yutaka  <gniibe@fsij.org>
 
 	* mcu/usb-stm32f103.c (usb_lld_init): Set up interrupt on errors.
