@@ -79,7 +79,11 @@ chx_fatal (uint32_t err_code)
 #include "chopstx-cortex-m.h"
 #endif
 
-/* RUNNING: the current thread. */
+/* ALLOW_SLEEP for idle */
+int chx_allow_sleep;
+static struct chx_spinlock chx_enable_sleep_lock;
+
+/* RUNNING: the current thread.  */
 struct chx_thread *running;
 
 struct chx_queue {
@@ -441,6 +445,7 @@ chx_init (struct chx_thread *tp)
 {
   chx_prio_init ();
   chx_init_arch (tp);
+  chx_spin_init (&chx_enable_sleep_lock);
 
   q_ready.q.next = q_ready.q.prev = (struct chx_pq *)&q_ready.q;
   chx_spin_init (&q_ready.lock);
@@ -1469,4 +1474,25 @@ chopstx_setpriority (chopstx_prio_t prio_new)
     chx_cpu_sched_unlock ();
 
   return prio_orig;
+}
+
+
+/**
+ * chopstx_conf_idle - Configure IDLE thread
+ * @enable_sleep: Enable sleep on idle or not
+ *
+ * If @enable_sleep is true, allow sleep for the idle thread.
+ * Return previous value of @enable_sleep.
+ */
+int
+chopstx_conf_idle (int enable_sleep)
+{
+  int r;
+
+  chx_spin_lock (&chx_enable_sleep_lock);
+  r = chx_allow_sleep;
+  chx_allow_sleep = enable_sleep;
+  chx_spin_unlock (&chx_enable_sleep_lock);
+
+  return r;
 }

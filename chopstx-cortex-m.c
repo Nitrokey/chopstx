@@ -232,12 +232,14 @@ chx_cpu_sched_unlock (void)
 static void __attribute__((naked, used))
 idle (void)
 {
-#if defined(USE_WFI_FOR_IDLE)
+  int sleep_enabled;
+
   for (;;)
-    asm volatile ("wfi" : : : "memory");
-#else
-  for (;;);
-#endif
+    {
+      asm ("ldr	%0, %1" : "=r" (sleep_enabled): "m" (chx_allow_sleep));
+      if (sleep_enabled)
+	asm volatile ("wfi" : : : "memory");
+    }
 }
 
 

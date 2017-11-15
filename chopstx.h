@@ -1,7 +1,7 @@
 /*
  * chopstx.h - Threads and only threads.
  *
- * Copyright (C) 2013, 2016 Flying Stone Technology
+ * Copyright (C) 2013, 2016, 2017 Flying Stone Technology
  * Author: NIIBE Yutaka <gniibe@fsij.org>
  *
  * This file is a part of Chopstx, a thread library for embedded.
@@ -159,5 +159,7 @@ void chopstx_intr_wait (chopstx_intr_t *intr); /* DEPRECATED */
 
 
 int chopstx_poll (uint32_t *usec_p, int n, struct chx_poll_head *pd_array[]);
+
+int chopstx_conf_idle (int enable_sleep);
 
 #define CHOPSTX_THREAD_SIZE 64
