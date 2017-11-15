@@ -342,3 +342,8 @@ chopstx_create_arch (uintptr_t stack_addr, size_t stack_size,
   chx_cpu_sched_unlock ();
   return tp;
 }
+
+void
+chx_sleep_mode (int enable_sleep)
+{
+}

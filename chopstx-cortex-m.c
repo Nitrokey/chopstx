@@ -704,3 +704,67 @@ svc (void)
 	: /* no output */ : "r" (tp) : "memory");
 }
 #endif
+
+struct SCB
+{
+  volatile uint32_t CPUID;
+  volatile uint32_t ICSR;
+  volatile uint32_t VTOR;
+  volatile uint32_t AIRCR;
+  volatile uint32_t SCR;
+  volatile uint32_t CCR;
+  volatile uint8_t  SHP[12];
+  volatile uint32_t SHCSR;
+  volatile uint32_t CFSR;
+  volatile uint32_t HFSR;
+  volatile uint32_t DFSR;
+  volatile uint32_t MMFAR;
+  volatile uint32_t BFAR;
+  volatile uint32_t AFSR;
+  volatile uint32_t PFR[2];
+  volatile uint32_t DFR;
+  volatile uint32_t ADR;
+  volatile uint32_t MMFR[4];
+  volatile uint32_t ISAR[5];
+  /* Cortex-M3 has more...  */
+};
+static struct SCB *const SCB = ((struct SCB *)0xE000ED00);
+#define SCB_SCR_SLEEPDEEP (1 << 2)
+
+struct PWR
+{
+  volatile uint32_t CR;
+  volatile uint32_t CSR;
+};
+static struct PWR *const PWR = ((struct PWR *)0x40007000);
+#define PWR_CR_LPDS 0x0001
+#define PWR_CR_PDDS 0x0002
+#define PWR_CR_CWUF 0x0004
+
+void
+chx_sleep_mode (int enable_sleep)
+{
+  if (enable_sleep == 0)
+    ;
+  else
+    {
+      if (enable_sleep == 1)
+	/* sleep only */
+	SCB->SCR &= ~SCB_SCR_SLEEPDEEP;
+      else
+	{
+	  PWR->CR |= PWR_CR_CWUF;
+	
+	  if (enable_sleep == 2 || enable_sleep == 3)
+	    {
+	      PWR->CR &= ~PWR_CR_PDDS;
+	      if (enable_sleep == 3)
+		PWR->CR |= PWR_CR_LPDS;
+	    }
+	  else /* enable_sleep == 4 */
+	    PWR->CR |= PWR_CR_PDDS;
+
+	  SCB->SCR |= SCB_SCR_SLEEPDEEP;
+	}
+    }
+}

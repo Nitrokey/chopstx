@@ -1481,7 +1481,16 @@ chopstx_setpriority (chopstx_prio_t prio_new)
  * chopstx_conf_idle - Configure IDLE thread
  * @enable_sleep: Enable sleep on idle or not
  *
- * If @enable_sleep is true, allow sleep for the idle thread.
+ * If @enable_sleep is > 0, allow sleep for the idle thread.
+ *
+ * Behavior of @enable_sleep >= 1 depends on MCU.
+ *
+ * For STM32F103, it's like following.
+ *    1: Sleep   (CPU clock OFF only)
+ *    2: Stop    Wakeup by EXTI  (voltage regulator on)
+ *    3: Stop    Wakeup by EXTI  (voltage regulator low-power)
+ *    4: Standby Wakeup by RESET (voltage regulator off)
+ *
  * Return previous value of @enable_sleep.
  */
 int
@@ -1492,6 +1501,7 @@ chopstx_conf_idle (int enable_sleep)
   chx_spin_lock (&chx_enable_sleep_lock);
   r = chx_allow_sleep;
   chx_allow_sleep = enable_sleep;
+  chx_sleep_mode (enable_sleep);
   chx_spin_unlock (&chx_enable_sleep_lock);
 
   return r;
