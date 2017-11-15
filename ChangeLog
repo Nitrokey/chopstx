@@ -1,5 +1,10 @@
 2017-11-15  NIIBE Yutaka  <gniibe@fsij.org>
 
+	* mcu/usb-stm32f103.c (usb_lld_init): Enable USB wake up
+	by EXTI.
+
+2017-11-15  NIIBE Yutaka  <gniibe@fsij.org>
+
 	* chopstx.c (chopstx_conf_idle): Call chx_sleep_mode.
 	* chopstx-cortex-m.c (chx_sleep_mode): New.
 	* chopstx-gnu-linux.c (chx_sleep_mode): New.

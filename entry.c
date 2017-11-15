@@ -205,23 +205,23 @@ handler vector_table[] __attribute__ ((section(".startup.vectors"))) = {
   preempt,			/* PendSV */
   chx_timer_expired,		/* SysTick */
   /* 0x40 */
-  chx_handle_intr /* WWDG */,     chx_handle_intr /* PVD */,
-  chx_handle_intr /* TAMPER */,   chx_handle_intr /* RTC */,
-  chx_handle_intr /* FLASH */,    chx_handle_intr /* RCC */,
-  chx_handle_intr /* EXTI0 */,    chx_handle_intr /* EXTI1 */,
+  chx_handle_intr /* WWDG */,      chx_handle_intr /* PVD */,
+  chx_handle_intr /* TAMPER */,    chx_handle_intr /* RTC */,
+  chx_handle_intr /* FLASH */,     chx_handle_intr /* RCC */,
+  chx_handle_intr /* EXTI0 */,     chx_handle_intr /* EXTI1 */,
   /* 0x60 */
-  chx_handle_intr /* EXTI2 */,    chx_handle_intr /* EXTI3 */,
-  chx_handle_intr /* EXTI4 */,    chx_handle_intr /* DMA1 CH1 */,
-  chx_handle_intr /* DMA1 CH2 */, chx_handle_intr /* DMA1 CH3 */,
-  chx_handle_intr /* DMA1 CH4 */, chx_handle_intr /* DMA1 CH5 */,
+  chx_handle_intr /* EXTI2 */,     chx_handle_intr /* EXTI3 */,
+  chx_handle_intr /* EXTI4 */,     chx_handle_intr /* DMA1 CH1 */,
+  chx_handle_intr /* DMA1 CH2 */,  chx_handle_intr /* DMA1 CH3 */,
+  chx_handle_intr /* DMA1 CH4 */,  chx_handle_intr /* DMA1 CH5 */,
   /* 0x80 */
-  chx_handle_intr /* DMA1 CH6 */, chx_handle_intr /* DMA1 CH7 */,
-  chx_handle_intr /* ADC1_2 */,   chx_handle_intr /* USB HP */,
+  chx_handle_intr /* DMA1 CH6 */,  chx_handle_intr /* DMA1 CH7 */,
+  chx_handle_intr /* ADC1_2 */,    chx_handle_intr /* USB HP */,
   /* 0x90 */
-  chx_handle_intr /* USB LP */,   chx_handle_intr /* CAN */,
-  /* ... and more.  EXT9_5, TIMx, I2C, SPI, USART, EXT15_10 */
-  chx_handle_intr,                chx_handle_intr,
-  /* 0xA0 */
+  chx_handle_intr /* USB LP */,    chx_handle_intr /* CAN RX1 */,
+  chx_handle_intr /* CAN SCE */,   chx_handle_intr /* EXT9_5 */,
+  /* 0xa0 */
+  /* ... and more.  TIMx, I2C, SPI, USART... */
   chx_handle_intr,  chx_handle_intr,  chx_handle_intr,  chx_handle_intr,
   chx_handle_intr,  chx_handle_intr,  chx_handle_intr,  chx_handle_intr,
   /* 0xc0 */
@@ -229,15 +229,16 @@ handler vector_table[] __attribute__ ((section(".startup.vectors"))) = {
   /* STM32F0 doesn't have more.  */
   chx_handle_intr,  chx_handle_intr,  chx_handle_intr,  chx_handle_intr,
   chx_handle_intr,  chx_handle_intr,  chx_handle_intr,  chx_handle_intr,
-  chx_handle_intr,  chx_handle_intr,  chx_handle_intr,
+  /* 0xe0 */
+  chx_handle_intr /* EXT15_10 */,  chx_handle_intr /* RTCAlarm */,
+  chx_handle_intr /* USBWakeup */, chx_handle_intr,
 #endif
 #if !defined(STM32F10X_MD)
-  /* High-density chips have more; RTCAlarm, USBWakeup, ... , DMA2_Channel4_5 */
+  /* High-density chips have more; ... DMA2_Channel4_5 */
   chx_handle_intr,  chx_handle_intr,  chx_handle_intr,  chx_handle_intr,
   chx_handle_intr,  chx_handle_intr,  chx_handle_intr,  chx_handle_intr,
   chx_handle_intr,  chx_handle_intr,  chx_handle_intr,  chx_handle_intr,
   chx_handle_intr,  chx_handle_intr,  chx_handle_intr,  chx_handle_intr,
-  chx_handle_intr,  chx_handle_intr,  chx_handle_intr,
 #endif
 };
 #endif

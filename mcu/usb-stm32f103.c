@@ -1,7 +1,7 @@
 /*
  * usb-stm32f103.c - USB driver for STM32F103
  *
- * Copyright (C) 2016  Flying Stone Technology
+ * Copyright (C) 2016, 2017  Flying Stone Technology
  * Author: NIIBE Yutaka <gniibe@fsij.org>
  *
  * This file is a part of Chopstx, a thread library for embedded.
@@ -29,6 +29,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#include "mcu/stm32f103.h"
 #include "sys-stm32f103.h"
 #include "usb_lld.h"
 #include "usb_lld_driver.h"
@@ -341,6 +342,11 @@ void usb_lld_init (struct usb_dev *dev, uint8_t feature)
   st103_set_istr (0);
   st103_set_cntr (CNTR_CTRM | CNTR_OVRM | CNTR_ERRM
 		  | CNTR_WKUPM | CNTR_SUSPM | CNTR_RESETM);
+
+  /* Setting of EXTI wakeup interrupt to break sleep mode.  */
+  EXTI->RTSR |= (1 << 18);	/* Rising trigger selection */
+  EXTI->PR   |= (1 << 18);	/* Clear pending bit */
+  EXTI->IMR  |= (1 << 18);	/* Interrupt mask disabled */
 }
 
 void usb_lld_prepare_shutdown (void)
