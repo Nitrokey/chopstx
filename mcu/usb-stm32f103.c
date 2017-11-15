@@ -343,10 +343,9 @@ void usb_lld_init (struct usb_dev *dev, uint8_t feature)
   st103_set_cntr (CNTR_CTRM | CNTR_OVRM | CNTR_ERRM
 		  | CNTR_WKUPM | CNTR_SUSPM | CNTR_RESETM);
 
-  /* Setting of EXTI wakeup interrupt to break sleep mode.  */
+  /* Setting of EXTI wakeup event to break sleep on WFE.    */
   EXTI->RTSR |= (1 << 18);	/* Rising trigger selection */
-  EXTI->PR   |= (1 << 18);	/* Clear pending bit */
-  EXTI->IMR  |= (1 << 18);	/* Interrupt mask disabled */
+  EXTI->EMR  |= (1 << 18);	/* Event mask cleared       */
 }
 
 void usb_lld_prepare_shutdown (void)

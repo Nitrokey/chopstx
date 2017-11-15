@@ -153,7 +153,6 @@ void usb_lld_setup_endp (struct usb_dev *dev, int ep_num, int rx_en, int tx_en);
 void usb_lld_stall_tx (int ep_num);
 void usb_lld_stall_rx (int ep_num);
 #else
-#define INTR_REQ_USB_WAKEUP 42
 #define INTR_REQ_USB 20
 /* EP_TYPE[1:0] EndPoint TYPE */
 #define EP_BULK        (0x0000) /* EndPoint BULK        */

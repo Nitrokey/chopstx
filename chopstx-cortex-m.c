@@ -237,7 +237,11 @@ idle (void)
   for (;;)
     {
       asm ("ldr	%0, %1" : "=r" (sleep_enabled): "m" (chx_allow_sleep));
-      if (sleep_enabled)
+      if (!sleep_enabled)
+	continue;
+      if ((sleep_enabled & 0x80))
+	asm volatile ("wfe" : : : "memory");
+      else
 	asm volatile ("wfi" : : : "memory");
     }
 }
@@ -737,31 +741,31 @@ struct PWR
   volatile uint32_t CSR;
 };
 static struct PWR *const PWR = ((struct PWR *)0x40007000);
-#define PWR_CR_LPDS 0x0001
-#define PWR_CR_PDDS 0x0002
-#define PWR_CR_CWUF 0x0004
+#define PWR_CR_LPDS 0x0001	/* Low-power deepsleep  */
+#define PWR_CR_PDDS 0x0002	/* Power down deepsleep */
+#define PWR_CR_CWUF 0x0004	/* Clear wakeup flag    */
 
 void
-chx_sleep_mode (int enable_sleep)
+chx_sleep_mode (int how)
 {
-  if (enable_sleep == 0)
+  if (how == 0)
     ;
   else
     {
-      if (enable_sleep == 1)
+      if (how == 1)
 	/* sleep only */
 	SCB->SCR &= ~SCB_SCR_SLEEPDEEP;
       else
 	{
 	  PWR->CR |= PWR_CR_CWUF;
-	
-	  if (enable_sleep == 2 || enable_sleep == 3)
+
+	  if (how == 2 || how == 3)
 	    {
 	      PWR->CR &= ~PWR_CR_PDDS;
-	      if (enable_sleep == 3)
+	      if (how == 3)
 		PWR->CR |= PWR_CR_LPDS;
 	    }
-	  else /* enable_sleep == 4 */
+	  else /* how == 4 */
 	    PWR->CR |= PWR_CR_PDDS;
 
 	  SCB->SCR |= SCB_SCR_SLEEPDEEP;
