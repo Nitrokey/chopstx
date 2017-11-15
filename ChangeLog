@@ -1,5 +1,7 @@
 2017-11-15  NIIBE Yutaka  <gniibe@fsij.org>
 
+	* usb_lld.h (INTR_REQ_USB_WAKEUP): New.
+
 	* mcu/usb-stm32f103.c (usb_lld_init): Enable USB wake up
 	by EXTI.
 
