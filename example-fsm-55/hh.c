@@ -366,6 +366,8 @@ main (int argc, const char *argv[])
   (void)argc;
   (void)argv;
 
+  chopstx_conf_idle (1);
+
   chopstx_mutex_init (&mtx);
   chopstx_cond_init (&cnd0);
   chopstx_cond_init (&cnd1);

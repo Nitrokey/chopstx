@@ -10,6 +10,12 @@ In Chopstx 1.4 and 1.5, cancellation doesn't work for real MCU.  This
 is due to the change of chx_sched interface, introduced for GNU/Linux
 emulation.  This bug is fixed.
 
+** New feature: sleep mode
+New function chopstx_conf_idle is added to support core sleep.  Use of
+sleep by this feature requires careful preparation.  Enabling sleep, a
+board with no RESET pin cannot be debugged by JTAG/SWD.  Setting of
+DBGMCU_CR (0xE0042004) is required beforehand (default is zero).
+
 ** USB API changes
 INTR_REQ_USB is now defined by usb_lld.h.  Enumeration type of
 DEVICE_STATE now has USB_DEVICE_STATE_ prefix.

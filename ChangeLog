@@ -1,5 +1,8 @@
 2017-11-15  NIIBE Yutaka  <gniibe@fsij.org>
 
+	* example-fsm-55/hh.c (main): Add call to chopstx_conf_idle.
+	* example-fsm-55/Makefile (DEFS): Remove USE_WFI_FOR_IDLE.
+
 	* chopstx.c (chx_init): Initialize sleep lock.
 	(chopstx_conf_idle): New.
 	* chopstx-cortex-m.c (idle): Support sleep.
