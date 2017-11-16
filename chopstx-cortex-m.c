@@ -331,8 +331,8 @@ chx_sched (uint32_t yield)
    * pc:  return address (= .L_CONTEXT_SWITCH_FINISH)
    * psr: INITIAL_XPSR          scratch
    */
-  asm ("ldr	r1, lr\n\t"
-       "mov	r2, =.L_CONTEXT_SWITCH_FINISH\n\t"
+  asm ("mov	r1, lr\n\t"
+       "ldr	r2, =.L_CONTEXT_SWITCH_FINISH\n\t"
        "mov	r3, #128\n\t"
        "lsl	r3, #17\n\t"
        "push	{r1, r2, r3}\n\t"
