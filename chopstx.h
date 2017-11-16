@@ -158,7 +158,8 @@ void chopstx_claim_irq (chopstx_intr_t *intr, uint8_t irq_num);
 void chopstx_intr_wait (chopstx_intr_t *intr); /* DEPRECATED */
 
 
-int chopstx_poll (uint32_t *usec_p, int n, struct chx_poll_head *pd_array[]);
+int chopstx_poll (uint32_t *usec_p, int n,
+		  struct chx_poll_head *const pd_array[]);
 
 int chopstx_conf_idle (int enable_sleep);
 

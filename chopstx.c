@@ -1322,7 +1322,7 @@ chx_proxy_init (struct chx_px *px, uint32_t *cp)
  * Returns number of active descriptors.
  */
 int
-chopstx_poll (uint32_t *usec_p, int n, struct chx_poll_head *pd_array[])
+chopstx_poll (uint32_t *usec_p, int n, struct chx_poll_head *const pd_array[])
 {
   uint32_t counter = 0;
   int i;

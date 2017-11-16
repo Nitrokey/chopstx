@@ -1,5 +1,8 @@
 2017-11-16  NIIBE Yutaka  <gniibe@fsij.org>
 
+	* chopstx.h (chopstx_poll): API change.
+	* chopstx.c (chopstx_poll): Use const pointer.
+
 	* chopstx-cortex-m.c (idle): Support WFE.
 	* mcu/usb-stm32f103.c (usb_lld_init): Use event.
 	* usb_lld.h (INTR_REQ_USB_WAKEUP): Remove.
