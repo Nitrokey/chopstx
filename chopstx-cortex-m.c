@@ -709,7 +709,7 @@ svc (void)
 }
 #endif
 
-#ifdef MCU_STM32F0 
+#ifdef MCU_STM32F0
 struct SCB
 {
   volatile uint32_t CPUID;
@@ -766,10 +766,39 @@ chx_sleep_mode (int how)
     }
 }
 #else
-/* Deepsleep is only useful with RTC, Watch Dog, or WKUP pin.  */
+struct RCC {
+  volatile uint32_t CR;
+  volatile uint32_t CFGR;
+  /* And more... */
+};
+static struct RCC *const RCC = (struct RCC *)0x40021000;
+#define STM32_SW_PLL		(2 << 0)
+#define RCC_CFGR_SWS		0x0000000C
+
+/*
+ * Deepsleep is only useful with RTC, Watch Dog, or WKUP pin.
+ * So, we can't use deepsleep.
+ *
+ * On sleep mode, clock is HSI, while it's PLL when running.
+ * This can achieve lower power consumption on sleep.
+ */
 void
 chx_sleep_mode (int how)
 {
-  (void)how;
+  uint32_t cfg_sw;
+
+  if (how == 0)
+    {
+      RCC->CFGR |= STM32_SW_PLL;
+      cfg_sw = STM32_SW_PLL;
+    }
+  else
+    {
+      RCC->CFGR &= ~3;
+      cfg_sw = 0;
+    }
+
+  while ((RCC->CFGR & RCC_CFGR_SWS) != (cfg_sw << 2))
+    ;
 }
 #endif

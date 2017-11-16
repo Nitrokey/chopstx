@@ -4,15 +4,7 @@
 	* chopstx.c (chopstx_poll): Use const pointer.
 
 	* chopstx-cortex-m.c (idle): Support WFE.
-	* mcu/usb-stm32f103.c (usb_lld_init): Use event.
-	* usb_lld.h (INTR_REQ_USB_WAKEUP): Remove.
-
-2017-11-15  NIIBE Yutaka  <gniibe@fsij.org>
-
-	* usb_lld.h (INTR_REQ_USB_WAKEUP): New.
-
-	* mcu/usb-stm32f103.c (usb_lld_init): Enable USB wake up
-	by EXTI.
+	[!MCU_STM32F0] (chx_sleep_mode): Clock feed by HSI.
 
 2017-11-15  NIIBE Yutaka  <gniibe@fsij.org>
 

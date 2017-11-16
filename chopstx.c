@@ -1485,10 +1485,12 @@ chopstx_setpriority (chopstx_prio_t prio_new)
  *
  * Behavior of @enable_sleep >= 1 depends on MCU.
  *
- * For STM32F103, 1 for Sleep (CPU clock OFF only), 2 for Stop (Wakeup
+ * For STM32F0, 1 for Sleep (CPU clock OFF only), 2 for Stop (Wakeup
  * by EXTI, voltage regulator on), 3 for Stop (Wakeup by EXTI, voltage
  * regulator low-power), 4 for Standby (Wakeup by RESET, voltage
  * regulator off), and 128 is or-ed to ask WFE instead of WFI.
+ *
+ * For STM32F103, 1 for sleep with lower 8MHz clock.
  *
  * Return previous value of @enable_sleep.
  */
