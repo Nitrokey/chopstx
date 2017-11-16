@@ -709,6 +709,7 @@ svc (void)
 }
 #endif
 
+#ifdef MCU_STM32F0 
 struct SCB
 {
   volatile uint32_t CPUID;
@@ -748,27 +749,27 @@ static struct PWR *const PWR = ((struct PWR *)0x40007000);
 void
 chx_sleep_mode (int how)
 {
-  if (how == 0)
-    ;
+  PWR->CR |= PWR_CR_CWUF;
+  PWR->CR &= ~(PWR_CR_PDDS|PWR_CR_LPDS);
+
+  if (how == 0 || how == 1 /* Sleep only (not deepsleep) */)
+    SCB->SCR &= ~SCB_SCR_SLEEPDEEP;
   else
-    {
-      if (how == 1)
-	/* sleep only */
-	SCB->SCR &= ~SCB_SCR_SLEEPDEEP;
-      else
-	{
-	  PWR->CR |= PWR_CR_CWUF;
+    {			   /* Deepsleep */
+      /* how == 2: deepsleep but regulator ON */
+      if (how == 3)
+	PWR->CR |= PWR_CR_LPDS;	/* regulator low-power mode */
+      else if (how == 4)
+	PWR->CR |= PWR_CR_PDDS;	/* Power down: All OFF     */
 
-	  if (how == 2 || how == 3)
-	    {
-	      PWR->CR &= ~PWR_CR_PDDS;
-	      if (how == 3)
-		PWR->CR |= PWR_CR_LPDS;
-	    }
-	  else /* how == 4 */
-	    PWR->CR |= PWR_CR_PDDS;
-
-	  SCB->SCR |= SCB_SCR_SLEEPDEEP;
-	}
+      SCB->SCR |= SCB_SCR_SLEEPDEEP;
     }
 }
+#else
+/* Deepsleep is only useful with RTC, Watch Dog, or WKUP pin.  */
+void
+chx_sleep_mode (int how)
+{
+  (void)how;
+}
+#endif

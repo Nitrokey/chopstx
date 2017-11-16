@@ -29,7 +29,6 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#include "mcu/stm32f103.h"
 #include "sys-stm32f103.h"
 #include "usb_lld.h"
 #include "usb_lld_driver.h"
@@ -343,9 +342,19 @@ void usb_lld_init (struct usb_dev *dev, uint8_t feature)
   st103_set_cntr (CNTR_CTRM | CNTR_OVRM | CNTR_ERRM
 		  | CNTR_WKUPM | CNTR_SUSPM | CNTR_RESETM);
 
-  /* Setting of EXTI wakeup event to break sleep on WFE.    */
-  EXTI->RTSR |= (1 << 18);	/* Rising trigger selection */
+#if 0
+/*
+ * Since stop mode makes PLL, HSI & HES oscillators stop, USB clock is
+ * not supplied in stop mode.  Thus, USB wakeup can't occur.
+ *
+ * So, only sleep mode can be supported with USB, which doesn't
+ * require use of EXTI.
+ */
+#include "mcu/stm32f103.h"
+  /* Setting of EXTI wakeup event to break stop mode.       */
   EXTI->EMR  |= (1 << 18);	/* Event mask cleared       */
+  EXTI->RTSR |= (1 << 18);	/* Rising trigger selection */
+#endif
 }
 
 void usb_lld_prepare_shutdown (void)
