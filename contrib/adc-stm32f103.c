@@ -32,6 +32,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <chopstx.h>
+#include <mcu/stm32.h>
 #include <mcu/stm32f103.h>
 #include "adc.h"
 

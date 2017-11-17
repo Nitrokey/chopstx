@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <mcu/cortex-m.h>
+#define MCU_STM32F0
 #include <mcu/stm32.h>
 
 extern int chx_allow_sleep;

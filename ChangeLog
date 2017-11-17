@@ -1,5 +1,8 @@
 2017-11-17  NIIBE Yutaka  <gniibe@fsij.org>
 
+	* mcu/stm32f103.h (RCC), clk_gpio_init-stm32.c (RCC): Move to...
+	* mcu/stm32.h (RCC): ... this header file.
+
 	* example-fsm-55: Update for new sleep API.
 
 	* rules.mk (CSRC): Add mcu/chx-$(CHIP).c.
