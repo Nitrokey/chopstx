@@ -1,6 +1,7 @@
 #define BOARD_NAME "CQ STARM"
 #define BOARD_ID    0xc5480875
 
+#define MCU_STM32F1 1
 #define STM32F10X_MD		/* Medium-density device */
 
 #define STM32_PLLXTPRE                  STM32_PLLXTPRE_DIV1

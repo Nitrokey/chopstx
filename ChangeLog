@@ -1,3 +1,13 @@
+2017-11-17  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* board/board-blue-pill.h, board/board-cq-starm.h,
+	board/board-fst-01-00.h, board/board-fst-01.h,
+	board/board-fst-01g.h, board/board-maple-mini.h,
+	board/board-nitrokey-start.h, board/board-olimex-stm32-h103.h,
+	board/board-st-dongle.h, board/board-st-nucleo-f103.h,
+	board/board-stbee-mini.h, board/board-stbee.h,
+	board/board-stm32-primer2.h: Add MCU_STM32F1.
+
 2017-11-16  NIIBE Yutaka  <gniibe@fsij.org>
 
 	* chopstx.h (chopstx_poll): API change.

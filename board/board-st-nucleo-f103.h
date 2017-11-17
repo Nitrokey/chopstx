@@ -16,6 +16,7 @@
  *  GND  BLACK --> 20 GND
  */
 
+#define MCU_STM32F1 1
 #define STM32F10X_MD		/* Medium-density device */
 
 #define STM32_PLLXTPRE                  STM32_PLLXTPRE_DIV1

@@ -1,6 +1,9 @@
 #define BOARD_NAME "STM32 Primer2"
 #define BOARD_ID    0x21e5798d
 
+#define MCU_STM32F1 1
+/* High-density device */
+
 #define STM32_PLLXTPRE                  STM32_PLLXTPRE_DIV1
 #define STM32_PLLMUL_VALUE              6
 #define STM32_HSECLK                    12000000

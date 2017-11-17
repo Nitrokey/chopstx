@@ -3,6 +3,7 @@
 /* echo -n "Blue Pill" | shasum -a 256 | sed -e 's/^.*\(........\)  -$/\1/' */
 #define BOARD_ID    0xa1099d43
 
+#define MCU_STM32F1 1
 #define STM32F10X_MD		/* Medium-density device */
 
 #define STM32_PLLXTPRE                  STM32_PLLXTPRE_DIV1

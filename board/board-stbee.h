@@ -1,6 +1,9 @@
 #define BOARD_NAME "STBee"
 #define BOARD_ID    0x945c37e8
 
+#define MCU_STM32F1 1
+/* High-density device */
+
 #define STM32_PLLXTPRE                  STM32_PLLXTPRE_DIV1
 #define STM32_PLLMUL_VALUE              6
 #define STM32_HSECLK                    12000000

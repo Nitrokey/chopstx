@@ -1,6 +1,7 @@
 #define BOARD_NAME "NITROKEY-START"
 #define BOARD_ID    0xad1e7ebd
 
+#define MCU_STM32F1 1
 #define STM32F10X_MD		/* Medium-density device */
 
 #define STM32_PLLXTPRE                  STM32_PLLXTPRE_DIV1
