@@ -1,5 +1,8 @@
 2017-11-17  NIIBE Yutaka  <gniibe@fsij.org>
 
+	* chopstx.c (chopstx_conf_idle): Call chx_sleep_mode before
+	changing chx_allow_sleep.
+
 	* board/board-blue-pill.h, board/board-cq-starm.h,
 	board/board-fst-01-00.h, board/board-fst-01.h,
 	board/board-fst-01g.h, board/board-maple-mini.h,

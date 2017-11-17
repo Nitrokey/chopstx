@@ -79,7 +79,7 @@ chx_fatal (uint32_t err_code)
 #include "chopstx-cortex-m.h"
 #endif
 
-/* ALLOW_SLEEP for idle */
+/* ALLOW_SLEEP for the idle thread.  */
 int chx_allow_sleep;
 static struct chx_spinlock chx_enable_sleep_lock;
 
@@ -1488,12 +1488,15 @@ chopstx_setpriority (chopstx_prio_t prio_new)
  * For STM32F0, 1 for Sleep (CPU clock OFF only), 2 for Stop (Wakeup
  * by EXTI, voltage regulator on), 3 for Stop (Wakeup by EXTI, voltage
  * regulator low-power), 4 for Standby (Wakeup by RESET, voltage
- * regulator off), and 128 is or-ed to ask WFE instead of WFI.
+ * regulator off).
  *
- * For STM32F103, 1 for sleep with lower 8MHz clock.
+ * For STM32F103, 1 for normal sleep, and 2 for sleep with lower 8MHz
+ * clock.
  *
  * Return previous value of @enable_sleep.
  */
+extern void chx_sleep_mode (int enable_sleep);
+
 int
 chopstx_conf_idle (int enable_sleep)
 {
@@ -1501,8 +1504,8 @@ chopstx_conf_idle (int enable_sleep)
 
   chx_spin_lock (&chx_enable_sleep_lock);
   r = chx_allow_sleep;
+  chx_sleep_mode (enable_sleep);
   chx_allow_sleep = enable_sleep;
-  chx_sleep_mode ((enable_sleep & 0x7f));
   chx_spin_unlock (&chx_enable_sleep_lock);
 
   return r;
