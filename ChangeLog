@@ -1,5 +1,15 @@
 2017-11-17  NIIBE Yutaka  <gniibe@fsij.org>
 
+	* rules.mk (CSRC): Add mcu/chx-$(CHIP).c.
+
+	* chopstx-cortex-m.c (idle, chx_sleep_mode): Remove.
+	(chx_sched, preempt): Call chx_idle.
+	* mcu/chx-mkl27z.c, mcu/chx-stm32f0.c, mcu/chx-stm32f103.c: New.
+	* mcu/stm32.h: New.
+
+	* chopstx-gnu-linux.c (chx_sleep_mode): Move to...
+	* mcu/chx-gnu-linux.c: Here.
+
 	* mcu/stm32f103.h (DBGMCU): New.
 
 	* mcu/cortex-m.h: New.

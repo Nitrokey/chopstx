@@ -229,24 +229,6 @@ chx_cpu_sched_unlock (void)
 }
 
 
-static void __attribute__((naked, used))
-idle (void)
-{
-  int sleep_enabled;
-
-  for (;;)
-    {
-      asm ("ldr	%0, %1" : "=r" (sleep_enabled): "m" (chx_allow_sleep));
-      if (!sleep_enabled)
-	continue;
-      if ((sleep_enabled & 0x80))
-	asm volatile ("wfe" : : : "memory");
-      else
-	asm volatile ("wfi" : : : "memory");
-    }
-}
-
-
 void
 chx_handle_intr (void)
 {
@@ -388,7 +370,7 @@ chx_sched (uint32_t yield)
 		/* Spawn an IDLE thread.  */
 		"ldr	r1, =__main_stack_end__\n\t"
 		"mov	sp, r1\n\t"
-		"ldr	r0, =idle\n\t"	     /* PC = idle */
+		"ldr	r0, =chx_idle\n\t" /* PC = idle */
 		/**/
 		/* Unmask interrupts.  */
 		"cpsie	i\n\t"
@@ -637,7 +619,7 @@ preempt (void)
 	"mov	r3, #0\n\t"
 	"stm	r0!, {r1, r2, r3}\n\t"
 	"stm	r0!, {r1, r2, r3}\n\t"
-	"ldr	r1, =idle\n\t"	     /* PC = idle */
+	"ldr	r1, =chx_idle\n\t" /* PC = idle */
 	"mov	r2, #0x010\n\t"
 	"lsl	r2, r2, #20\n\t" /* xPSR = T-flag set (Thumb) */
 	"stm	r0!, {r1, r2}\n\t"
@@ -706,99 +688,5 @@ svc (void)
   asm volatile (
 	"b	.L_CONTEXT_SWITCH"
 	: /* no output */ : "r" (tp) : "memory");
-}
-#endif
-
-#ifdef MCU_STM32F0
-struct SCB
-{
-  volatile uint32_t CPUID;
-  volatile uint32_t ICSR;
-  volatile uint32_t VTOR;
-  volatile uint32_t AIRCR;
-  volatile uint32_t SCR;
-  volatile uint32_t CCR;
-  volatile uint8_t  SHP[12];
-  volatile uint32_t SHCSR;
-  volatile uint32_t CFSR;
-  volatile uint32_t HFSR;
-  volatile uint32_t DFSR;
-  volatile uint32_t MMFAR;
-  volatile uint32_t BFAR;
-  volatile uint32_t AFSR;
-  volatile uint32_t PFR[2];
-  volatile uint32_t DFR;
-  volatile uint32_t ADR;
-  volatile uint32_t MMFR[4];
-  volatile uint32_t ISAR[5];
-  /* Cortex-M3 has more...  */
-};
-static struct SCB *const SCB = ((struct SCB *)0xE000ED00);
-#define SCB_SCR_SLEEPDEEP (1 << 2)
-
-struct PWR
-{
-  volatile uint32_t CR;
-  volatile uint32_t CSR;
-};
-static struct PWR *const PWR = ((struct PWR *)0x40007000);
-#define PWR_CR_LPDS 0x0001	/* Low-power deepsleep  */
-#define PWR_CR_PDDS 0x0002	/* Power down deepsleep */
-#define PWR_CR_CWUF 0x0004	/* Clear wakeup flag    */
-
-void
-chx_sleep_mode (int how)
-{
-  PWR->CR |= PWR_CR_CWUF;
-  PWR->CR &= ~(PWR_CR_PDDS|PWR_CR_LPDS);
-
-  if (how == 0 || how == 1 /* Sleep only (not deepsleep) */)
-    SCB->SCR &= ~SCB_SCR_SLEEPDEEP;
-  else
-    {			   /* Deepsleep */
-      /* how == 2: deepsleep but regulator ON */
-      if (how == 3)
-	PWR->CR |= PWR_CR_LPDS;	/* regulator low-power mode */
-      else if (how == 4)
-	PWR->CR |= PWR_CR_PDDS;	/* Power down: All OFF     */
-
-      SCB->SCR |= SCB_SCR_SLEEPDEEP;
-    }
-}
-#else
-struct RCC {
-  volatile uint32_t CR;
-  volatile uint32_t CFGR;
-  /* And more... */
-};
-static struct RCC *const RCC = (struct RCC *)0x40021000;
-#define STM32_SW_PLL		(2 << 0)
-#define RCC_CFGR_SWS		0x0000000C
-
-/*
- * Deepsleep is only useful with RTC, Watch Dog, or WKUP pin.
- * So, we can't use deepsleep.
- *
- * On sleep mode, clock is HSI, while it's PLL when running.
- * This can achieve lower power consumption on sleep.
- */
-void
-chx_sleep_mode (int how)
-{
-  uint32_t cfg_sw;
-
-  if (how == 0)
-    {
-      RCC->CFGR |= STM32_SW_PLL;
-      cfg_sw = STM32_SW_PLL;
-    }
-  else
-    {
-      RCC->CFGR &= ~3;
-      cfg_sw = 0;
-    }
-
-  while ((RCC->CFGR & RCC_CFGR_SWS) != (cfg_sw << 2))
-    ;
 }
 #endif
