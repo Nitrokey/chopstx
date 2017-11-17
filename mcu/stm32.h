@@ -97,6 +97,38 @@ static struct RCC *const RCC = (struct RCC *)RCC_BASE;
 #define RCC_CFGR_SW_MASK	(3 << 0)
 #define RCC_CFGR_SWS		0x0000000C
 
+/* Clock setting values.
+ * Due to historical reason, it has the prefix of STM32_.
+ */
+#define STM32_SW_HSI		(0 << 0)
+#define STM32_SW_HSE		(1 << 0)
+#define STM32_SW_PLL		(2 << 0)
+
+#define STM32_PLLSRC_HSI	(0 << 16)
+#define STM32_PLLSRC_HSE	(1 << 16)
+
+#define STM32_PLLXTPRE_DIV1	(0 << 17)
+#define STM32_PLLXTPRE_DIV2	(1 << 17)
+
+#define STM32_HPRE_DIV1		(0 << 4)
+#define STM32_HPRE_DIV8		(10 << 4)
+#define STM32_HPRE_DIV16	(11 << 4)
+
+#define STM32_PPRE1_DIV1	(0 << 8)
+#define STM32_PPRE1_DIV2	(4 << 8)
+#define STM32_PPRE1_DIV16	(7 << 8)
+
+#define STM32_PPRE2_DIV1        (0 << 11)
+#define STM32_PPRE2_DIV2	(4 << 11)
+#define STM32_PPRE2_DIV16	(7 << 11)
+
+#define STM32_ADCPRE_DIV4	(1 << 14)
+#define STM32_ADCPRE_DIV6       (2 << 14)
+#define STM32_ADCPRE_DIV8	(3 << 14)
+
+#define STM32_USBPRE_DIV1P5     (0 << 22)
+
+#define STM32_MCO_NOCLOCK	(0 << 24)
 
 struct PWR
 {
