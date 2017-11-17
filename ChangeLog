@@ -1,5 +1,7 @@
 2017-11-17  NIIBE Yutaka  <gniibe@fsij.org>
 
+	* example-fsm-55: Update for new sleep API.
+
 	* rules.mk (CSRC): Add mcu/chx-$(CHIP).c.
 
 	* chopstx-cortex-m.c (idle, chx_sleep_mode): Remove.

@@ -97,12 +97,12 @@ enables coherent code for ease of maintenance.
 @node Use of sleep mode
 Calling the chopstx_conf_idle function with 1 to allow the idle thread
 going to sleep.  MCU will be in sleep mode when no threads are
-running.  By setting relevant system registers, MCU will be able to be
-into deep sleep or stand-by mode.
+running.  By setting relevant bits of system registers, MCU will be
+able to be into stop or stand-by mode, which is MCU dependent.
 
 If you use this sleep feature, please consider and implement
-carefully.  Enabling sleep, it may result bricked board; A board with
-no RESET pin cannot be debugged by JTAG/SWD.
+carefully.  Enabling sleep, it may result a bricked board; A board
+with no RESET pin cannot be debugged by JTAG/SWD.
 
 
 @node API

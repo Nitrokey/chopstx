@@ -364,7 +364,7 @@ main (int argc, const char *argv[])
   (void)argc;
   (void)argv;
 
-  chopstx_conf_idle (4);
+  chopstx_conf_idle (1);
 
   chopstx_mutex_init (&mtx);
   chopstx_cond_init (&cnd0);
@@ -406,8 +406,8 @@ main (int argc, const char *argv[])
   chopstx_join (button_thd, NULL);
   chopstx_join (led_thd, NULL);
 
-  for (;;)
-    asm volatile ("wfi" : : : "memory");
+  chopstx_conf_idle (4);
+  chopstx_poll (NULL, 0, NULL);
 
   return 0;
 }
