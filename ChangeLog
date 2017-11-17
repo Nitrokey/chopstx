@@ -1,5 +1,8 @@
 2017-11-17  NIIBE Yutaka  <gniibe@fsij.org>
 
+	* mcu/cortex-m.h: New.
+	* mcu/sys-stm32f0.c, mcu/sys-stm32f103.c: Use mcu/cortex-m.h.
+
 	* chopstx.c (chopstx_conf_idle): Call chx_sleep_mode before
 	changing chx_allow_sleep.
 
