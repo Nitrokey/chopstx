@@ -118,9 +118,6 @@ clock_init (void)
   /* Flash setup */
   FLASH->ACR = STM32_FLASHBITS;
 
-  /* CRC */
-  RCC->AHBENR |= RCC_AHBENR_CRCEN;
-
   /* Switching on the configured clock source. */
   RCC->CFGR |= STM32_SW;
   while ((RCC->CFGR & RCC_CFGR_SWS) != (STM32_SW << 2))

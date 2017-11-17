@@ -39,6 +39,10 @@ static struct RCC *const RCC = (struct RCC *)RCC_BASE;
 
 #define RCC_CFGR_SWS		0x0000000C
 #define RCC_CFGR_SWS_HSI	0x00000000
+#define RCC_CFGR_SW_HSI		(0 << 0)
+#define RCC_CFGR_SW_HSE		(1 << 0)
+#define RCC_CFGR_SW_PLL		(2 << 0)
+#define RCC_CFGR_SW_MASK	(3 << 0)
 
 #define RCC_AHBENR_DMA1EN       0x00000001
 #define RCC_AHBENR_CRCEN        0x00000040
@@ -92,10 +96,6 @@ static struct RCC *const RCC = (struct RCC *)RCC_BASE;
 #define RCC_APB2ENR_IOPGEN	0x00000100
 #endif
 
-#define RCC_CFGR_SW_HCI		(0 << 0)
-#define RCC_CFGR_SW_PLL		(2 << 0)
-#define RCC_CFGR_SW_MASK	(3 << 0)
-#define RCC_CFGR_SWS		0x0000000C
 
 /* Clock setting values.
  * Due to historical reason, it has the prefix of STM32_.

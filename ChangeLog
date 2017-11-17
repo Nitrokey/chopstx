@@ -1,5 +1,11 @@
 2017-11-17  NIIBE Yutaka  <gniibe@fsij.org>
 
+	* mcu/chx-stm32f103.c (configure_clock): Change prescaler on
+	sleep.
+
+	* mcu/clk_gpio_init-stm32.c (clock_init): Don't turn on CRC
+	module.
+
 	* mcu/clk_gpio_init-stm32.c (STM32_*): Move to...
 	* mcu/stm32.h (STM32_*): ... this header file.
 
