@@ -407,7 +407,5 @@ main (int argc, const char *argv[])
   chopstx_join (led_thd, NULL);
 
   chopstx_conf_idle (4);
-  chopstx_poll (NULL, 0, NULL);
-
   return 0;
 }
