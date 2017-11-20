@@ -1,5 +1,7 @@
 2017-11-20  NIIBE Yutaka  <gniibe@fsij.org>
 
+	* example-led: Update using stack-def.h.
+
 	* chopstx-cortex-m.c [__ARM_ARCH_6M__] (chx_sched): Fix.
 
 2017-11-18  NIIBE Yutaka  <gniibe@fsij.org>
