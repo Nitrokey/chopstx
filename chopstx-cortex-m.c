@@ -304,7 +304,7 @@ chx_sched (uint32_t yield)
 
   /* Build stack data as if it were an exception entry.  */
   /*
-   * r0:  0                     scratch
+   * r0:  TP                    scratch
    * r1:  0                     scratch
    * r2:  0                     scratch
    * r3:  0                     scratch
@@ -322,16 +322,16 @@ chx_sched (uint32_t yield)
        "mov	r2, r1\n\t"
        "mov	r3, r1\n\t"
        "push	{r1, r2, r3}\n\t"
-       "push	{r1, r2}"
-       : /* no output*/
-       : /* no input */
-       : "r1", "r2", "r3", "memory");
-
-  /* Save registers onto CHX_THREAD struct.  */
-  asm ("mov	r1, r0\n\t"
+       "mov	r1, r0\n\t"
        "ldr	r2, =running\n\t"
        "ldr	r0, [r2]\n\t"
-       "add	r0, #20\n\t"
+       "push	{r0, r3}"
+       :  "=r" (tp), "=r" (arg_yield)
+       : "0" (yield)
+       : "r2", "r3", "memory");
+
+  /* Save registers onto CHX_THREAD struct.  */
+  asm ("add	r0, #20\n\t"
        "stm	r0!, {r4, r5, r6, r7}\n\t"
        "mov	r2, r8\n\t"
        "mov	r3, r9\n\t"
@@ -340,8 +340,8 @@ chx_sched (uint32_t yield)
        "mov	r6, sp\n\t"
        "stm	r0!, {r2, r3, r4, r5, r6}\n\t"
        "sub	r0, #56"
-       : "=r" (tp), "=r" (arg_yield)
-       : "0" (yield)
+       : /* no output */
+       : "r" (tp)
        : "r2", "r3", "r4", "r5", "r6", "r7", "memory");
 
   if (arg_yield)
