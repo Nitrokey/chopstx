@@ -11,10 +11,11 @@ is due to the change of chx_sched interface, introduced for GNU/Linux
 emulation.  This bug is fixed.
 
 ** New feature: sleep mode
-New function chopstx_conf_idle is added to support core sleep.  Use of
-sleep by this feature requires careful preparation.  Enabling sleep, a
-board with no RESET pin cannot be debugged by JTAG/SWD.  Setting of
-DBGMCU_CR (0xE0042004) is required beforehand (default is zero).
+New function chopstx_conf_idle is added to support sleep.  Use of
+sleep by this feature requires careful preparation.  For example,
+enabling sleep, a board with no RESET pin cannot be debugged by
+JTAG/SWD.  Setting of DBGMCU_CR (0xE0042004) is required beforehand
+(default is zero).
 
 ** API change: chopstx_poll
 This is a kind of clarification.  The third argument is now an array
@@ -27,7 +28,7 @@ INTR_REQ_USB is now defined by usb_lld.h.  Enumeration type of
 DEVICE_STATE now has USB_DEVICE_STATE_ prefix.
 
 ** USB driver change
-USB suspend/resume is supported for STM32F103.
+USB suspend and wakeup events are supported for STM32F103.
 
 
 * Major changes in Chopstx 1.5
