@@ -86,12 +86,16 @@ led_enable_column (uint8_t col)
 }
 
 
+#define STACK_MAIN
+#define STACK_PROCESS_1
+#define STACK_PROCESS_2
+#define STACK_PROCESS_3
+#include "stack-def.h"
+
 #define PRIO_LED 3
 
-extern uint8_t __process1_stack_base__[], __process1_stack_size__[];
-
-#define STACK_ADDR_LED ((uint32_t)__process1_stack_base__)
-#define STACK_SIZE_LED ((uint32_t)__process1_stack_size__)
+#define STACK_ADDR_LED ((uint32_t)process1_base)
+#define STACK_SIZE_LED (sizeof process1_base)
 
 static void *
 led (void *arg)
@@ -119,10 +123,9 @@ led (void *arg)
 
 
 #define PRIO_SPK 4
-extern uint8_t __process2_stack_base__[], __process2_stack_size__[];
 
-#define STACK_ADDR_SPK ((uint32_t)__process2_stack_base__)
-#define STACK_SIZE_SPK ((uint32_t)__process2_stack_size__)
+#define STACK_ADDR_SPK ((uint32_t)process2_base)
+#define STACK_SIZE_SPK (sizeof process2_base)
 
 static chopstx_mutex_t spk_mtx;
 static chopstx_cond_t spk_cnd;
@@ -193,10 +196,9 @@ spk (void *arg)
 
 
 #define PRIO_MUSIC 2
-extern uint8_t __process3_stack_base__[], __process3_stack_size__[];
 
-#define STACK_ADDR_MUSIC ((uint32_t)__process3_stack_base__)
-#define STACK_SIZE_MUSIC ((uint32_t)__process3_stack_size__)
+#define STACK_ADDR_MUSIC ((uint32_t)process3_base)
+#define STACK_SIZE_MUSIC (sizeof process3_base)
 
 #define C 0
 #define D 1

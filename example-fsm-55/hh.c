@@ -166,14 +166,16 @@ button (void *arg)
 #define PRIO_LED 3
 #define PRIO_BUTTON 2
 
-extern uint8_t __process1_stack_base__[], __process1_stack_size__[];
-extern uint8_t __process2_stack_base__[], __process2_stack_size__[];
+#define STACK_MAIN
+#define STACK_PROCESS_1
+#define STACK_PROCESS_2
+#include "stack-def.h"
 
-#define STACK_ADDR_LED ((uint32_t)__process1_stack_base__)
-#define STACK_SIZE_LED ((uint32_t)__process1_stack_size__)
+#define STACK_ADDR_LED ((uint32_t)process1_base)
+#define STACK_SIZE_LED (sizeof process1_base)
 
-#define STACK_ADDR_BUTTON ((uint32_t)__process2_stack_base__)
-#define STACK_SIZE_BUTTON ((uint32_t)__process2_stack_size__)
+#define STACK_ADDR_BUTTON ((uint32_t)process2_base)
+#define STACK_SIZE_BUTTON (sizeof process2_base)
 
 #define DATA55(x0,x1,x2,x3,x4) (x0<<20)|(x1<<15)|(x2<<10)|(x3<< 5)|(x4<< 0)
 #define SIZE55(img) (sizeof (img) / sizeof (uint32_t))

@@ -1,3 +1,7 @@
+2017-11-21  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* example-fsm-55: Update using stack-def.h.
+
 2017-11-20  NIIBE Yutaka  <gniibe@fsij.org>
 
 	* example-led: Update using stack-def.h.
