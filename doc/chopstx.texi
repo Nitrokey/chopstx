@@ -1,7 +1,7 @@
 \input texinfo                      @c -*-texinfo-*-
 @c %**start of header
 @setfilename chopstx.info
-@set VERSION 1.5
+@set VERSION 1.6
 @settitle Chopstx Reference Manual
 @c Unify some of the indices.
 @syncodeindex tp fn
@@ -59,7 +59,8 @@ section entitled ``Copying''.
 
 @menu
 * Introduction::                 What is Chopstx.
-* Use of sleep mode::            Use it carefully.
+* Threads and only Threads::     Threads and only Threads.
+* Note: Use of sleep mode::      Use it carefully.
 * API::                          API.
 
 Appendix
@@ -86,7 +87,7 @@ Indexes
 
 Chopstx is an RT thread library for ARM Cortex-M0, Cortex-M0plus,
 Cortex-M3 and GNU/Linux emulation.  Specifically, it is used for
-STM32F030, MKL27Z and STM32F103.
+STM32F030, MKL27Z, STM32F103 and as a command on GNU/Linux.
 
 While most RTOSes come with many features, drivers, and stacks,
 Chopstx just offers a RT thread library.
@@ -94,15 +95,51 @@ Chopstx just offers a RT thread library.
 With Chopstx, interrupt handling is also done by a thread.  This
 enables coherent code for ease of maintenance.
 
-@node Use of sleep mode
-Calling the chopstx_conf_idle function with 1 to allow the idle thread
+@node Threads and only Threads
+@chapter Threads and only Threads
+
+Chopstx doesn't use the feature of (prioritized) nested vector
+interrupt mechanism at all.  All interrupts are equally handled by a
+single entry of chx_handle_intr which just wakes up corresponding
+thread.  This is the feature of Chopstx.
+
+Nested vector interrupt machanism would be useful for interrupt-driven
+programming style for specific application targets, or, some other
+programing style like the one with spl of Unix.  Some engineers
+(especially, hardware side) still seem to believe that it is a good
+feature to have.  But from the view point of programming and
+maintenance of software, this is one of the most difficult part with
+little benefit, if any.
+
+With traditional interrupt handling, a demarcation of what should be
+done by interrupt handler, bottom half, and thead is crucial for
+applications' performance.  And because the demarcation should be done
+at an early stage of an application development, it has a tendency,
+many parts are getting demanding higher priority.  Amount of code for
+higher priority interrupt hander is getting bigger and bigger, while
+losing performance.
+
+On the other hand, ``Threads (and only Threads)'' programming style
+gives us best flexibility and it can make an application more
+predictable, deterministic and easy to maintain.
+
+There are some applications, like square wave generator, which are not
+suited to this programming style; Another programming style can
+support more performance (frequency).  In general, such an example is
+best suited by hardware (not software).
+
+
+@node Note: Use of sleep mode
+@chapter Note: Use of sleep mode
+
+Calling the chopstx_conf_idle function (> 0) to allow the idle thread
 going to sleep.  MCU will be in sleep mode when no threads are
 running.  By setting relevant bits of system registers, MCU will be
 able to be into stop or stand-by mode, which is MCU dependent.
 
-If you use this sleep feature, please consider and implement
-carefully.  Enabling sleep, it may result a bricked board; A board
-with no RESET pin cannot be debugged by JTAG/SWD.
+If you use this sleep feature, please consider and implement your
+program carefully.  Enabling sleep, it may result a bricked board; A
+board with no RESET pin cannot be debugged by JTAG/SWD.
 
 
 @node API

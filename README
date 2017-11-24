@@ -1,6 +1,6 @@
 Chopstx - Threads and only Threads
-							 Version 1.5
-							  2017-10-10
+							 Version 1.6
+							  2017-11-24
 							Niibe Yutaka
 					     Flying Stone Technology
 
@@ -17,12 +17,12 @@ stacks, Chopstx just offers a simple RT thread library.
 With Chopstx, interrupt handling is also done by a thread.  This
 enables coherent code for ease of maintenance.
 
-This library is _not_ related to the hand game:
+Note that this library is _not_ related to the hand game:
 
     https://en.wikipedia.org/wiki/Chopsticks_(hand_game)
 
-Thanks to Yao Wei and Enrico Zini for giving me the opportunity
-visiting the wiki page.
+Thanks to Yao Wei and Enrico Zini for giving me an opportunity
+visiting the wiki page above.
 
 
 License

@@ -3,7 +3,7 @@ NEWS - Noteworthy changes
 
 * Major changes in Chopstx 1.6
 
-  Released 2017-11-XX
+  Released 2017-11-24
 
 ** Fix cancellation
 In Chopstx 1.4 and 1.5, cancellation doesn't work for real MCU.  This
@@ -11,11 +11,11 @@ is due to the change of chx_sched interface, introduced for GNU/Linux
 emulation.  This bug is fixed.
 
 ** New feature: sleep mode
-New function chopstx_conf_idle is added to support sleep.  Use of
-sleep by this feature requires careful preparation.  For example,
-enabling sleep, a board with no RESET pin cannot be debugged by
-JTAG/SWD.  Setting of DBGMCU_CR (0xE0042004) is required beforehand
-(default is zero).
+New function chopstx_conf_idle is added to support sleep.  Note that
+use of sleep by this feature requires careful preparation.  For
+example, enabling sleep, a board with no RESET pin cannot be debugged
+by JTAG/SWD.  Setting of DBGMCU_CR (0xE0042004) is required beforehand
+(hardware default is zero).
 
 ** API change: chopstx_poll
 This is a kind of clarification.  The third argument is now an array

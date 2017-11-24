@@ -1,3 +1,9 @@
+2017-11-24  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* VERSION: 1.6.
+	* doc/chopstx.texi (VERSION): 1.6.
+	* doc/chopstx-api.texi: Regenerated.
+
 2017-11-21  NIIBE Yutaka  <gniibe@fsij.org>
 
 	* example-fsm-55: Update using stack-def.h.
