@@ -32,9 +32,10 @@
 #include <bb.h>
 
 void
-bb_init (struct bb *bb, uint32_t items)
+bb_init (struct bb *bb, uint32_t max_item)
 {
-  bb->items = items;
+  bb->items = 0;
+  bb->max_items = max_item;
   chopstx_cond_init (&bb->cond);
   chopstx_mutex_init (&bb->mutex);
 }
@@ -53,26 +54,36 @@ void
 bb_put (struct bb *bb)
 {
   chopstx_mutex_lock (&bb->mutex);
+  while (bb->items == bb->max_item)
+    chopstx_cond_wait (&bb->cond, &bb->mutex);
   bb->items++;
   chopstx_cond_signal (&bb->cond);
   chopstx_mutex_unlock (&bb->mutex);
 }
 
 static int
-bb_check (void *arg)
+bb_check_empty (void *arg)
 {
   struct bb *bb = arg;
 
   return bb->items != 0;
 }
 
+static int
+bb_check_full (void *arg)
+{
+  struct bb *bb = arg;
+
+  return bb->items != bb->max_item;
+}
+
 void
-bb_prepare_poll (struct bb *bb, chopstx_poll_cond_t *p)
+bb_prepare_poll (struct bb *bb, chopstx_poll_cond_t *p, int full)
 {
   poll_desc->type = CHOPSTX_POLL_COND;
   poll_desc->ready = 0;
   poll_desc->cond = &bb->cond;
   poll_desc->mutex = &bb->mutex;
-  poll_desc->check = bb_check;
-  poll_desc->arg = ev;
+  poll_desc->check = full? bb_check_full: bb_check_empty;
+  poll_desc->arg = bb;
 }
