@@ -25,5 +25,5 @@ char process3_base[0x0200] __attribute__ ((section(".process_stack.3")));
 
 /* Fourth thread program    */
 #if defined(STACK_PROCESS_4)
-char process3_base[0x0200] __attribute__ ((section(".process_stack.4")));
+char process4_base[0x0200] __attribute__ ((section(".process_stack.4")));
 #endif

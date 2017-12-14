@@ -5,6 +5,8 @@
 #include "usb_lld.h"
 #include "cdc.h"
 
+static chopstx_intr_t usb_intr;
+
 struct line_coding
 {
   uint32_t bitrate;
@@ -20,8 +22,9 @@ static const struct line_coding lc_default = {
   0x08    /* bits:      8         */
 };
 
+static uint8_t device_state;    /* USB device status */
+
 struct cdc {
-  chopstx_intr_t intr;
   uint8_t endp1;
   uint8_t endp2;
   uint8_t endp3;
@@ -29,36 +32,22 @@ struct cdc {
   chopstx_mutex_t mtx;
   chopstx_cond_t cnd;
   uint8_t input[BUFSIZE];
-  uint32_t device_state     : 8;    /* USB device status */
   uint32_t input_len        : 7;
   uint32_t flag_connected   : 1;
   uint32_t flag_output_ready: 1;
   uint32_t flag_input_avail : 1;
-  uint32_t                  : 14;
+  uint32_t                  : 22;
   struct line_coding line_coding;
 };
 
 #define MAX_CDC 2
-static struct cdc cdc[MAX_CDC];
+static struct cdc cdc_table[MAX_CDC];
 
 #define STACK_PROCESS_3
-#define STACK_PROCESS_4
 #include "stack-def.h"
-#define STACK_ADDR_CDC0 ((uintptr_t)process3_base)
-#define STACK_SIZE_CDC0 (sizeof process3_base)
-#define STACK_ADDR_CDC1 ((uintptr_t)process4_base)
-#define STACK_SIZE_CDC1 (sizeof process4_base)
+#define STACK_ADDR_CDC ((uintptr_t)process3_base)
+#define STACK_SIZE_CDC (sizeof process3_base)
 
-struct cdc_table {
-  struct cdc *cdc;
-  uintptr_t stack_addr;
-  size_t stack_size;
-};
-
-static const struct cdc_table cdc_table[MAX_CDC] = {
-  { &cdc[0], STACK_ADDR_CDC0, STACK_SIZE_CDC0 },
-  { &cdc[1], STACK_ADDR_CDC1, STACK_SIZE_CDC1 },
-};
 
 /*
  * Locate CDC structure from interface number or endpoint number.
@@ -71,16 +60,16 @@ cdc_get (int interface, uint8_t ep_num)
   if (interface >= 0)
     {
       if (interface == 0 || interface == 1)
-	s = &cdc[0];
+	s = &cdc_table[0];
       else
-	s = &cdc[1];
+	s = &cdc_table[1];
     }
   else
     {
       if (ep_num == ENDP1 || ep_num == ENDP2 || ep_num == ENDP3)
-	s = &cdc[0];
+	s = &cdc_table[0];
       else
-	s = &cdc[1];
+	s = &cdc_table[1];
     }
 
   return s;
@@ -201,7 +190,7 @@ static const uint8_t vcom_config_desc[] = {
   ENDP1|0x80,			/* bEndpointAddress. */
   0x02,				/* bmAttributes (Bulk).             */
   0x40, 0x00,			/* wMaxPacketSize.                  */
-  0x00				/* bInterval.                       */
+  0x00,				/* bInterval.                       */
 
   /******************************************************************/
 
@@ -327,17 +316,16 @@ usb_device_reset (struct usb_dev *dev)
   /* Initialize Endpoint 0 */
   usb_lld_setup_endpoint (ENDP0, EP_CONTROL, 0, ENDP0_RXADDR, ENDP0_TXADDR, 64);
 
+  device_state = USB_DEVICE_STATE_ATTACHED;
   for (i = 0; i < MAX_CDC; i++)
     {
-      struct cdc *s = cdc_table[i].cdc;
+      struct cdc *s = &cdc_table[i];
 
       chopstx_mutex_lock (&s->mtx);
       s->input_len = 0;
-      s->send_head = cdc->send_tail = 0;
       s->flag_connected = 0;
       s->flag_output_ready = 1;
       s->flag_input_avail = 0;
-      s->device_state = USB_DEVICE_STATE_ATTACHED;
       memcpy (&s->line_coding, &lc_default, sizeof (struct line_coding));
       chopstx_mutex_unlock (&s->mtx);
     }
@@ -352,7 +340,7 @@ usb_ctrl_write_finish (struct usb_dev *dev)
   struct device_req *arg = &dev->dev_req;
   uint8_t type_rcp = arg->type & (REQUEST_TYPE|RECIPIENT);
 
-  if (type_rcp == (CLASS_REQUEST | INTERFACE_RECIPIENT) && arg->index == 0
+  if (type_rcp == (CLASS_REQUEST | INTERFACE_RECIPIENT)
       && USB_SETUP_SET (arg->type)
       && arg->request == USB_CDC_REQ_SET_CONTROL_LINE_STATE)
     {
@@ -409,7 +397,7 @@ usb_setup (struct usb_dev *dev)
   struct device_req *arg = &dev->dev_req;
   uint8_t type_rcp = arg->type & (REQUEST_TYPE|RECIPIENT);
 
-  if (type_rcp == (CLASS_REQUEST | INTERFACE_RECIPIENT) && arg->index == 0)
+  if (type_rcp == (CLASS_REQUEST | INTERFACE_RECIPIENT))
     return vcom_port_data_setup (dev);
 
   return -1;
@@ -529,11 +517,12 @@ usb_set_configuration (struct usb_dev *dev)
       usb_lld_set_configuration (dev, 1);
       for (i = 0; i < NUM_INTERFACES; i++)
 	vcom_setup_endpoints_for_interface (i, 0);
-      chopstx_mutex_lock (&cdc->mtx);
+      device_state = USB_DEVICE_STATE_CONFIGURED;
       for (i = 0; i < MAX_CDC; i++)
 	{
-	  struct cdc *s = cdc_table[i].cdc;
-	  s->device_state = USB_DEVICE_STATE_CONFIGURED;
+	  struct cdc *s = &cdc_table[i];
+
+	  chopstx_mutex_lock (&s->mtx);
 	  chopstx_cond_signal (&s->cnd);
 	  chopstx_mutex_unlock (&s->mtx);
 	}
@@ -546,10 +535,12 @@ usb_set_configuration (struct usb_dev *dev)
       usb_lld_set_configuration (dev, 0);
       for (i = 0; i < NUM_INTERFACES; i++)
 	vcom_setup_endpoints_for_interface (i, 1);
+      device_state = USB_DEVICE_STATE_ADDRESSED;
       for (i = 0; i < MAX_CDC; i++)
 	{
+	  struct cdc *s = &cdc_table[i];
+
 	  chopstx_mutex_lock (&s->mtx);
-	  s->device_state = USB_DEVICE_STATE_ADDRESSED;
 	  chopstx_cond_signal (&s->cnd);
 	  chopstx_mutex_unlock (&s->mtx);
 	}
@@ -636,8 +627,6 @@ usb_rx_ready (uint8_t ep_num, uint16_t len)
 
   if (ep_num == ENDP3 || ep_num == ENDP6)
     {
-      int i;
-
       usb_lld_rxcpy (s->input, ep_num, 0, len);
       s->flag_input_avail = 1;
       s->input_len = len;
@@ -650,6 +639,41 @@ static void *cdc_main (void *arg);
 #define PRIO_CDC      4
 
 
+void
+cdc_init (void)
+{
+  int i;
+
+  for (i = 0; i < MAX_CDC; i++)
+    {
+      struct cdc *s = &cdc_table[i];
+
+      chopstx_mutex_init (&s->mtx);
+      chopstx_cond_init (&s->cnd);
+      s->input_len = 0;
+      s->flag_connected = 0;
+      s->flag_output_ready = 1;
+      s->flag_input_avail = 0;
+      memcpy (&s->line_coding, &lc_default, sizeof (struct line_coding));
+
+      if (i == 0)
+	{
+	  s->endp1 = ENDP1;
+	  s->endp2 = ENDP2;
+	  s->endp3 = ENDP3;
+	}
+      else
+	{
+	  s->endp1 = ENDP4;
+	  s->endp2 = ENDP5;
+	  s->endp3 = ENDP6;
+	}
+    }
+
+  device_state = USB_DEVICE_STATE_UNCONNECTED;
+  chopstx_create (PRIO_CDC, STACK_ADDR_CDC, STACK_SIZE_CDC, cdc_main, NULL);
+}
+
 struct cdc *
 cdc_open (uint8_t cdc_num)
 {
@@ -658,31 +682,7 @@ cdc_open (uint8_t cdc_num)
   if (cdc_num >= MAX_CDC)
     return NULL;
 
-  s = cdc_table[cdc_num].cdc;
-  if (cdc_num == 0)
-    {
-      s->endp1 = ENDP1;
-      s->endp2 = ENDP2;
-      s->endp3 = ENDP3;
-    }
-  else
-    {
-      s->endp1 = ENDP4;
-      s->endp2 = ENDP5;
-      s->endp3 = ENDP6;
-    }
-
-  chopstx_mutex_init (&s->mtx);
-  chopstx_cond_init (&s->cnd);
-  s->input_len = 0;
-  s->flag_connected = 0;
-  s->flag_output_ready = 1;
-  s->flag_input_avail = 0;
-  s->device_state = USB_DEVICE_STATE_UNCONNECTED;
-  memcpy (&s->line_coding, &lc_default, sizeof (struct line_coding));
-
-  chopstx_create (PRIO_CDC, cdc_table[cdc_num].stack_addr,
-		  cdc_table[cdc_num].stack_size, cdc_main, cdc);
+  s = &cdc_table[cdc_num];
   return s;
 }
 
@@ -690,9 +690,10 @@ cdc_open (uint8_t cdc_num)
 static void *
 cdc_main (void *arg)
 {
-  struct cdc *s = arg;
   struct usb_dev dev;
   int e;
+
+  (void)arg;
 
 #if defined(OLDER_SYS_H)
   /*
@@ -713,17 +714,17 @@ cdc_main (void *arg)
    *
    */
   usb_lld_init (&dev, VCOM_FEATURE_BUS_POWERED);
-  chopstx_claim_irq (&s->intr, INTR_REQ_USB);
+  chopstx_claim_irq (&usb_intr, INTR_REQ_USB);
   goto event_handle;
 #else
-  chopstx_claim_irq (&s->intr, INTR_REQ_USB);
+  chopstx_claim_irq (&usb_intr, INTR_REQ_USB);
   usb_lld_init (&dev, VCOM_FEATURE_BUS_POWERED);
 #endif
 
   while (1)
     {
-      chopstx_intr_wait (&s->intr);
-      if (s->intr.ready)
+      chopstx_intr_wait (&usb_intr);
+      if (usb_intr.ready)
 	{
 	  uint8_t ep_num;
 #if defined(OLDER_SYS_H)
@@ -765,10 +766,13 @@ cdc_main (void *arg)
 		 * device.  Usually, just "continue" as EVENT_OK is
 		 * OK.
 		 */
-		chopstx_mutex_lock (&cdc->mtx);
-		cdc->device_state = USB_DEVICE_STATE_ADDRESSED;
-		chopstx_cond_signal (&cdc->cnd);
-		chopstx_mutex_unlock (&cdc->mtx);
+		device_state = USB_DEVICE_STATE_ADDRESSED;
+		{
+		  struct cdc *s = &cdc_table[0];
+		  chopstx_mutex_lock (&s->mtx);
+		  chopstx_cond_signal (&s->cnd);
+		  chopstx_mutex_unlock (&s->mtx);
+		}
 		continue;
 
 	      case USB_EVENT_GET_DESCRIPTOR:
@@ -827,10 +831,12 @@ cdc_main (void *arg)
 
 
 void
-cdc_wait_configured (struct cdc *s)
+cdc_wait_configured (void)
 {
+  struct cdc *s = &cdc_table[0];
+
   chopstx_mutex_lock (&s->mtx);
-  while (s->device_state != USB_DEVICE_STATE_CONFIGURED)
+  while (device_state != USB_DEVICE_STATE_CONFIGURED)
     chopstx_cond_wait (&s->cnd, &s->mtx);
   chopstx_mutex_unlock (&s->mtx);
 }

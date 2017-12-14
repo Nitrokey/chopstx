@@ -4,53 +4,22 @@
 #include <chopstx.h>
 
 #include "usb_lld.h"
-#include "tty.h"
+#include "cdc.h"
 
 /* For set_led */
 #include "board.h"
 #include "sys.h"
-
-static chopstx_mutex_t mtx;
-static chopstx_cond_t cnd0;
-static chopstx_cond_t cnd1;
-
-static uint8_t u, v;
-static uint8_t m;		/* 0..100 */
-
-static void *
-pwm (void *arg)
-{
-  (void)arg;
-
-  chopstx_mutex_lock (&mtx);
-  chopstx_cond_wait (&cnd0, &mtx);
-  chopstx_mutex_unlock (&mtx);
-
-  while (1)
-    {
-      set_led (u&v);
-      chopstx_usec_wait (m);
-      set_led (0);
-      chopstx_usec_wait (100-m);
-    }
-
-  return NULL;
-}
 
 static void *
 blk (void *arg)
 {
   (void)arg;
 
-  chopstx_mutex_lock (&mtx);
-  chopstx_cond_wait (&cnd1, &mtx);
-  chopstx_mutex_unlock (&mtx);
-
   while (1)
     {
-      v = 0;
+      set_led (0);
       chopstx_usec_wait (200*1000);
-      v = 1;
+      set_led (1);
       chopstx_usec_wait (200*1000);
     }
 
@@ -58,110 +27,89 @@ blk (void *arg)
 }
 
 
-#define PRIO_PWM 3
 #define PRIO_BLK 2
+#define PRIO_CDC 3
 
 #define STACK_MAIN
 #define STACK_PROCESS_1
 #define STACK_PROCESS_2
 #include "stack-def.h"
-#define STACK_ADDR_PWM ((uint32_t)process1_base)
-#define STACK_SIZE_PWM (sizeof process1_base)
-#define STACK_ADDR_BLK ((uint32_t)process2_base)
-#define STACK_SIZE_BLK (sizeof process2_base)
+#define STACK_ADDR_BLK ((uint32_t)process1_base)
+#define STACK_SIZE_BLK (sizeof process1_base)
+
+#define STACK_ADDR_CDC ((uint32_t)process2_base)
+#define STACK_SIZE_CDC (sizeof process2_base)
 
 
-static char hexchar (uint8_t x)
+static void *
+cdc_loop (void *arg)
 {
-  x &= 0x0f;
-  if (x <= 0x09)
-    return '0' + x;
-  else if (x <= 0x0f)
-    return 'a' + x - 10;
-  else
-    return '?';
-}
+  struct cdc **cdc_array;
+  struct cdc *cdc_another;
+  struct cdc *cdc;
 
+  cdc_array = arg;
+  cdc = cdc_array[0];
+  cdc_another = cdc_array[1];
 
-int
-main (int argc, const char *argv[])
-{
-  struct tty *tty;
-  uint8_t count;
-
-  (void)argc;
-  (void)argv;
-
-  chopstx_mutex_init (&mtx);
-  chopstx_cond_init (&cnd0);
-  chopstx_cond_init (&cnd1);
-
-  m = 10;
-
-  chopstx_create (PRIO_PWM, STACK_ADDR_PWM, STACK_SIZE_PWM, pwm, NULL);
-  chopstx_create (PRIO_BLK, STACK_ADDR_BLK, STACK_SIZE_BLK, blk, NULL);
-
-  chopstx_usec_wait (200*1000);
-
-  chopstx_mutex_lock (&mtx);
-  chopstx_cond_signal (&cnd0);
-  chopstx_cond_signal (&cnd1);
-  chopstx_mutex_unlock (&mtx);
-
-  u = 1;
-
-  tty = tty_open ();
-  tty_wait_configured (tty);
-
-  count = 0;
-  m = 50;
   while (1)
     {
-      char s[LINEBUFSIZE];
+      char s[BUFSIZE];
 
-      u = 1;
-      tty_wait_connection (tty);
+      cdc_wait_connection (cdc);
 
       chopstx_usec_wait (50*1000);
 
       /* Send ZLP at the beginning.  */
-      tty_send (tty, s, 0);
-
-      memcpy (s, "xx: Hello, World with Chopstx!\r\n", 32);
-      s[0] = hexchar (count >> 4);
-      s[1] = hexchar (count & 0x0f);
-      count++;
-
-      if (tty_send (tty, s, 32) < 0)
-	continue;
+      cdc_send (cdc, s, 0);
 
       while (1)
 	{
 	  int size;
-	  uint32_t usec;
+	  uint32_t usec = 3000000;	/* 3.0 seconds */
 
-	  usec = 3000000;	/* 3.0 seconds */
-	  size = tty_recv (tty, s + 4, &usec);
+	  size = cdc_recv (cdc_another, s, &usec);
 	  if (size < 0)
 	    break;
 
 	  if (size)
 	    {
-	      size--;
-
-	      s[0] = hexchar (size >> 4);
-	      s[1] = hexchar (size & 0x0f);
-	      s[2] = ':';
-	      s[3] = ' ';
-	      s[size + 4] = '\r';
-	      s[size + 5] = '\n';
-	      if (tty_send (tty, s, size + 6) < 0)
+	      if (cdc_send (cdc, s, size) < 0)
 		break;
 	    }
-
-	  u ^= 1;
+	  else
+	    {
+	      if (cdc_send (cdc, "HELLO!\r\n", 8) < 0)
+		break;
+	    }
 	}
     }
+
+  return NULL;
+}
+
+int
+main (int argc, const char *argv[])
+{
+  struct cdc *cdc_array[2];
+  struct cdc *cdc_array_dash[2];
+
+  (void)argc;
+  (void)argv;
+
+  chopstx_create (PRIO_BLK, STACK_ADDR_BLK, STACK_SIZE_BLK, blk, NULL);
+
+  chopstx_usec_wait (200*1000);
+
+  cdc_init ();
+  cdc_wait_configured ();
+
+  cdc_array[0] = cdc_array_dash[1] = cdc_open (0);
+  cdc_array[1] = cdc_array_dash[0] = cdc_open (1);
+
+  chopstx_create (PRIO_CDC, STACK_ADDR_CDC, STACK_SIZE_CDC,
+		  cdc_loop, cdc_array);
+  cdc_loop (cdc_array_dash);
 
   return 0;
 }
