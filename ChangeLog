@@ -1,3 +1,12 @@
+2017-12-14  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* board/board-st-nucleo-f103.h: Update.
+
+	* mcu/sys-stm32f103.h (BOARD_ID_FST_01G): New.
+
+	* contrib/adc-stm32f103.c (get_adc_config): Add case for
+	BOARD_ID_FST_01G and BOARD_ID_ST_NUCLEO_F103.
+
 2017-11-24  NIIBE Yutaka  <gniibe@fsij.org>
 
 	* VERSION: 1.6.
