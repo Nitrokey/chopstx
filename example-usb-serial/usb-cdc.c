@@ -61,22 +61,25 @@ static const struct serial_table serial_table[MAX_SERIAL] = {
 
 /*
  * Locate SERIAL structure from interface number or endpoint number.
- * Currently, it always returns serial0, because we only have the one.
  */
 static struct serial *
 serial_get (int interface, uint8_t ep_num)
 {
-  struct serial *t = &serial0;
+  struct serial *t;
 
   if (interface >= 0)
     {
-      if (interface == 0)
-	t = &serial0;
+      if (interface == 0 || interface == 1)
+	t = &serial[0];
+      else
+	t = &serial[1];
     }
   else
     {
       if (ep_num == ENDP1 || ep_num == ENDP2 || ep_num == ENDP3)
-	t = &serial0;
+	t = &serial[0];
+      else
+	t = &serial[1];
     }
 
   return t;
@@ -87,7 +90,10 @@ serial_get (int interface, uint8_t ep_num)
 #define ENDP0_TXADDR        (0x80)
 #define ENDP1_TXADDR        (0xc0)
 #define ENDP2_TXADDR        (0x100)
-#define ENDP3_RXADDR        (0x140)
+#define ENDP3_RXADDR        (0x108)
+#define ENDP4_TXADDR        (0x148)
+#define ENDP5_TXADDR        (0x188)
+#define ENDP6_RXADDR        (0x190)
 
 #define USB_CDC_REQ_SET_LINE_CODING             0x20
 #define USB_CDC_REQ_GET_LINE_CODING             0x21
@@ -115,13 +121,13 @@ static const uint8_t vcom_device_desc[18] = {
 #define VCOM_FEATURE_BUS_POWERED	0x80
 
 /* Configuration Descriptor tree for a CDC.*/
-static const uint8_t vcom_config_desc[67] = {
+static const uint8_t vcom_config_desc[] = {
   9,
   CONFIG_DESCRIPTOR,		/* bDescriptorType: Configuration */
   /* Configuration Descriptor.*/
-  67, 0x00,			/* wTotalLength.                    */
-  0x02,				/* bNumInterfaces.                  */
-  0x01,				/* bConfigurationValue.             */
+  58*2+9, 0x00,			/* wTotalLength.                    */
+  2*2,				/* bNumInterfaces.                  */
+  1,				/* bConfigurationValue.             */
   0,				/* iConfiguration.                  */
   VCOM_FEATURE_BUS_POWERED,	/* bmAttributes.                    */
   50,				/* bMaxPower (100mA).               */
@@ -195,6 +201,79 @@ static const uint8_t vcom_config_desc[67] = {
   0x02,				/* bmAttributes (Bulk).             */
   0x40, 0x00,			/* wMaxPacketSize.                  */
   0x00				/* bInterval.                       */
+
+  /******************************************************************/
+
+  /* Interface Descriptor (second). */
+  9,
+  INTERFACE_DESCRIPTOR,
+  0x02,		   /* bInterfaceNumber.                */
+  0x00,		   /* bAlternateSetting.               */
+  0x01,		   /* bNumEndpoints.                   */
+  0x02,		   /* bInterfaceClass (Communications Interface Class,
+		      CDC section 4.2).  */
+  0x02,		   /* bInterfaceSubClass (Abstract Control Model, CDC
+		      section 4.3).  */
+  0x01,		   /* bInterfaceProtocol (AT commands, CDC section
+		      4.4).  */
+  0,	           /* iInterface.                      */
+  /* Header Functional Descriptor (CDC section 5.2.3).*/
+  5,	      /* bLength.                         */
+  0x24,	      /* bDescriptorType (CS_INTERFACE).  */
+  0x00,	      /* bDescriptorSubtype (Header Functional Descriptor). */
+  0x10, 0x01, /* bcdCDC.                          */
+  /* Call Management Functional Descriptor. */
+  5,            /* bFunctionLength.                 */
+  0x24,         /* bDescriptorType (CS_INTERFACE).  */
+  0x01,         /* bDescriptorSubtype (Call Management Functional
+		   Descriptor). */
+  0x03,         /* bmCapabilities (D0+D1).          */
+  0x03,         /* bDataInterface.                  */
+  /* ACM Functional Descriptor.*/
+  4,            /* bFunctionLength.                 */
+  0x24,         /* bDescriptorType (CS_INTERFACE).  */
+  0x02,         /* bDescriptorSubtype (Abstract Control Management
+		   Descriptor).  */
+  0x02,         /* bmCapabilities.                  */
+  /* Union Functional Descriptor.*/
+  5,            /* bFunctionLength.                 */
+  0x24,         /* bDescriptorType (CS_INTERFACE).  */
+  0x06,         /* bDescriptorSubtype (Union Functional
+		   Descriptor).  */
+  0x02,         /* bMasterInterface (Communication Class
+		   Interface).  */
+  0x03,         /* bSlaveInterface0 (Data Class Interface).  */
+  /* Endpoint 2 Descriptor.*/
+  7,
+  ENDPOINT_DESCRIPTOR,
+  ENDP5|0x80,    /* bEndpointAddress.    */
+  0x03,          /* bmAttributes (Interrupt).        */
+  0x08, 0x00,	 /* wMaxPacketSize.                  */
+  0xFF,		 /* bInterval.                       */
+  /* Interface Descriptor.*/
+  9,
+  INTERFACE_DESCRIPTOR, /* bDescriptorType: */
+  0x03,          /* bInterfaceNumber.                */
+  0x00,          /* bAlternateSetting.               */
+  0x02,          /* bNumEndpoints.                   */
+  0x0A,          /* bInterfaceClass (Data Class Interface, CDC section 4.5). */
+  0x00,          /* bInterfaceSubClass (CDC section 4.6). */
+  0x00,          /* bInterfaceProtocol (CDC section 4.7). */
+  0x00,		 /* iInterface.                      */
+  /* Endpoint 3 Descriptor.*/
+  7,
+  ENDPOINT_DESCRIPTOR,		/* bDescriptorType: Endpoint */
+  ENDP6,    /* bEndpointAddress. */
+  0x02,				/* bmAttributes (Bulk).             */
+  0x40, 0x00,			/* wMaxPacketSize.                  */
+  0x00,				/* bInterval.                       */
+  /* Endpoint 1 Descriptor.*/
+  7,
+  ENDPOINT_DESCRIPTOR,		/* bDescriptorType: Endpoint */
+  ENDP4|0x80,			/* bEndpointAddress. */
+  0x02,				/* bmAttributes (Bulk).             */
+  0x40, 0x00,			/* wMaxPacketSize.                  */
+  0x00				/* bInterval.                       */
 };
 
 
@@ -219,9 +298,9 @@ static const uint8_t vcom_string1[] = {
 static const uint8_t vcom_string2[] = {
   14*2+2,			/* bLength */
   STRING_DESCRIPTOR,		/* bDescriptorType */
-  /* Product name: "Chopstx Sample" */
+  /* Product name: "Chopstx Serial" */
   'C', 0, 'h', 0, 'o', 0, 'p', 0, 's', 0, 't', 0, 'x', 0, ' ', 0,
-  'S', 0, 'a', 0, 'm', 0, 'p', 0, 'l', 0, 'e', 0,
+  'S', 0, 'e', 0, 'r', 0, 'i', 0, 'a', 0, 'l', 0,
 };
 
 /*
@@ -234,7 +313,7 @@ static const uint8_t vcom_string3[28] = {
 };
 
 
-#define NUM_INTERFACES 2
+#define NUM_INTERFACES 4
 
 
 static void
