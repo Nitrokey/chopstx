@@ -76,6 +76,7 @@ SECTIONS
     .process_stack (NOLOAD) :
     {
         . = ALIGN(8);
+        *(.process_stack.4)
         *(.process_stack.3)
         *(.process_stack.2)
         *(.process_stack.1)
