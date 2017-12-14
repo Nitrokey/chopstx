@@ -62,7 +62,7 @@ struct SYSCFG {
 };
 #define SYSCFG_CFGR1_MEM_MODE 0x03
 
-#define SYSCFG_BASE	(APBPERIPH_BASE + 0x00010000)
+#define SYSCFG_BASE	(APB1PERIPH_BASE + 0x00010000)
 static struct SYSCFG *const SYSCFG = (struct SYSCFG *)SYSCFG_BASE;
 #endif
 
