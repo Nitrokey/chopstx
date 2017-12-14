@@ -22,6 +22,10 @@ static const struct line_coding lc_default = {
 
 struct serial {
   chopstx_intr_t intr;
+  uint8_t endp1;
+  uint8_t endp2;
+  uint8_t endp3;
+
   chopstx_mutex_t mtx;
   chopstx_cond_t cnd;
   uint8_t inputline[LINEBUFSIZE];   /* Line editing is supported */
@@ -65,24 +69,24 @@ static const struct serial_table serial_table[MAX_SERIAL] = {
 static struct serial *
 serial_get (int interface, uint8_t ep_num)
 {
-  struct serial *t;
+  struct serial *s;
 
   if (interface >= 0)
     {
       if (interface == 0 || interface == 1)
-	t = &serial[0];
+	s = &serial[0];
       else
-	t = &serial[1];
+	s = &serial[1];
     }
   else
     {
       if (ep_num == ENDP1 || ep_num == ENDP2 || ep_num == ENDP3)
-	t = &serial[0];
+	s = &serial[0];
       else
-	t = &serial[1];
+	s = &serial[1];
     }
 
-  return t;
+  return s;
 }
 
 
@@ -319,20 +323,27 @@ static const uint8_t vcom_string3[28] = {
 static void
 usb_device_reset (struct usb_dev *dev)
 {
+  int i;
+
   usb_lld_reset (dev, VCOM_FEATURE_BUS_POWERED);
 
   /* Initialize Endpoint 0 */
   usb_lld_setup_endpoint (ENDP0, EP_CONTROL, 0, ENDP0_RXADDR, ENDP0_TXADDR, 64);
 
-  chopstx_mutex_lock (&serial->mtx);
-  serial->inputline_len = 0;
-  serial->send_head = serial->send_tail = 0;
-  serial->flag_connected = 0;
-  serial->flag_send_ready = 1;
-  serial->flag_input_avail = 0;
-  serial->device_state = USB_DEVICE_STATE_ATTACHED;
-  memcpy (&serial->line_coding, &line_coding0, sizeof (struct line_coding));
-  chopstx_mutex_unlock (&serial->mtx);
+  for (i = 0; i < MAX_SERIAL; i++)
+    {
+      struct serial *s = serial_table[i].serial;
+
+      chopstx_mutex_lock (&s->mtx);
+      s->inputline_len = 0;
+      s->send_head = serial->send_tail = 0;
+      s->flag_connected = 0;
+      s->flag_send_ready = 1;
+      s->flag_input_avail = 0;
+      s->device_state = USB_DEVICE_STATE_ATTACHED;
+      memcpy (&s->line_coding, &lc_default, sizeof (struct line_coding));
+      chopstx_mutex_unlock (&s->mtx);
+    }
 }
 
 
@@ -348,13 +359,13 @@ usb_ctrl_write_finish (struct usb_dev *dev)
       && USB_SETUP_SET (arg->type)
       && arg->request == USB_CDC_REQ_SET_CONTROL_LINE_STATE)
     {
-      struct serial *t = serial_get (arg->index, 0);
+      struct serial *s = serial_get (arg->index, 0);
 
       /* Open/close the connection.  */
-      chopstx_mutex_lock (&t->mtx);
-      t->flag_connected = ((arg->value & CDC_CTRL_DTR) != 0);
-      chopstx_cond_signal (&t->cnd);
-      chopstx_mutex_unlock (&t->mtx);
+      chopstx_mutex_lock (&s->mtx);
+      s->flag_connected = ((arg->value & CDC_CTRL_DTR) != 0);
+      chopstx_cond_signal (&s->cnd);
+      chopstx_mutex_unlock (&s->mtx);
     }
 
   /*
@@ -372,10 +383,10 @@ vcom_port_data_setup (struct usb_dev *dev)
 
   if (USB_SETUP_GET (arg->type))
     {
-      struct serial *t = serial_get (arg->index, 0);
+      struct serial *s = serial_get (arg->index, 0);
 
       if (arg->request == USB_CDC_REQ_GET_LINE_CODING)
-	return usb_lld_ctrl_send (dev, &t->line_coding,
+	return usb_lld_ctrl_send (dev, &s->line_coding,
 				  sizeof (struct line_coding));
     }
   else  /* USB_SETUP_SET (req) */
@@ -383,9 +394,9 @@ vcom_port_data_setup (struct usb_dev *dev)
       if (arg->request == USB_CDC_REQ_SET_LINE_CODING
 	  && arg->len == sizeof (struct line_coding))
 	{
-	  struct serial *t = serial_get (arg->index, 0);
+	  struct serial *s = serial_get (arg->index, 0);
 
-	  return usb_lld_ctrl_recv (dev, &t->line_coding,
+	  return usb_lld_ctrl_recv (dev, &s->line_coding,
 				    sizeof (struct line_coding));
 	}
       else if (arg->request == USB_CDC_REQ_SET_CONTROL_LINE_STATE)
@@ -460,25 +471,48 @@ usb_get_descriptor (struct usb_dev *dev)
 static void
 vcom_setup_endpoints_for_interface (uint16_t interface, int stop)
 {
+  struct serial *s = serial_get (interface, 0);
+
   if (interface == 0)
     {
       if (!stop)
-	usb_lld_setup_endpoint (ENDP2, EP_INTERRUPT, 0, 0, ENDP2_TXADDR, 0);
+	usb_lld_setup_endpoint (s->endp2, EP_INTERRUPT, 0, 0, ENDP2_TXADDR, 0);
       else
-	usb_lld_stall_tx (ENDP2);
+	usb_lld_stall_tx (s->endp2);
     }
   else if (interface == 1)
     {
       if (!stop)
 	{
-	  usb_lld_setup_endpoint (ENDP1, EP_BULK, 0, 0, ENDP1_TXADDR, 0);
-	  usb_lld_setup_endpoint (ENDP3, EP_BULK, 0, ENDP3_RXADDR, 0, 64);
+	  usb_lld_setup_endpoint (s->endp1, EP_BULK, 0, 0, ENDP1_TXADDR, 0);
+	  usb_lld_setup_endpoint (s->endp3, EP_BULK, 0, ENDP3_RXADDR, 0, 64);
 	  /* Start with no data receiving (ENDP3 not enabled)*/
 	}
       else
 	{
-	  usb_lld_stall_tx (ENDP1);
-	  usb_lld_stall_rx (ENDP3);
+	  usb_lld_stall_tx (s->endp1);
+	  usb_lld_stall_rx (s->endp3);
+	}
+    }
+  else if (interface == 2)
+    {
+      if (!stop)
+	usb_lld_setup_endpoint (s->endp2, EP_INTERRUPT, 0, 0, ENDP5_TXADDR, 0);
+      else
+	usb_lld_stall_tx (s->endp2);
+    }
+  else if (interface == 3)
+    {
+      if (!stop)
+	{
+	  usb_lld_setup_endpoint (s->endp1, EP_BULK, 0, 0, ENDP4_TXADDR, 0);
+	  usb_lld_setup_endpoint (s->endp3, EP_BULK, 0, ENDP6_RXADDR, 0, 64);
+	  /* Start with no data receiving (ENDP6 not enabled)*/
+	}
+      else
+	{
+	  usb_lld_stall_tx (s->endp1);
+	  usb_lld_stall_rx (s->endp3);
 	}
     }
 }
@@ -499,9 +533,13 @@ usb_set_configuration (struct usb_dev *dev)
       for (i = 0; i < NUM_INTERFACES; i++)
 	vcom_setup_endpoints_for_interface (i, 0);
       chopstx_mutex_lock (&serial->mtx);
-      serial->device_state = USB_DEVICE_STATE_CONFIGURED;
-      chopstx_cond_signal (&serial->cnd);
-      chopstx_mutex_unlock (&serial->mtx);
+      for (i = 0; i < MAX_SERIAL; i++)
+	{
+	  struct serial *s = serial_table[i].serial;
+	  s->device_state = USB_DEVICE_STATE_CONFIGURED;
+	  chopstx_cond_signal (&s->cnd);
+	  chopstx_mutex_unlock (&s->mtx);
+	}
     }
   else if (current_conf != dev->dev_req.value)
     {
@@ -511,10 +549,13 @@ usb_set_configuration (struct usb_dev *dev)
       usb_lld_set_configuration (dev, 0);
       for (i = 0; i < NUM_INTERFACES; i++)
 	vcom_setup_endpoints_for_interface (i, 1);
-      chopstx_mutex_lock (&serial->mtx);
-      serial->device_state = USB_DEVICE_STATE_ADDRESSED;
-      chopstx_cond_signal (&serial->cnd);
-      chopstx_mutex_unlock (&serial->mtx);
+      for (i = 0; i < MAX_SERIAL; i++)
+	{
+	  chopstx_mutex_lock (&s->mtx);
+	  s->device_state = USB_DEVICE_STATE_ADDRESSED;
+	  chopstx_cond_signal (&s->cnd);
+	  chopstx_mutex_unlock (&s->mtx);
+	}
     }
 
   usb_lld_ctrl_ack (dev);
@@ -608,30 +649,30 @@ get_chars_from_ringbuffer (struct serial *t, uint8_t *s, int len)
 
 
 static void
-serial_echo_char (struct serial *t, int c)
+serial_echo_char (struct serial *s, int c)
 {
-  put_char_to_ringbuffer (t, c);
+  put_char_to_ringbuffer (s, c);
 }
 
 
 static void
 usb_tx_done (uint8_t ep_num, uint16_t len)
 {
-  struct serial *t = serial_get (-1, ep_num);
+  struct serial *s = serial_get (-1, ep_num);
 
   (void)len;
 
-  if (ep_num == ENDP1)
+  if (ep_num == ENDP1 || ep_num == ENDP4)
     {
-      chopstx_mutex_lock (&t->mtx);
-      if (t->flag_send_ready == 0)
+      chopstx_mutex_lock (&s->mtx);
+      if (s->flag_send_ready == 0)
 	{
-	  t->flag_send_ready = 1;
-	  chopstx_cond_signal (&t->cnd);
+	  s->flag_send_ready = 1;
+	  chopstx_cond_signal (&s->cnd);
 	}
-      chopstx_mutex_unlock (&t->mtx);
+      chopstx_mutex_unlock (&s->mtx);
     }
-  else if (ep_num == ENDP2)
+  else if (ep_num == ENDP2 || ep_num == ENDP5)
     {
       /* Nothing */
     }
@@ -701,21 +742,21 @@ static void
 usb_rx_ready (uint8_t ep_num, uint16_t len)
 {
   uint8_t recv_buf[64];
-  struct serial *t = serial_get (-1, ep_num);
+  struct serial *s = serial_get (-1, ep_num);
 
-  if (ep_num == ENDP3)
+  if (ep_num == ENDP3 || ep_num == ENDP6)
     {
       int i;
 
       usb_lld_rxcpy (recv_buf, ep_num, 0, len);
       for (i = 0; i < len; i++)
-	if (serial_input_char (t, recv_buf[i]))
+	if (serial_input_char (s, recv_buf[i]))
 	  break;
 
-      chopstx_mutex_lock (&t->mtx);
+      chopstx_mutex_lock (&s->mtx);
       if (t->flag_input_avail == 0)
-	usb_lld_rx_enable (ENDP3);
-      chopstx_mutex_unlock (&t->mtx);
+	usb_lld_rx_enable (ep_num);
+      chopstx_mutex_unlock (&s->mtx);
     }
 }
 
@@ -727,32 +768,45 @@ static void *serial_main (void *arg);
 struct serial *
 serial_open (uint8_t serial_num)
 {
-  struct serial *serial;
+  struct serial *s;
 
   if (serial_num >= MAX_SERIAL)
     return NULL;
 
-  serial = &serial_table[serial_num];
+  s = serial_table[serial_num].serial;
+  if (serial_num == 0)
+    {
+      s->endp1 = ENDP1;
+      s->endp2 = ENDP2;
+      s->endp3 = ENDP3;
+    }
+  else
+    {
+      s->endp1 = ENDP4;
+      s->endp2 = ENDP5;
+      s->endp3 = ENDP6;
+    }
 
-  chopstx_mutex_init (&serial->mtx);
-  chopstx_cond_init (&serial->cnd);
-  serial->inputline_len = 0;
-  serial->send_head = serial->send_tail = 0;
-  serial->flag_connected = 0;
-  serial->flag_send_ready = 1;
-  serial->flag_input_avail = 0;
-  serial->device_state = USB_DEVICE_STATE_UNCONNECTED;
-  memcpy (&serial->line_coding, &lc_default, sizeof (struct line_coding));
+  chopstx_mutex_init (&s->mtx);
+  chopstx_cond_init (&s->cnd);
+  s->inputline_len = 0;
+  s->send_head = s->send_tail = 0;
+  s->flag_connected = 0;
+  s->flag_send_ready = 1;
+  s->flag_input_avail = 0;
+  s->device_state = USB_DEVICE_STATE_UNCONNECTED;
+  memcpy (&s->line_coding, &lc_default, sizeof (struct line_coding));
 
-  chopstx_create (PRIO_SERIAL, STACK_ADDR_SERIAL, STACK_SIZE_SERIAL, serial_main, serial);
-  return serial;
+  chopstx_create (PRIO_SERIAL, serial_table[serial_num].stack_addr,
+		  serial_table[serial_num].stack_size, serial_main, serial);
+  return s;
 }
 
 
 static void *
 serial_main (void *arg)
 {
-  struct serial *t = arg;
+  struct serial *s = arg;
   struct usb_dev dev;
   int e;
 
@@ -775,17 +829,17 @@ serial_main (void *arg)
    *
    */
   usb_lld_init (&dev, VCOM_FEATURE_BUS_POWERED);
-  chopstx_claim_irq (&usb_intr, INTR_REQ_USB);
+  chopstx_claim_irq (&s->intr, INTR_REQ_USB);
   goto event_handle;
 #else
-  chopstx_claim_irq (&usb_intr, INTR_REQ_USB);
+  chopstx_claim_irq (&s->intr, INTR_REQ_USB);
   usb_lld_init (&dev, VCOM_FEATURE_BUS_POWERED);
 #endif
 
   while (1)
     {
-      chopstx_intr_wait (&usb_intr);
-      if (usb_intr.ready)
+      chopstx_intr_wait (&s->intr);
+      if (s->intr.ready)
 	{
 	  uint8_t ep_num;
 #if defined(OLDER_SYS_H)
@@ -883,21 +937,21 @@ serial_main (void *arg)
 	      }
 	}
 
-      chopstx_mutex_lock (&t->mtx);
-      if (t->device_state == USB_DEVICE_STATE_CONFIGURED && t->flag_connected
-	  && t->flag_send_ready)
+      chopstx_mutex_lock (&s->mtx);
+      if (s->device_state == USB_DEVICE_STATE_CONFIGURED && s->flag_connected
+	  && s->flag_send_ready)
 	{
 	  uint8_t line[32];
-	  int len = get_chars_from_ringbuffer (t, line, sizeof (len));
+	  int len = get_chars_from_ringbuffer (s, line, sizeof (len));
 
 	  if (len)
 	    {
-	      usb_lld_txcpy (line, ENDP1, 0, len);
-	      usb_lld_tx_enable (ENDP1, len);
-	      t->flag_send_ready = 0;
+	      usb_lld_txcpy (line, s->endp1, 0, len);
+	      usb_lld_tx_enable (s->endp1, len);
+	      s->flag_send_ready = 0;
 	    }
 	}
-      chopstx_mutex_unlock (&t->mtx);
+      chopstx_mutex_unlock (&s->mtx);
     }
 
   return NULL;
@@ -907,41 +961,41 @@ serial_main (void *arg)
 void
 serial_wait_configured (struct serial *t)
 {
-  chopstx_mutex_lock (&t->mtx);
-  while (t->device_state != USB_DEVICE_STATE_CONFIGURED)
-    chopstx_cond_wait (&t->cnd, &t->mtx);
-  chopstx_mutex_unlock (&t->mtx);
+  chopstx_mutex_lock (&s->mtx);
+  while (s->device_state != USB_DEVICE_STATE_CONFIGURED)
+    chopstx_cond_wait (&s->cnd, &s->mtx);
+  chopstx_mutex_unlock (&s->mtx);
 }
 
 
 void
-serial_wait_connection (struct serial *t)
+serial_wait_connection (struct serial *s)
 {
-  chopstx_mutex_lock (&t->mtx);
-  while (t->flag_connected == 0)
-    chopstx_cond_wait (&t->cnd, &t->mtx);
-  t->flag_send_ready = 1;
-  t->flag_input_avail = 0;
-  t->send_head = t->send_tail = 0;
-  t->inputline_len = 0;
-  usb_lld_rx_enable (ENDP3);	/* Accept input for line */
-  chopstx_mutex_unlock (&t->mtx);
+  chopstx_mutex_lock (&s->mtx);
+  while (s->flag_connected == 0)
+    chopstx_cond_wait (&s->cnd, &s->mtx);
+  s->flag_send_ready = 1;
+  s->flag_input_avail = 0;
+  s->send_head = s->send_tail = 0;
+  s->inputline_len = 0;
+  usb_lld_rx_enable (s->endp3);	/* Accept input for line */
+  chopstx_mutex_unlock (&s->mtx);
 }
 
 static int
-check_tx (struct serial *t)
+check_tx (struct serial *s)
 {
-  if (t->flag_send_ready)
+  if (s->flag_send_ready)
     /* TX done */
     return 1;
-  if (t->flag_connected == 0)
+  if (s->flag_connected == 0)
     /* Disconnected */
     return -1;
   return 0;
 }
 
 int
-serial_send (struct serial *t, const char *buf, int len)
+serial_send (struct serial *s, const char *buf, int len)
 {
   int r;
   const char *p;
@@ -952,16 +1006,16 @@ serial_send (struct serial *t, const char *buf, int len)
 
   while (1)
     {
-      chopstx_mutex_lock (&t->mtx);
-      while ((r = check_tx (t)) == 0)
-	chopstx_cond_wait (&t->cnd, &t->mtx);
+      chopstx_mutex_lock (&s->mtx);
+      while ((r = check_tx (s)) == 0)
+	chopstx_cond_wait (&s->cnd, &s->mtx);
       if (r > 0)
 	{
-	  usb_lld_txcpy (p, ENDP1, 0, count);
-	  usb_lld_tx_enable (ENDP1, count);
-	  t->flag_send_ready = 0;
+	  usb_lld_txcpy (p, s->endp1, 0, count);
+	  usb_lld_tx_enable (s->endp1, count);
+	  s->flag_send_ready = 0;
 	}
-      chopstx_mutex_unlock (&t->mtx);
+      chopstx_mutex_unlock (&s->mtx);
 
       len -= count;
       p += count;
@@ -981,12 +1035,12 @@ serial_send (struct serial *t, const char *buf, int len)
 static int
 check_rx (void *arg)
 {
-  struct serial *t = arg;
+  struct serial *s = arg;
 
-  if (t->flag_input_avail)
+  if (s->flag_input_avail)
     /* RX */
     return 1;
-  if (t->flag_connected == 0)
+  if (s->flag_connected == 0)
     /* Disconnected */
     return 1;
   return 0;
@@ -999,17 +1053,17 @@ check_rx (void *arg)
  *
  */
 int
-serial_recv (struct serial *t, char *buf, uint32_t *timeout)
+serial_recv (struct serial *s, char *buf, uint32_t *timeout)
 {
   int r;
   chopstx_poll_cond_t poll_desc;
 
   poll_desc.type = CHOPSTX_POLL_COND;
   poll_desc.ready = 0;
-  poll_desc.cond = &t->cnd;
-  poll_desc.mutex = &t->mtx;
+  poll_desc.cond = &s->cnd;
+  poll_desc.mutex = &s->mtx;
   poll_desc.check = check_rx;
-  poll_desc.arg = t;
+  poll_desc.arg = s;
 
   while (1)
     {
@@ -1017,27 +1071,27 @@ serial_recv (struct serial *t, char *buf, uint32_t *timeout)
 	(struct chx_poll_head *)&poll_desc
       };
       chopstx_poll (timeout, 1, pd_array);
-      chopstx_mutex_lock (&t->mtx);
+      chopstx_mutex_lock (&s->mtx);
       r = check_rx (t);
-      chopstx_mutex_unlock (&t->mtx);
+      chopstx_mutex_unlock (&s->mtx);
       if (r || (timeout != NULL && *timeout == 0))
 	break;
     }
 
-  chopstx_mutex_lock (&t->mtx);
-  if (t->flag_connected == 0)
+  chopstx_mutex_lock (&s->mtx);
+  if (s->flag_connected == 0)
     r = -1;
-  else if (t->flag_input_avail)
+  else if (s->flag_input_avail)
     {
-      r = t->inputline_len;
-      memcpy (buf, t->inputline, r);
-      t->flag_input_avail = 0;
-      usb_lld_rx_enable (ENDP3);
-      t->inputline_len = 0;
+      r = s->inputline_len;
+      memcpy (buf, s->inputline, r);
+      s->flag_input_avail = 0;
+      usb_lld_rx_enable (s->endp3);
+      s->inputline_len = 0;
     }
   else
     r = 0;
-  chopstx_mutex_unlock (&t->mtx);
+  chopstx_mutex_unlock (&s->mtx);
 
   return r;
 }
