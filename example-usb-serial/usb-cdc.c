@@ -5,40 +5,23 @@
 #include "usb_lld.h"
 #include "tty.h"
 
-static chopstx_intr_t usb_intr;
-
 struct line_coding
 {
   uint32_t bitrate;
   uint8_t format;
   uint8_t paritytype;
   uint8_t datatype;
-}  __attribute__((packed));
+} __attribute__((packed));
 
-static const struct line_coding line_coding0 = {
+static const struct line_coding lc_default = {
   115200, /* baud rate: 115200    */
   0x00,   /* stop bits: 1         */
   0x00,   /* parity:    none      */
   0x08    /* bits:      8         */
 };
 
-/*
- * Currently, we only support a single TTY.
- *
- * It is possible to extend to support multiple TTYs, for multiple
- * interfaces.
- *
- * In that case, add argument to TTY_OPEN function and
- * modify TTY_GET function to get the TTY structure.  Functions which
- * directy accesses TTY0 (usb_device_reset and usb_set_configuration)
- * should be modified, too.
- *
- * Modification of TTY_MAIN thread will be also needed to echo back
- * input for each TTY, and the thread should run if one of TTY is
- * opened.
- */
-
 struct tty {
+  chopstx_intr_t intr;
   chopstx_mutex_t mtx;
   chopstx_cond_t cnd;
   uint8_t inputline[LINEBUFSIZE];   /* Line editing is supported */
@@ -54,7 +37,27 @@ struct tty {
   struct line_coding line_coding;
 };
 
-static struct tty tty0;
+#define MAX_TTY 2
+static struct tty tty[MAX_TTY];
+
+#define STACK_PROCESS_3
+#define STACK_PROCESS_4
+#include "stack-def.h"
+#define STACK_ADDR_TTY0 ((uintptr_t)process3_base)
+#define STACK_SIZE_TTY0 (sizeof process3_base)
+#define STACK_ADDR_TTY1 ((uintptr_t)process4_base)
+#define STACK_SIZE_TTY1 (sizeof process4_base)
+
+struct tty_table {
+  struct tty *tty;
+  uintptr_t stack_addr;
+  size_t stack_size;
+};
+
+static const struct tty_table tty_table[MAX_TTY] = {
+  { &tty[0], STACK_ADDR_TTY0, STACK_SIZE_TTY0 },
+  { &tty[1], STACK_ADDR_TTY1, STACK_SIZE_TTY1 },
+};
 
 /*
  * Locate TTY structure from interface number or endpoint number.
@@ -242,15 +245,15 @@ usb_device_reset (struct usb_dev *dev)
   /* Initialize Endpoint 0 */
   usb_lld_setup_endpoint (ENDP0, EP_CONTROL, 0, ENDP0_RXADDR, ENDP0_TXADDR, 64);
 
-  chopstx_mutex_lock (&tty0.mtx);
-  tty0.inputline_len = 0;
-  tty0.send_head = tty0.send_tail = 0;
-  tty0.flag_connected = 0;
-  tty0.flag_send_ready = 1;
-  tty0.flag_input_avail = 0;
-  tty0.device_state = USB_DEVICE_STATE_ATTACHED;
-  memcpy (&tty0.line_coding, &line_coding0, sizeof (struct line_coding));
-  chopstx_mutex_unlock (&tty0.mtx);
+  chopstx_mutex_lock (&tty->mtx);
+  tty->inputline_len = 0;
+  tty->send_head = tty->send_tail = 0;
+  tty->flag_connected = 0;
+  tty->flag_send_ready = 1;
+  tty->flag_input_avail = 0;
+  tty->device_state = USB_DEVICE_STATE_ATTACHED;
+  memcpy (&tty->line_coding, &line_coding0, sizeof (struct line_coding));
+  chopstx_mutex_unlock (&tty->mtx);
 }
 
 
@@ -416,10 +419,10 @@ usb_set_configuration (struct usb_dev *dev)
       usb_lld_set_configuration (dev, 1);
       for (i = 0; i < NUM_INTERFACES; i++)
 	vcom_setup_endpoints_for_interface (i, 0);
-      chopstx_mutex_lock (&tty0.mtx);
-      tty0.device_state = USB_DEVICE_STATE_CONFIGURED;
-      chopstx_cond_signal (&tty0.cnd);
-      chopstx_mutex_unlock (&tty0.mtx);
+      chopstx_mutex_lock (&tty->mtx);
+      tty->device_state = USB_DEVICE_STATE_CONFIGURED;
+      chopstx_cond_signal (&tty->cnd);
+      chopstx_mutex_unlock (&tty->mtx);
     }
   else if (current_conf != dev->dev_req.value)
     {
@@ -429,10 +432,10 @@ usb_set_configuration (struct usb_dev *dev)
       usb_lld_set_configuration (dev, 0);
       for (i = 0; i < NUM_INTERFACES; i++)
 	vcom_setup_endpoints_for_interface (i, 1);
-      chopstx_mutex_lock (&tty0.mtx);
-      tty0.device_state = USB_DEVICE_STATE_ADDRESSED;
-      chopstx_cond_signal (&tty0.cnd);
-      chopstx_mutex_unlock (&tty0.mtx);
+      chopstx_mutex_lock (&tty->mtx);
+      tty->device_state = USB_DEVICE_STATE_ADDRESSED;
+      chopstx_cond_signal (&tty->cnd);
+      chopstx_mutex_unlock (&tty->mtx);
     }
 
   usb_lld_ctrl_ack (dev);
@@ -641,26 +644,29 @@ static void *tty_main (void *arg);
 
 #define PRIO_TTY      4
 
-#define STACK_PROCESS_3
-#include "stack-def.h"
-#define STACK_ADDR_TTY ((uint32_t)process3_base)
-#define STACK_SIZE_TTY (sizeof process3_base)
 
 struct tty *
-tty_open (void)
+tty_open (uint8_t tty_num)
 {
-  chopstx_mutex_init (&tty0.mtx);
-  chopstx_cond_init (&tty0.cnd);
-  tty0.inputline_len = 0;
-  tty0.send_head = tty0.send_tail = 0;
-  tty0.flag_connected = 0;
-  tty0.flag_send_ready = 1;
-  tty0.flag_input_avail = 0;
-  tty0.device_state = USB_DEVICE_STATE_UNCONNECTED;
-  memcpy (&tty0.line_coding, &line_coding0, sizeof (struct line_coding));
+  struct tty *tty;
 
-  chopstx_create (PRIO_TTY, STACK_ADDR_TTY, STACK_SIZE_TTY, tty_main, &tty0);
-  return &tty0;
+  if (tty_num >= MAX_TTY)
+    return NULL;
+
+  tty = &tty_table[tty_num];
+
+  chopstx_mutex_init (&tty->mtx);
+  chopstx_cond_init (&tty->cnd);
+  tty->inputline_len = 0;
+  tty->send_head = tty->send_tail = 0;
+  tty->flag_connected = 0;
+  tty->flag_send_ready = 1;
+  tty->flag_input_avail = 0;
+  tty->device_state = USB_DEVICE_STATE_UNCONNECTED;
+  memcpy (&tty->line_coding, &lc_default, sizeof (struct line_coding));
+
+  chopstx_create (PRIO_TTY, STACK_ADDR_TTY, STACK_SIZE_TTY, tty_main, tty);
+  return tty;
 }
 
 
@@ -742,10 +748,10 @@ tty_main (void *arg)
 		 * device.  Usually, just "continue" as EVENT_OK is
 		 * OK.
 		 */
-		chopstx_mutex_lock (&tty0.mtx);
-		tty0.device_state = USB_DEVICE_STATE_ADDRESSED;
-		chopstx_cond_signal (&tty0.cnd);
-		chopstx_mutex_unlock (&tty0.mtx);
+		chopstx_mutex_lock (&tty->mtx);
+		tty->device_state = USB_DEVICE_STATE_ADDRESSED;
+		chopstx_cond_signal (&tty->cnd);
+		chopstx_mutex_unlock (&tty->mtx);
 		continue;
 
 	      case USB_EVENT_GET_DESCRIPTOR:
