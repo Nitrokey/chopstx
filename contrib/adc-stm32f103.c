@@ -145,6 +145,7 @@ get_adc_config (uint32_t config[4])
   config[2] = ADC_SQR1_NUM_CH(2);
   switch (SYS_BOARD_ID)
     {
+    case BOARD_ID_FST_01G:
     case BOARD_ID_FST_01:
       config[0] = 0;
       config[1] = ADC_SMPR2_SMP_AN0(ADC_SAMPLE_1P5)
@@ -170,13 +171,20 @@ get_adc_config (uint32_t config[4])
 		| ADC_SQR3_SQ2_N(ADC_CHANNEL_IN2);
       break;
 
+    case BOARD_ID_ST_NUCLEO_F103:
+      config[0] = 0;
+      config[1] = ADC_SMPR2_SMP_AN8(ADC_SAMPLE_1P5)
+		| ADC_SMPR2_SMP_AN9(ADC_SAMPLE_1P5);
+      config[3] = ADC_SQR3_SQ1_N(ADC_CHANNEL_IN8)
+		| ADC_SQR3_SQ2_N(ADC_CHANNEL_IN9);
+      break;
+
     case BOARD_ID_CQ_STARM:
     case BOARD_ID_FST_01_00:
     case BOARD_ID_MAPLE_MINI:
     case BOARD_ID_STM32_PRIMER2:
     case BOARD_ID_STM8S_DISCOVERY:
     case BOARD_ID_ST_DONGLE:
-    case BOARD_ID_ST_NUCLEO_F103:
     case BOARD_ID_NITROKEY_START:
     default:
       config[0] = 0;

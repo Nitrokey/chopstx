@@ -26,21 +26,40 @@
 #define GPIO_LED_BASE   GPIOA_BASE
 #define GPIO_LED_SET_TO_EMIT            5
 #undef  GPIO_USB_BASE		/* No external DISCONNECT/RENUM circuit.  */
-#undef  GPIO_OTHER_BASE
+#define GPIO_OTHER_BASE GPIOB_BASE
 
 /*
  * Port A setup.
- * PA0  - input with pull-up.  AN0
- * PA1  - input with pull-up.  AN1
- * PA5  - Push pull output 50MHz (LED 1:ON 0:OFF)
+ * PA0  - Input with pull-up                       USART2-CTS
+ * PA1  - Alternate function push pull output 2MHz USART2-RTS
+ * PA2  - Alternate function push pull output 2MHz USART2-TX
+ * PA3  - Input with pull-up                       USART2-RX
+ * PA4  - Alternate function push pull output 2MHz USART2-CK
+ * PA5  - Push pull output 2MHz (LED 1:ON 0:OFF)
  * PA11 - Push Pull output 10MHz 0 default (until USB enabled) (USBDM) 
  * PA12 - Push Pull output 10MHz 0 default (until USB enabled) (USBDP)
  * ------------------------ Default
  * PAx  - input with pull-up
  */
 #define VAL_GPIO_LED_ODR            0xFFFFE7FF
-#define VAL_GPIO_LED_CRL            0x88388888      /*  PA7...PA0 */
+#define VAL_GPIO_LED_CRL            0x882E8EE8      /*  PA7...PA0 */
 #define VAL_GPIO_LED_CRH            0x88811888      /* PA15...PA8 */
 
-#define RCC_ENR_IOP_EN      RCC_APB2ENR_IOPAEN
-#define RCC_RSTR_IOP_RST    RCC_APB2RSTR_IOPARST
+/*
+ * Port B setup.
+ * PB0  - input with pull-up: AN8 for NeuG
+ * PB1  - input with pull-up: AN9 for NeuG
+ * PB10 - Alternate function push pull output 2MHz USART3-TX
+ * PB11 - Input with pull-up                       USART3-RX
+ * PB12 - Alternate function push pull output 2MHz USART3-CK
+ * PB13 - Input with pull-up                       USART3-CTS
+ * PB14 - Alternate function push pull output 2MHz USART3-RTS
+ * ------------------------ Default
+ * PBx  - input with pull-up.
+ */
+#define VAL_GPIO_OTHER_ODR          0xFFFFFFFF
+#define VAL_GPIO_OTHER_CRL          0x88888888      /*  PB7...PB0 */
+#define VAL_GPIO_OTHER_CRH          0x8E8E8E88      /* PB15...PB8 */
+
+#define RCC_ENR_IOP_EN      (RCC_APB2ENR_IOPAEN | RCC_APB2ENR_IOPBEN)
+#define RCC_RSTR_IOP_RST    (RCC_APB2RSTR_IOPARST | RCC_APB2RSTR_IOPBRST)
