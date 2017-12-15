@@ -341,7 +341,7 @@ static int
 rb_empty_check (void *arg)
 {
   struct rb *rb = arg;
-  return rb->empty != 0;
+  return rb->empty == 0;
 }
 
 static void
