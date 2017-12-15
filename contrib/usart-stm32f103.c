@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include <chopstx.h>
 #include <mcu/stm32.h>
+#include <contrib/usart.h>
 
 struct USART {
   volatile uint32_t SR;
@@ -43,8 +44,8 @@ struct USART {
 
 #define USART2_BASE           (APB1PERIPH_BASE + 0x4400)
 #define USART3_BASE           (APB1PERIPH_BASE + 0x4800)
-static struct USART *const USART2 = (struct SYSCFG *)USART2_BASE;
-static struct USART *const USART3 = (struct SYSCFG *)USART3_BASE;
+static struct USART *const USART2 = (struct USART *)USART2_BASE;
+static struct USART *const USART3 = (struct USART *)USART3_BASE;
 
 #define USART_SR_CTS	(1 << 9)
 #define USART_SR_LBD	(1 << 8)
@@ -86,8 +87,11 @@ get_usart_dev (uint8_t dev_no)
 }
 
 /* We assume 36MHz f_PCLK */
-struct brr_setting { uint8_t baud_spec, uint16_t brr_value };
-#define NUM_BAUD (sizeof (brr_table) / sizeof (struct brr_setting))
+struct brr_setting {
+  uint8_t baud_spec;
+  uint16_t brr_value;
+};
+#define NUM_BAUD (int)(sizeof (brr_table) / sizeof (struct brr_setting))
 
 static const struct brr_setting brr_table[] = {
   { B600,    (3750 << 4)},
@@ -111,7 +115,7 @@ int
 usart_config (uint8_t dev_no, uint32_t config_bits)
 {
   struct USART *USARTx = get_usart_dev (dev_no);
-  uint8_t baud_spec = (config & MASK_BAUD);
+  uint8_t baud_spec = (config_bits & MASK_BAUD);
   int i;
   uint32_t cr1_config = (USART_CR1_UE | USART_CR1_TXEIE | USART_CR1_RXNEIE
 			 | USART_CR1_TE | USART_CR1_RE);
@@ -201,7 +205,7 @@ struct rb {
  * Note: size = 1024 can still work, regardless of the limit of 10-bit.
  */
 static void
-rb_init (struct rng_rb *rb, uint32_t *p, uint16_t size)
+rb_init (struct rb *rb, uint8_t *p, uint16_t size)
 {
   rb->buf = p;
   rb->size = size;
@@ -214,7 +218,7 @@ rb_init (struct rng_rb *rb, uint32_t *p, uint16_t size)
 }
 
 static void
-rb_add (struct rng_rb *rb, uint8_t v)
+rb_add (struct rb *rb, uint8_t v)
 {
   rb->buf[rb->tail++] = v;
   if (rb->tail == rb->size)
@@ -225,7 +229,7 @@ rb_add (struct rng_rb *rb, uint8_t v)
 }
 
 static uint8_t
-rb_del (struct rng_rb *rb)
+rb_del (struct rb *rb)
 {
   uint32_t v = rb->buf[rb->head++];
 
@@ -243,7 +247,7 @@ rb_del (struct rng_rb *rb)
  * Hardware:    generator
  */
 static int
-rb_ll_put (struct rng_rb *rb, uint8_t v)
+rb_ll_put (struct rb *rb, uint8_t v)
 {
   int r;
 
@@ -265,7 +269,7 @@ rb_ll_put (struct rng_rb *rb, uint8_t v)
  * Hardware:    consumer
  */
 static int
-rb_ll_get (struct rng_rb *rb)
+rb_ll_get (struct rb *rb)
 {
   int r;
 
@@ -286,7 +290,7 @@ rb_ll_get (struct rng_rb *rb)
  * Hardware:    generator
  */
 static int
-rb_read (struct rng_rb *rb, uint8_t *buf, uint16_t buflen)
+rb_read (struct rb *rb, uint8_t *buf, uint16_t buflen)
 {
   int i;
 
@@ -311,7 +315,7 @@ rb_read (struct rng_rb *rb, uint8_t *buf, uint16_t buflen)
  * Hardware:    consumer
  */
 static void
-rb_write (struct rng_rb *rb, uint8_t *buf, uint16_t buflen)
+rb_write (struct rb *rb, uint8_t *buf, uint16_t buflen)
 {
   int i = 0;
 
@@ -336,7 +340,7 @@ rb_write (struct rng_rb *rb, uint8_t *buf, uint16_t buflen)
 static int
 rb_empty_check (void *arg)
 {
-  struct rng_rb *rb = arg;
+  struct rb *rb = arg;
   return rb->empty != 0;
 }
 
@@ -362,22 +366,22 @@ static uint8_t buf_usart3_rb_h2a[512];
 static struct chx_intr usart2_intr;
 static struct chx_intr usart3_intr;
 
-static struct rng_rb usart2_rb_a2h;
-static struct rng_rb usart2_rb_h2a;
-static struct rng_rb usart3_rb_a2h;
-static struct rng_rb usart3_rb_h2a;
+static struct rb usart2_rb_a2h;
+static struct rb usart2_rb_h2a;
+static struct rb usart3_rb_a2h;
+static struct rb usart3_rb_h2a;
 
 static chopstx_poll_cond_t usart2_app_write_event;
 static chopstx_poll_cond_t usart3_app_write_event;
 
-static struct chx_poll_head * usart_poll[4];
+static struct chx_poll_head *usart_poll[4];
 
 /* Global variables so that it can be easier to debug.  */
 static int usart2_tx_ready;
 static int usart3_tx_ready;
 
 static int
-handle_intr (struct USART *USARTx, struct rng_rb rb2a, struct usart_stat *stat)
+handle_intr (struct USART *USARTx, struct rb *rb2a, struct usart_stat *stat)
 {
   int tx_ready = 0;
   uint32_t r = USARTx->SR;
@@ -414,6 +418,8 @@ handle_intr (struct USART *USARTx, struct rng_rb rb2a, struct usart_stat *stat)
 	  /* XXX: if CS is 7-bit, mask it, or else parity bit in upper layer */
 	  if (rb_ll_put (rb2a, (data & 0xff)) < 0)
 	    stat->err_rx_overflow++;
+	  else
+	    stat->rx++;
 	}
     }
 
@@ -421,7 +427,7 @@ handle_intr (struct USART *USARTx, struct rng_rb rb2a, struct usart_stat *stat)
 }
 
 static int
-handle_tx_ready (struct USART *USARTx, struct rng_rb rb2h,
+handle_tx_ready (struct USART *USARTx, struct rb *rb2h,
 		 struct usart_stat *stat)
 {
   int c = rb_ll_get (rb2h);
@@ -460,14 +466,14 @@ usart_main (void *arg)
     {
       int n = 0;
 
-      usart_poll[n++] = &usart2_intr;
-      usart_poll[n++] = &usart3_intr;
+      usart_poll[n++] = (struct chx_poll_head *)&usart2_intr;
+      usart_poll[n++] = (struct chx_poll_head *)&usart3_intr;
       if (usart2_tx_ready)
-	usart_poll[n++] = &usart2_app_write_event;
+	usart_poll[n++] = (struct chx_poll_head *)&usart2_app_write_event;
       else
 	usart2_app_write_event.ready = 0;
       if (usart3_tx_ready)
-	usart_poll[n++] = &usart3_app_write_event;
+	usart_poll[n++] = (struct chx_poll_head *)&usart3_app_write_event;
       else
 	usart3_app_write_event.ready = 0;
 
@@ -494,7 +500,7 @@ usart_main (void *arg)
 int
 usart_read (uint8_t dev_no, uint8_t *buf, uint16_t buflen)
 {
-  struct rng_rb *rb;
+  struct rb *rb;
 
   if (dev_no == 2)
     rb = &usart2_rb_h2a;
@@ -507,9 +513,9 @@ usart_read (uint8_t dev_no, uint8_t *buf, uint16_t buflen)
 }
 
 int
-usart_write (struct rng_rb *rb, uint8_t *buf, uint16_t buflen)
+usart_write (uint8_t dev_no, uint8_t *buf, uint16_t buflen)
 {
-  struct rng_rb *rb;
+  struct rb *rb;
 
   if (dev_no == 2)
     rb = &usart2_rb_a2h;

@@ -25,6 +25,9 @@ endif
 ifneq ($(USE_ADC),)
 CSRC += $(CHOPSTX)/contrib/adc-$(CHIP).c
 endif
+ifneq ($(USE_USART),)
+CSRC += $(CHOPSTX)/contrib/usart-$(CHIP).c
+endif
 
 INCDIR += $(CHOPSTX)
 
