@@ -46,17 +46,18 @@ struct USART {
 static struct USART *const USART2 = (struct SYSCFG *)USART2_BASE;
 static struct USART *const USART3 = (struct SYSCFG *)USART3_BASE;
 
-#define USART_SR_CTS	0x0200
-#define USART_SR_LBD	0x0100
-#define USART_SR_TXE	0x0080
-#define USART_SR_TC	0x0040
-#define USART_SR_RXNE	0x0020
-#define USART_SR_IDLE	0x0010
-#define USART_SR_ORE	0x0008
-#define USART_SR_NE	0x0004
-#define USART_SR_FE	0x0002
-#define USART_SR_PE	0x0001
+#define USART_SR_CTS	(1 << 9)
+#define USART_SR_LBD	(1 << 8)
+#define USART_SR_TXE	(1 << 7)
+#define USART_SR_TC	(1 << 6)
+#define USART_SR_RXNE	(1 << 5)
+#define USART_SR_IDLE	(1 << 4)
+#define USART_SR_ORE	(1 << 3)
+#define USART_SR_NE	(1 << 2)
+#define USART_SR_FE	(1 << 1)
+#define USART_SR_PE	(1 << 0)
 
+#define USART_CR1_TXEIE	(1 << 7)
 
 
 static struct USART *
@@ -87,12 +88,28 @@ static const struct brr_setting brr_table[] = {
   { B921600, (   2 << 4)|7},
 };
 
+static void *usart_main (void *arg);
+
+struct usart_stat {
+  uint32_t tx;
+  uint32_t rx;
+  uint32_t rx_break;
+  uint32_t err_rx_overflow;	/* software side */
+  uint32_t err_rx_overrun;	/* hardware side */
+  uint32_t err_rx_noise;
+  uint32_t err_rx_parity;
+};
+
+static struct usart_stat usart2_stat;
+static struct usart_stat usart3_stat;
+
 void
 usart_init (void)
 {
   RCC->APB1ENR |= ((1 << 18) | (1 << 17));
   RCC->APB1RSTR = ((1 << 18) | (1 << 17));
   RCC->APB1RSTR = 0;
+
 }
 
 /*
@@ -107,7 +124,7 @@ usart_init (void)
 int
 usart_config (uint8_t dev_no, uint32_t config_bits)
 {
-  struct USART *dev = get_usart_dev (dev_no);
+  struct USART *USARTx = get_usart_dev (dev_no);
   uint8_t baud_spec = (config & 0x3f);
   int i;
 
@@ -118,7 +135,9 @@ usart_config (uint8_t dev_no, uint32_t config_bits)
   if (i >= NUM_BAUD)
     return -1;
 
-  dev->BRR = brr_table[i].brr_value;
+  USARTx->BRR = brr_table[i].brr_value;
+
+  /* No PEIE, CTSIE, TCIE, IDLEIE, LBDIE */
   return 0;
 }
 
@@ -142,7 +161,7 @@ struct rb {
 /*
  * Note: size = 1024 can still work, regardless of the limit of 10-bit.
  */
-static init
+static void
 rb_init (struct rng_rb *rb, uint32_t *p, uint16_t size)
 {
   rb->buf = p;
@@ -273,4 +292,160 @@ rb_write (struct rng_rb *rb, uint8_t *buf, uint16_t buflen)
       chopstx_cond_signal (&rb->data_available);
     }
   chopstx_mutex_unlock (&rb->m);
+}
+
+static int
+rb_empty_check (void *arg)
+{
+  struct rng_rb *rb = arg;
+  return rb->empty != 0;
+}
+
+static void
+rb_get_prepare_poll (struct rb *rb, chopstx_poll_cond_t *poll_desc)
+{
+  poll_desc->type  = CHOPSTX_POLL_COND;
+  poll_desc->ready = 0;
+  poll_desc->cond  = &rb->data_available;
+  poll_desc->mutex = &rb->m;
+  poll_desc->check = rb_empty_check;
+  poll_desc->arg   = rb;
+}
+
+#define INTR_REQ_USART2 38
+#define INTR_REQ_USART3 39
+
+static uint8_t buf_usart2_rb_a2h[256];
+static uint8_t buf_usart2_rb_h2a[512];
+static uint8_t buf_usart3_rb_a2h[256];
+static uint8_t buf_usart3_rb_h2a[512];
+
+static struct chx_intr usart2_intr;
+static struct chx_intr usart3_intr;
+
+static struct rng_rb usart2_rb_a2h;
+static struct rng_rb usart2_rb_h2a;
+static struct rng_rb usart3_rb_a2h;
+static struct rng_rb usart3_rb_h2a;
+
+static chopstx_poll_cond_t usart2_app_write_event;
+static chopstx_poll_cond_t usart3_app_write_event;
+
+static struct chx_poll_head * usart_poll[4];
+
+static int usart2_tx_ready;
+static int usart3_tx_ready;
+
+static int
+handle_intr (struct USART *USARTx, struct rng_rb rb2a, struct usart_stat *stat)
+{
+  int tx_ready = 0;
+  uint32_t r = USARTx->SR;
+
+  if ((r & USART_SR_TXE))
+    {
+      tx_ready = 1;
+      USARTx->CR1 &= ~USART_CR1_TXEIE;
+    }
+
+  if ((r & USART_SR_RXNE))
+    {
+      uint32_t data = USARTx->DR;
+
+      /* DR register should be accessed even if data is not used.
+       * Its read-access has side effect of clearing error flags.
+       */
+      asm volatile ("" : : "r" (data) : "memory");
+
+      if ((r & USART_SR_NE))
+	stat->err_rx_noise++;
+      else if ((r & USART_SR_FE))
+	{
+	  stat->rx_break++;
+	  /* XXX: break event report to upper layer? */
+	}
+      else if ((r & USART_SR_PE))
+	stat->err_rx_parity++;
+      else
+	{
+	  if ((r & USART_SR_ORE))
+	    stat->err_rx_overrun++;
+
+	  if (rb_ll_put (rb2a, (data & 0xff)) < 0)
+	    stat->err_rx_overflow++;
+	}
+    }
+
+  return tx_ready;
+}
+
+static int
+handle_tx_ready (struct USART *USARTx, struct rng_rb rb2h,
+		 struct usart_stat *stat)
+{
+  int c = rb_ll_get (rb2h);
+
+  if (c >= 0)
+    {
+      USARTx->DR = c;
+      USARTx->CR1 |= USART_CR1_TXEIE;
+      stat->tx++;
+      return 0;
+    }
+
+  return 1;
+}
+
+static void *
+usart_main (void *arg)
+{
+  (void)arg;
+
+  usart2_tx_ready = 1;
+  usart3_tx_ready = 1;
+
+  chopstx_claim_irq (&usart2_intr, INTR_REQ_USART2);
+  chopstx_claim_irq (&usart3_intr, INTR_REQ_USART3);
+
+  rb_init (&usart2_rb_a2h, buf_usart2_rb_a2h, sizeof buf_usart2_rb_a2h);
+  rb_init (&usart2_rb_h2a, buf_usart2_rb_h2a, sizeof buf_usart2_rb_h2a);
+  rb_init (&usart3_rb_a2h, buf_usart3_rb_a2h, sizeof buf_usart3_rb_a2h);
+  rb_init (&usart3_rb_h2a, buf_usart3_rb_h2a, sizeof buf_usart3_rb_h2a);
+
+  rb_get_prepare_poll (&usart2_rb_a2h, &usart2_app_write_event);
+  rb_get_prepare_poll (&usart3_rb_a2h, &usart3_app_write_event);
+
+  while (1)
+    {
+      int n = 0;
+
+      usart_poll[n++] = &usart2_intr;
+      usart_poll[n++] = &usart3_intr;
+      if (usart2_tx_ready)
+	usart_poll[n++] = &usart2_app_write_event;
+      else
+	usart2_app_write_event.ready = 0;
+      if (usart3_tx_ready)
+	usart_poll[n++] = &usart3_app_write_event;
+      else
+	usart3_app_write_event.ready = 0;
+
+      chopstx_poll (NULL, n, usart_poll);
+
+      if (usart2_intr.ready)
+	usart2_tx_ready = handle_intr (USART2, &usart2_rb_h2a, &usart2_stat);
+
+      if (usart3_intr.ready)
+	usart3_tx_ready = handle_intr (USART3, &usart3_rb_h2a, &usart3_stat);
+
+      if (usart2_tx_ready && usart2_app_write_event.ready)
+	usart2_tx_ready = handle_tx_ready (USART2,
+					   &usart2_rb_a2h, &usart2_stat);
+
+      if (usart3_tx_ready && usart3_app_write_event.ready)
+	usart3_tx_ready = handle_tx_ready (USART3,
+					   &usart3_rb_a2h, &usart3_stat);
+    }
+
+  return NULL;
 }
