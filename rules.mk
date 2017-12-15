@@ -2,10 +2,6 @@
 
 CSRC += $(CHOPSTX)/entry.c $(CHOPSTX)/chopstx.c
 
-ifneq ($(USE_BB),)
-CSRC += $(CHOPSTX)/bb.c
-endif
-
 ifneq ($(USE_EVENTFLAG),)
 CSRC += $(CHOPSTX)/eventflag.c
 endif
