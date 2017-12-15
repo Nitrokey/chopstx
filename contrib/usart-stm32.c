@@ -121,3 +121,156 @@ usart_config (uint8_t dev_no, uint32_t config_bits)
   dev->BRR = brr_table[i].brr_value;
   return 0;
 }
+
+/*
+ * Ring buffer
+ */
+#define MAX_RB_BUF 1024
+
+struct rb {
+  uint8_t *buf;
+  chopstx_mutex_t m;
+  chopstx_cond_t data_available;
+  chopstx_cond_t space_available;
+  uint32_t head  :10;
+  uint32_t tail  :10;
+  uint32_t size  :10;
+  uint32_t full  : 1;
+  uint32_t empty : 1;
+};
+
+/*
+ * Note: size = 1024 can still work, regardless of the limit of 10-bit.
+ */
+static init
+rb_init (struct rng_rb *rb, uint32_t *p, uint16_t size)
+{
+  rb->buf = p;
+  rb->size = size;
+  chopstx_mutex_init (&rb->m);
+  chopstx_cond_init (&rb->data_available);
+  chopstx_cond_init (&rb->space_available);
+  rb->head = rb->tail = 0;
+  rb->full = 0;
+  rb->empty = 1;
+}
+
+static void
+rb_add (struct rng_rb *rb, uint8_t v)
+{
+  rb->buf[rb->tail++] = v;
+  if (rb->tail == rb->size)
+    rb->tail = 0;
+  if (rb->tail == rb->head)
+    rb->full = 1;
+  rb->empty = 0;
+}
+
+static uint8_t
+rb_del (struct rng_rb *rb)
+{
+  uint32_t v = rb->buf[rb->head++];
+
+  if (rb->head == rb->size)
+    rb->head = 0;
+  if (rb->head == rb->tail)
+    rb->empty = 1;
+  rb->full = 0;
+
+  return v;
+}
+
+/*
+ * Application: consumer
+ * Hardware:    generator
+ */
+static int
+rb_ll_put (struct rng_rb *rb, uint8_t v)
+{
+  int r;
+
+  chopstx_mutex_lock (&rb->m);
+  if (rb->full)
+    r = -1;
+  else
+    {
+      r = 0;
+      rb_add (rb, v);
+      chopstx_cond_signal (&rb->data_available);
+    }
+  chopstx_mutex_unlock (&rb->m);
+  return r;
+}
+
+/*
+ * Application: generator
+ * Hardware:    consumer
+ */
+static int
+rb_ll_get (struct rng_rb *rb)
+{
+  int r;
+
+  chopstx_mutex_lock (&rb->m);
+  if (rb->empty)
+    r = -1;
+  else
+    {
+      r = rb_del (rb);
+      chopstx_cond_signal (&rb->space_available);
+    }
+  chopstx_mutex_unlock (&rb->m);
+  return r;
+}
+
+/*
+ * Application: consumer
+ * Hardware:    generator
+ */
+int
+rb_read (struct rng_rb *rb, uint8_t *buf, uint16_t buflen)
+{
+  int i;
+
+  chopstx_mutex_lock (&rb->m);
+  while (rb->empty)
+    chopstx_cond_wait (&rb->data_available, &rb->m);
+
+  for (i = 0; i < buflen; i++)
+    {
+      buf[i] = rb_del (rb);
+      if (rb->empty)
+	break;
+    }
+  chopstx_cond_signal (&rb->space_available);
+  chopstx_mutex_unlock (&rb->m);
+
+  return i;
+}
+
+/*
+ * Application: generator
+ * Hardware:    consumer
+ */
+void
+rb_write (struct rng_rb *rb, uint8_t *buf, uint16_t buflen)
+{
+  int i = 0;
+
+  chopstx_mutex_lock (&rb->m);
+  while (i < buflen)
+    {
+      while (rb->full)
+	chopstx_cond_wait (&rb->space_available, &rb->m);
+
+      while (i < buflen)
+	{
+	  rb_add (rb, buf[i++]);
+	  if (rb->full)
+	    break;
+	}
+
+      chopstx_cond_signal (&rb->data_available);
+    }
+  chopstx_mutex_unlock (&rb->m);
+}
