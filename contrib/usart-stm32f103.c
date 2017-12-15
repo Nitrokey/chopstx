@@ -292,15 +292,15 @@ rb_ll_get (struct rb *rb)
 static int
 rb_read (struct rb *rb, uint8_t *buf, uint16_t buflen)
 {
-  int i;
+  int i = 0;
 
   chopstx_mutex_lock (&rb->m);
   while (rb->empty)
     chopstx_cond_wait (&rb->data_available, &rb->m);
 
-  for (i = 0; i < buflen; i++)
+  while (i < buflen)
     {
-      buf[i] = rb_del (rb);
+      buf[i++] = rb_del (rb);
       if (rb->empty)
 	break;
     }
