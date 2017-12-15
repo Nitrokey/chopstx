@@ -55,6 +55,6 @@ struct usart_stat {
 
 void usart_init (uint16_t prio, uintptr_t stack_addr, size_t stack_size);
 int usart_config (uint8_t dev_no, uint32_t config_bits);
-int usart_read (uint8_t dev_no, uint8_t *buf, uint16_t buflen);
-int usart_write (uint8_t dev_no, uint8_t *buf, uint16_t buflen);
+int usart_read (uint8_t dev_no, char *buf, uint16_t buflen);
+int usart_write (uint8_t dev_no, char *buf, uint16_t buflen);
 const struct usart_stat *usart_stat (uint8_t dev_no);

@@ -10,6 +10,7 @@ CHIP=stm32f103
 
 USE_SYS = yes
 USE_USB = yes
+USE_USART = yes
 
 ###################################
 CROSS = arm-none-eabi-

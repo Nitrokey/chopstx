@@ -498,7 +498,7 @@ usart_main (void *arg)
 }
 
 int
-usart_read (uint8_t dev_no, uint8_t *buf, uint16_t buflen)
+usart_read (uint8_t dev_no, char *buf, uint16_t buflen)
 {
   struct rb *rb;
 
@@ -509,11 +509,11 @@ usart_read (uint8_t dev_no, uint8_t *buf, uint16_t buflen)
   else
     return -1;
 
-  return rb_read (rb, buf, buflen);
+  return rb_read (rb, (uint8_t *)buf, buflen);
 }
 
 int
-usart_write (uint8_t dev_no, uint8_t *buf, uint16_t buflen)
+usart_write (uint8_t dev_no, char *buf, uint16_t buflen)
 {
   struct rb *rb;
 
@@ -524,7 +524,7 @@ usart_write (uint8_t dev_no, uint8_t *buf, uint16_t buflen)
   else
     return -1;
 
-  rb_write (rb, buf, buflen);
+  rb_write (rb, (uint8_t *)buf, buflen);
   return 0;
 }
 

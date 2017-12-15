@@ -27,3 +27,13 @@ char process3_base[0x0200] __attribute__ ((section(".process_stack.3")));
 #if defined(STACK_PROCESS_4)
 char process4_base[0x0200] __attribute__ ((section(".process_stack.4")));
 #endif
+
+/* Fifth thread program    */
+#if defined(STACK_PROCESS_5)
+char process5_base[0x0200] __attribute__ ((section(".process_stack.5")));
+#endif
+
+/* Sixth thread program    */
+#if defined(STACK_PROCESS_6)
+char process6_base[0x0200] __attribute__ ((section(".process_stack.6")));
+#endif

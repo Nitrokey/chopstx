@@ -43,10 +43,10 @@ struct cdc {
 #define MAX_CDC 2
 static struct cdc cdc_table[MAX_CDC];
 
-#define STACK_PROCESS_3
+#define STACK_PROCESS_1
 #include "stack-def.h"
-#define STACK_ADDR_CDC ((uintptr_t)process3_base)
-#define STACK_SIZE_CDC (sizeof process3_base)
+#define STACK_ADDR_CDC ((uintptr_t)process1_base)
+#define STACK_SIZE_CDC (sizeof process1_base)
 
 
 /*
@@ -636,7 +636,7 @@ usb_rx_ready (uint8_t ep_num, uint16_t len)
 
 static void *cdc_main (void *arg);
 
-#define PRIO_CDC      4
+#define PRIO_CDC      3
 
 
 void
