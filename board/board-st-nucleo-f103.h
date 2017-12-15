@@ -42,7 +42,7 @@
  * PAx  - input with pull-up
  */
 #define VAL_GPIO_LED_ODR            0xFFFFE7FF
-#define VAL_GPIO_LED_CRL            0x882E8EE8      /*  PA7...PA0 */
+#define VAL_GPIO_LED_CRL            0x882A8AA8      /*  PA7...PA0 */
 #define VAL_GPIO_LED_CRH            0x88811888      /* PA15...PA8 */
 
 /*
@@ -59,7 +59,7 @@
  */
 #define VAL_GPIO_OTHER_ODR          0xFFFFFFFF
 #define VAL_GPIO_OTHER_CRL          0x88888888      /*  PB7...PB0 */
-#define VAL_GPIO_OTHER_CRH          0x8E8E8E88      /* PB15...PB8 */
+#define VAL_GPIO_OTHER_CRH          0x8A8A8A88      /* PB15...PB8 */
 
 #define RCC_ENR_IOP_EN      (RCC_APB2ENR_IOPAEN | RCC_APB2ENR_IOPBEN)
 #define RCC_RSTR_IOP_RST    (RCC_APB2RSTR_IOPARST | RCC_APB2RSTR_IOPBRST)
