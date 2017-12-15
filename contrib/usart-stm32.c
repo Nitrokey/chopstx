@@ -57,7 +57,21 @@ static struct USART *const USART3 = (struct SYSCFG *)USART3_BASE;
 #define USART_SR_FE	(1 << 1)
 #define USART_SR_PE	(1 << 0)
 
-#define USART_CR1_TXEIE	(1 << 7)
+
+#define USART_CR1_UE		(1 << 13)
+#define USART_CR1_M		(1 << 12)
+#define USART_CR1_WAKE		(1 << 11)
+#define USART_CR1_PCE		(1 << 10)
+#define USART_CR1_PS		(1 <<  9)
+#define USART_CR1_PEIE		(1 <<  8)
+#define USART_CR1_TXEIE		(1 <<  7)
+#define USART_CR1_TCIE		(1 <<  6)
+#define USART_CR1_RXNEIE	(1 <<  5)
+#define USART_CR1_IDLEIE	(1 <<  4)
+#define USART_CR1_TE		(1 <<  3)
+#define USART_CR1_RE		(1 <<  2)
+#define USART_CR1_RWU		(1 <<  1)
+#define USART_CR1_SBK		(1 <<  0)
 
 
 static struct USART *
@@ -90,43 +104,50 @@ static const struct brr_setting brr_table[] = {
 
 static void *usart_main (void *arg);
 
-struct usart_stat {
-  uint32_t tx;
-  uint32_t rx;
-  uint32_t rx_break;
-  uint32_t err_rx_overflow;	/* software side */
-  uint32_t err_rx_overrun;	/* hardware side */
-  uint32_t err_rx_noise;
-  uint32_t err_rx_parity;
-};
-
 static struct usart_stat usart2_stat;
 static struct usart_stat usart3_stat;
 
-void
-usart_init (void)
-{
-  RCC->APB1ENR |= ((1 << 18) | (1 << 17));
-  RCC->APB1RSTR = ((1 << 18) | (1 << 17));
-  RCC->APB1RSTR = 0;
-
-}
-
-/*
- * CONFIG_BITS includes
- *   baud_rate
- *   char-bit size
- *   stop-bit
- *   parity
- *   mode: Normal, LIN, Smartcard, etc.
- *   flow_ctrl
- */
 int
 usart_config (uint8_t dev_no, uint32_t config_bits)
 {
   struct USART *USARTx = get_usart_dev (dev_no);
-  uint8_t baud_spec = (config & 0x3f);
+  uint8_t baud_spec = (config & MASK_BAUD);
   int i;
+  uint32_t cr1_config = (USART_CR1_UE | USART_CR1_TXEIE | USART_CR1_RXNEIE
+			 | USART_CR1_TE | USART_CR1_RE);
+				/* No CTSIE, PEIE, TCIE, IDLEIE, LBDIE */
+  if (USARTx == NULL)
+    return -1;
+
+  /* Disable USART before configure.  */
+  USARTx->CR1 &= ~USART_CR1_UE;
+
+  if (((config_bits & MASK_CS) == CS7 && (config_bits & PARENB))
+      || ((config_bits & MASK_CS) == CS8 && (config_bits & PARENB) == 0))
+    cr1_config &= ~USART_CR1_M;
+  else if ((config_bits & MASK_CS) == CS8)
+    cr1_config |=  USART_CR1_M;
+  else
+    return -1;
+
+  if ((config_bits & PARENB) == 0)
+    cr1_config &= ~USART_CR1_PCE;
+  else
+    cr1_config |=  USART_CR1_PCE;
+
+  if ((config_bits & PARODD) == 0)
+    cr1_config &= ~USART_CR1_PS;
+  else
+    cr1_config |=  USART_CR1_PS;
+
+  if ((config_bits & MASK_STOP) == STOP0B5)
+    USARTx->CR2 = (0x1 << 12);
+  else if ((config_bits & MASK_STOP) == STOP1B)
+    USARTx->CR2 = (0x0 << 12);
+  else if ((config_bits & MASK_STOP) == STOP1B5)
+    USARTx->CR2 = (0x3 << 12);
+  else /* if ((config_bits & MASK_STOP) == STOP2B) */
+    USARTx->CR2 = (0x2 << 12);
 
   for (i = 0; i < NUM_BAUD; i++)
     if (brr_table[i].baud_spec == baud_spec)
@@ -137,10 +158,28 @@ usart_config (uint8_t dev_no, uint32_t config_bits)
 
   USARTx->BRR = brr_table[i].brr_value;
 
-  /* No PEIE, CTSIE, TCIE, IDLEIE, LBDIE */
+  if ((config_bits & MASK_FLOW))
+    USARTx->CR3 = (1 << 9) | (1 << 8);
+  else
+    USARTx->CR3 = 0;
+
+  USARTx->CR1 = cr1_config;
   return 0;
 }
 
+void
+usart_init (uint16_t prio, uintptr_t stack_addr, size_t stack_size)
+{
+  /* Enable USART2 and USART3 clocks, and strobe reset.  */
+  RCC->APB1ENR |= ((1 << 18) | (1 << 17));
+  RCC->APB1RSTR = ((1 << 18) | (1 << 17));
+  RCC->APB1RSTR = 0;
+
+  usart_config (2, B115200 | CS8 | STOP1B);
+  usart_config (3, B115200 | CS8 | STOP1B);
+  chopstx_create (prio, stack_addr, stack_size, usart_main, NULL);
+}
+
 /*
  * Ring buffer
  */
@@ -246,7 +285,7 @@ rb_ll_get (struct rng_rb *rb)
  * Application: consumer
  * Hardware:    generator
  */
-int
+static int
 rb_read (struct rng_rb *rb, uint8_t *buf, uint16_t buflen)
 {
   int i;
@@ -271,7 +310,7 @@ rb_read (struct rng_rb *rb, uint8_t *buf, uint16_t buflen)
  * Application: generator
  * Hardware:    consumer
  */
-void
+static void
 rb_write (struct rng_rb *rb, uint8_t *buf, uint16_t buflen)
 {
   int i = 0;
@@ -311,7 +350,7 @@ rb_get_prepare_poll (struct rb *rb, chopstx_poll_cond_t *poll_desc)
   poll_desc->check = rb_empty_check;
   poll_desc->arg   = rb;
 }
-
+
 #define INTR_REQ_USART2 38
 #define INTR_REQ_USART3 39
 
@@ -333,6 +372,7 @@ static chopstx_poll_cond_t usart3_app_write_event;
 
 static struct chx_poll_head * usart_poll[4];
 
+/* Global variables so that it can be easier to debug.  */
 static int usart2_tx_ready;
 static int usart3_tx_ready;
 
@@ -371,6 +411,7 @@ handle_intr (struct USART *USARTx, struct rng_rb rb2a, struct usart_stat *stat)
 	  if ((r & USART_SR_ORE))
 	    stat->err_rx_overrun++;
 
+	  /* XXX: if CS is 7-bit, mask it, or else parity bit in upper layer */
 	  if (rb_ll_put (rb2a, (data & 0xff)) < 0)
 	    stat->err_rx_overflow++;
 	}
@@ -387,7 +428,7 @@ handle_tx_ready (struct USART *USARTx, struct rng_rb rb2h,
 
   if (c >= 0)
     {
-      USARTx->DR = c;
+      USARTx->DR = (c & 0xff);
       USARTx->CR1 |= USART_CR1_TXEIE;
       stat->tx++;
       return 0;
@@ -448,4 +489,46 @@ usart_main (void *arg)
     }
 
   return NULL;
+}
+
+int
+usart_read (uint8_t dev_no, uint8_t *buf, uint16_t buflen)
+{
+  struct rng_rb *rb;
+
+  if (dev_no == 2)
+    rb = &usart2_rb_h2a;
+  else if (dev_no == 3)
+    rb = &usart3_rb_h2a;
+  else
+    return -1;
+
+  return rb_read (rb, buf, buflen);
+}
+
+int
+usart_write (struct rng_rb *rb, uint8_t *buf, uint16_t buflen)
+{
+  struct rng_rb *rb;
+
+  if (dev_no == 2)
+    rb = &usart2_rb_a2h;
+  else if (dev_no == 3)
+    rb = &usart3_rb_a2h;
+  else
+    return -1;
+
+  rb_write (rb, buf, buflen);
+  return 0;
+}
+
+const struct usart_stat *
+usart_stat (uint8_t dev_no)
+{
+  if (dev_no == 2)
+    return &usart2_stat;
+  else if (dev_no == 3)
+    return &usart3_stat;
+  else
+    return NULL;
 }
