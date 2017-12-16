@@ -423,6 +423,12 @@ handle_intr (struct USART *USARTx, struct rb *rb2a, struct usart_stat *stat)
 	    stat->rx++;
 	}
     }
+  else if ((r & USART_SR_ORE))
+    {				/* Clear ORE */
+      uint32_t data = USARTx->DR;
+      asm volatile ("" : : "r" (data) : "memory");
+      stat->err_rx_overrun++;
+    }
 
   return tx_ready;
 }
