@@ -114,8 +114,6 @@ cdc_to_usart_loop (void *arg)
 
 	  if (size)
 	    usart_write (cdc_usart->dev_no, s, size);
-	  else
-	    usart_write (cdc_usart->dev_no, "HELLO!\r\n", 8);
 	}
     }
 

@@ -2,3 +2,8 @@ This is an application example using ST Nucleo F103 board.
 
 SB62 and SB63 should be soldered.
 ST-Link/V2 is disconnected (SB13 and SB14).
+
+TODO:
+* serial config setting
+* stats report control
+* Use of DMA for serial communication
