@@ -117,8 +117,9 @@ usart_config (uint8_t dev_no, uint32_t config_bits)
   struct USART *USARTx = get_usart_dev (dev_no);
   uint8_t baud_spec = (config_bits & MASK_BAUD);
   int i;
-  uint32_t cr1_config = (USART_CR1_UE | USART_CR1_TXEIE | USART_CR1_RXNEIE
+  uint32_t cr1_config = (USART_CR1_UE | USART_CR1_RXNEIE
 			 | USART_CR1_TE | USART_CR1_RE);
+				/* TXEIE will be enabled when putting char */
 				/* No CTSIE, PEIE, TCIE, IDLEIE, LBDIE */
   if (USARTx == NULL)
     return -1;
@@ -430,17 +431,24 @@ static int
 handle_tx_ready (struct USART *USARTx, struct rb *rb2h,
 		 struct usart_stat *stat)
 {
+  int tx_ready = 1;
   int c = rb_ll_get (rb2h);
 
   if (c >= 0)
     {
+      uint32_t r;
+
       USARTx->DR = (c & 0xff);
-      USARTx->CR1 |= USART_CR1_TXEIE;
       stat->tx++;
-      return 0;
+      r = USARTx->SR;
+      if ((r & USART_SR_TXE) == 0)
+	{
+	  tx_ready = 0;
+	  USARTx->CR1 |= USART_CR1_TXEIE;
+	}
     }
 
-  return 1;
+  return tx_ready;
 }
 
 static void *

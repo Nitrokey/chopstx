@@ -636,7 +636,7 @@ usb_rx_ready (uint8_t ep_num, uint16_t len)
 
 static void *cdc_main (void *arg);
 
-#define PRIO_CDC      3
+#define PRIO_CDC      4
 
 
 void

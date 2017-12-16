@@ -27,9 +27,9 @@ blk (void *arg)
   return NULL;
 }
 
-#define PRIO_USART     4
-#define PRIO_CDC2USART 2
-#define PRIO_USART2CDC 2
+#define PRIO_USART     2
+#define PRIO_CDC2USART 3
+#define PRIO_USART2CDC 3
 
 #define STACK_MAIN
 #define STACK_PROCESS_2
