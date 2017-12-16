@@ -1,3 +1,8 @@
+2017-12-16  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* chopstx.c (chx_timer_expired): Bug fix of wake up.
+	(chx_mutex_unlock): Avoid non-deterministic thing.
+
 2017-12-14  NIIBE Yutaka  <gniibe@fsij.org>
 
 	* board/board-st-nucleo-f103.h: Update.

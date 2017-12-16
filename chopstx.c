@@ -403,6 +403,7 @@ chx_timer_expired (void)
 	       tp = tp_next)
 	    {
 	      next_tick = tp->v;
+	      tp->v = (uintptr_t)0;
 	      tp_next = (struct chx_thread *)tp->next;
 	      ll_dequeue ((struct chx_pq *)tp);
 	      chx_ready_enqueue (tp);
@@ -575,6 +576,7 @@ chx_mutex_unlock (chopstx_mutex_t *mutex)
       uint16_t newprio = running->prio_orig;
       chopstx_mutex_t *m;
 
+      tp->v = (uintptr_t)0;
       chx_ready_enqueue (tp);
 
       /* Examine mutexes we hold, and determine new priority for running.  */
