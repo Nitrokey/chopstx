@@ -30,7 +30,8 @@ struct cdc {
   uint8_t endp3;
 
   chopstx_mutex_t mtx;
-  chopstx_cond_t cnd;
+  chopstx_cond_t cnd_rx;
+  chopstx_cond_t cnd_tx;
   uint8_t input[BUFSIZE];
   uint32_t input_len        : 7;
   uint32_t flag_connected   : 1;
@@ -349,7 +350,7 @@ usb_ctrl_write_finish (struct usb_dev *dev)
       /* Open/close the connection.  */
       chopstx_mutex_lock (&s->mtx);
       s->flag_connected = ((arg->value & CDC_CTRL_DTR) != 0);
-      chopstx_cond_signal (&s->cnd);
+      chopstx_cond_broadcast (&s->cnd_rx);
       chopstx_mutex_unlock (&s->mtx);
     }
 
@@ -523,7 +524,7 @@ usb_set_configuration (struct usb_dev *dev)
 	  struct cdc *s = &cdc_table[i];
 
 	  chopstx_mutex_lock (&s->mtx);
-	  chopstx_cond_signal (&s->cnd);
+	  chopstx_cond_signal (&s->cnd_rx);
 	  chopstx_mutex_unlock (&s->mtx);
 	}
     }
@@ -541,7 +542,7 @@ usb_set_configuration (struct usb_dev *dev)
 	  struct cdc *s = &cdc_table[i];
 
 	  chopstx_mutex_lock (&s->mtx);
-	  chopstx_cond_signal (&s->cnd);
+	  chopstx_cond_signal (&s->cnd_rx);
 	  chopstx_mutex_unlock (&s->mtx);
 	}
     }
@@ -609,7 +610,7 @@ usb_tx_done (uint8_t ep_num, uint16_t len)
       if (s->flag_output_ready == 0)
 	{
 	  s->flag_output_ready = 1;
-	  chopstx_cond_signal (&s->cnd);
+	  chopstx_cond_signal (&s->cnd_tx);
 	}
       chopstx_mutex_unlock (&s->mtx);
     }
@@ -630,7 +631,7 @@ usb_rx_ready (uint8_t ep_num, uint16_t len)
       usb_lld_rxcpy (s->input, ep_num, 0, len);
       s->flag_input_avail = 1;
       s->input_len = len;
-      chopstx_cond_signal (&s->cnd);
+      chopstx_cond_signal (&s->cnd_rx);
     }
 }
 
@@ -649,7 +650,8 @@ cdc_init (void)
       struct cdc *s = &cdc_table[i];
 
       chopstx_mutex_init (&s->mtx);
-      chopstx_cond_init (&s->cnd);
+      chopstx_cond_init (&s->cnd_tx);
+      chopstx_cond_init (&s->cnd_rx);
       s->input_len = 0;
       s->flag_connected = 0;
       s->flag_output_ready = 1;
@@ -770,7 +772,7 @@ cdc_main (void *arg)
 		{
 		  struct cdc *s = &cdc_table[0];
 		  chopstx_mutex_lock (&s->mtx);
-		  chopstx_cond_signal (&s->cnd);
+		  chopstx_cond_signal (&s->cnd_rx);
 		  chopstx_mutex_unlock (&s->mtx);
 		}
 		continue;
@@ -837,7 +839,7 @@ cdc_wait_configured (void)
 
   chopstx_mutex_lock (&s->mtx);
   while (device_state != USB_DEVICE_STATE_CONFIGURED)
-    chopstx_cond_wait (&s->cnd, &s->mtx);
+    chopstx_cond_wait (&s->cnd_rx, &s->mtx);
   chopstx_mutex_unlock (&s->mtx);
 }
 
@@ -847,7 +849,7 @@ cdc_wait_connection (struct cdc *s)
 {
   chopstx_mutex_lock (&s->mtx);
   while (s->flag_connected == 0)
-    chopstx_cond_wait (&s->cnd, &s->mtx);
+    chopstx_cond_wait (&s->cnd_rx, &s->mtx);
   s->flag_output_ready = 1;
   s->flag_input_avail = 0;
   s->input_len = 0;
@@ -881,7 +883,7 @@ cdc_send (struct cdc *s, const char *buf, int len)
     {
       chopstx_mutex_lock (&s->mtx);
       while ((r = check_tx (s)) == 0)
-	chopstx_cond_wait (&s->cnd, &s->mtx);
+	chopstx_cond_wait (&s->cnd_tx, &s->mtx);
       if (r > 0)
 	{
 	  usb_lld_txcpy (p, s->endp1, 0, count);
@@ -933,7 +935,7 @@ cdc_recv (struct cdc *s, char *buf, uint32_t *timeout)
 
   poll_desc.type = CHOPSTX_POLL_COND;
   poll_desc.ready = 0;
-  poll_desc.cond = &s->cnd;
+  poll_desc.cond = &s->cnd_rx;
   poll_desc.mutex = &s->mtx;
   poll_desc.check = check_rx;
   poll_desc.arg = s;
