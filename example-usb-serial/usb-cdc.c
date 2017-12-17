@@ -2,7 +2,8 @@
 #include <stdlib.h>
 #include <chopstx.h>
 #include <string.h>
-#include "usb_lld.h"
+#include <contrib/usart.h>
+#include <usb_lld.h>
 #include "cdc.h"
 
 static chopstx_intr_t usb_intr;
@@ -12,7 +13,7 @@ struct line_coding
   uint32_t bitrate;
   uint8_t format;
   uint8_t paritytype;
-  uint8_t datatype;
+  uint8_t databits;
 } __attribute__((packed));
 
 static const struct line_coding lc_default = {
@@ -25,6 +26,8 @@ static const struct line_coding lc_default = {
 static uint8_t device_state;    /* USB device status */
 
 struct cdc {
+  uint8_t dev_no;
+
   uint8_t endp1;
   uint8_t endp2;
   uint8_t endp3;
@@ -333,6 +336,71 @@ usb_device_reset (struct usb_dev *dev)
 }
 
 
+static void
+setup_usart_config (struct cdc *s)
+{
+  /* Check supported config(s) */
+  uint32_t config_bits;
+
+  if (s->line_coding.bitrate == 9600)
+    config_bits = B9600;
+  else if (s->line_coding.bitrate == 19200)
+    config_bits = B19200;
+  else if (s->line_coding.bitrate == 57600)
+    config_bits = B57600;
+  else if (s->line_coding.bitrate == 115200)
+    config_bits = B115200;
+  else
+    {
+      s->line_coding.bitrate = 115200;
+      config_bits = B115200;
+    }
+
+  if (s->line_coding.format == 0)
+    config_bits |= STOP1B;
+  else if (s->line_coding.format == 1)
+    config_bits |= STOP1B5;
+  else if (s->line_coding.format == 2)
+    config_bits |= STOP2B;
+  else
+    {
+      s->line_coding.format = 0;
+      config_bits |= STOP1B;
+    }
+
+  if (s->line_coding.paritytype == 0)
+    config_bits |= 0;
+  else if (s->line_coding.paritytype == 1)
+    config_bits |= (PARENB | PARODD);
+  else if (s->line_coding.paritytype == 2)
+    config_bits |= PARENB;
+  else
+    {
+      s->line_coding.paritytype = 0;
+      config_bits |= 0;
+    }
+
+  if (s->line_coding.databits == 7)
+    config_bits |= CS7;
+  else if (s->line_coding.databits == 7)
+    config_bits |= CS8;
+  else
+    {
+      s->line_coding.databits = 8;
+      config_bits |= CS8;
+    }
+
+  if (s->line_coding.databits == 7 && s->line_coding.paritytype == 0)
+    {
+      s->line_coding.databits = 8;
+      config_bits &= ~MASK_CS;
+      config_bits |= CS8;
+    }
+
+  usart_config (s->dev_no, config_bits);
+}
+
+
 #define CDC_CTRL_DTR            0x0001
 
 static void
@@ -342,18 +410,21 @@ usb_ctrl_write_finish (struct usb_dev *dev)
   uint8_t type_rcp = arg->type & (REQUEST_TYPE|RECIPIENT);
 
   if (type_rcp == (CLASS_REQUEST | INTERFACE_RECIPIENT)
-      && USB_SETUP_SET (arg->type)
-      && arg->request == USB_CDC_REQ_SET_CONTROL_LINE_STATE)
+      && USB_SETUP_SET (arg->type))
     {
       struct cdc *s = cdc_get (arg->index, 0);
 
-      /* Open/close the connection.  */
-      chopstx_mutex_lock (&s->mtx);
-      s->flag_connected = ((arg->value & CDC_CTRL_DTR) != 0);
-      chopstx_cond_broadcast (&s->cnd_rx);
-      chopstx_mutex_unlock (&s->mtx);
+      if (arg->request == USB_CDC_REQ_SET_LINE_CODING)
+	setup_usart_config (s);
+      else if (arg->request == USB_CDC_REQ_SET_CONTROL_LINE_STATE)
+	{
+	  /* Open/close the connection.  */
+	  chopstx_mutex_lock (&s->mtx);
+	  s->flag_connected = ((arg->value & CDC_CTRL_DTR) != 0);
+	  chopstx_cond_broadcast (&s->cnd_rx);
+	  chopstx_mutex_unlock (&s->mtx);
+	}
     }
-
   /*
    * The transaction was already finished.  So, it is no use to call
    * usb_lld_ctrl_error when the condition does not match.
@@ -660,12 +731,14 @@ cdc_init (void)
 
       if (i == 0)
 	{
+	  s->dev_no = 2;
 	  s->endp1 = ENDP1;
 	  s->endp2 = ENDP2;
 	  s->endp3 = ENDP3;
 	}
       else
 	{
+	  s->dev_no = 3;
 	  s->endp1 = ENDP4;
 	  s->endp2 = ENDP5;
 	  s->endp3 = ENDP6;

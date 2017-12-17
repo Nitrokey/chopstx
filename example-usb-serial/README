@@ -5,5 +5,12 @@ ST-Link/V2 is disconnected (SB13 and SB14).
 
 TODO:
 * serial config setting
+  * CTSRTS? How by USB? By vendor specific control?
 * stats report control
+  * USB communication class interface notification (interrupt ENDP2) support
+    SERIAL_STATE
+* SEND_BREAK support
 * Use of DMA for serial communication
+* RS-232 support: GPIO with DTR (out), DCD (in), DSR (in), RI (in)
+* Half-duplex support
+* Support of other communication mode: smartcard, IrDA, etc.
