@@ -1,6 +1,19 @@
 NEWS - Noteworthy changes
 
 
+* Major changes in Chopstx 1.7
+
+  Released 2017-12-XX
+
+** Fix: timer wakeup
+Timer expiration had a bug.  When it is waken up, the wake up doesn't
+handle as timer expiration when there are multiple threads on same
+wake up timing.
+
+** New driver: USART for STM32.
+USART driver for STM32 is added.
+
+
 * Major changes in Chopstx 1.6
 
   Released 2017-11-24
