@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <chopstx.h>
 #include <string.h>
-#include <contrib/usart.h>
 #include <usb_lld.h>
 #include "cdc.h"
 
@@ -47,11 +46,6 @@ struct cdc {
 
 #define MAX_CDC 2
 static struct cdc cdc_table[MAX_CDC];
-
-#define STACK_PROCESS_1
-#include "stack-def.h"
-#define STACK_ADDR_CDC ((uintptr_t)process1_base)
-#define STACK_SIZE_CDC (sizeof process1_base)
 
 
 /*
@@ -340,70 +334,10 @@ usb_device_reset (struct usb_dev *dev)
 }
 
 
-static void
-setup_usart_config (struct cdc *s)
-{
-  /* Check supported config(s) */
-  uint32_t config_bits;
-
-  if (s->line_coding.bitrate == 9600)
-    config_bits = B9600;
-  else if (s->line_coding.bitrate == 19200)
-    config_bits = B19200;
-  else if (s->line_coding.bitrate == 57600)
-    config_bits = B57600;
-  else if (s->line_coding.bitrate == 115200)
-    config_bits = B115200;
-  else
-    {
-      s->line_coding.bitrate = 115200;
-      config_bits = B115200;
-    }
-
-  if (s->line_coding.format == 0)
-    config_bits |= STOP1B;
-  else if (s->line_coding.format == 1)
-    config_bits |= STOP1B5;
-  else if (s->line_coding.format == 2)
-    config_bits |= STOP2B;
-  else
-    {
-      s->line_coding.format = 0;
-      config_bits |= STOP1B;
-    }
-
-  if (s->line_coding.paritytype == 0)
-    config_bits |= 0;
-  else if (s->line_coding.paritytype == 1)
-    config_bits |= (PARENB | PARODD);
-  else if (s->line_coding.paritytype == 2)
-    config_bits |= PARENB;
-  else
-    {
-      s->line_coding.paritytype = 0;
-      config_bits |= 0;
-    }
-
-  if (s->line_coding.databits == 7)
-    config_bits |= CS7;
-  else if (s->line_coding.databits == 7)
-    config_bits |= CS8;
-  else
-    {
-      s->line_coding.databits = 8;
-      config_bits |= CS8;
-    }
-
-  if (s->line_coding.databits == 7 && s->line_coding.paritytype == 0)
-    {
-      s->line_coding.databits = 8;
-      config_bits &= ~MASK_CS;
-      config_bits |= CS8;
-    }
-
-  usart_config (s->dev_no, config_bits);
-}
-
+void (*send_break) (uint8_t dev_no, uint16_t duration);
+static void (*setup_usart_config) (uint8_t dev_no, uint32_t bitrate,
+				   uint8_t format, uint8_t paritytype,
+				   uint8_t databits);
 
 #define CDC_CTRL_DTR            0x0001
 
@@ -419,13 +353,22 @@ usb_ctrl_write_finish (struct usb_dev *dev)
       struct cdc *s = cdc_get (arg->index, 0);
 
       if (arg->request == USB_CDC_REQ_SET_LINE_CODING)
-	setup_usart_config (s);
+	(*setup_usart_config) (s->dev_no, s->line_coding.bitrate,
+			       s->line_coding.format,
+			       s->line_coding.paritytype,
+			       s->line_coding.databits);
       else if (arg->request == USB_CDC_REQ_SET_CONTROL_LINE_STATE)
 	{
 	  /* Open/close the connection.  */
 	  chopstx_mutex_lock (&s->mtx);
 	  s->flag_connected = ((arg->value & CDC_CTRL_DTR) != 0);
 	  chopstx_cond_broadcast (&s->cnd_rx);
+	  chopstx_mutex_unlock (&s->mtx);
+	}
+      else if (arg->request == USB_CDC_REQ_SEND_BREAK)
+	{
+	  chopstx_mutex_lock (&s->mtx);
+	  send_break (s->dev_no, arg->value);
 	  chopstx_mutex_unlock (&s->mtx);
 	}
     }
@@ -461,6 +404,8 @@ vcom_port_data_setup (struct usb_dev *dev)
 				    sizeof (struct line_coding));
 	}
       else if (arg->request == USB_CDC_REQ_SET_CONTROL_LINE_STATE)
+	return usb_lld_ctrl_ack (dev);
+      else if (arg->request == USB_CDC_REQ_SEND_BREAK)
 	return usb_lld_ctrl_ack (dev);
     }
 
@@ -712,14 +657,18 @@ usb_rx_ready (uint8_t ep_num, uint16_t len)
 
 static void *cdc_main (void *arg);
 
-#define PRIO_CDC      2
-
 
 void
-cdc_init (void)
+cdc_init (uint16_t prio, uintptr_t stack_addr, size_t stack_size,
+	  void (*sendbrk_callback) (uint8_t dev_no, uint16_t duration),
+	  void (*config_callback) (uint8_t dev_no,
+				   uint32_t bitrate, uint8_t format,
+				   uint8_t paritytype, uint8_t databits))
 {
   int i;
 
+  send_break = sendbrk_callback;
+  setup_usart_config = config_callback;
   for (i = 0; i < MAX_CDC; i++)
     {
       struct cdc *s = &cdc_table[i];
@@ -750,7 +699,7 @@ cdc_init (void)
     }
 
   device_state = USB_DEVICE_STATE_UNCONNECTED;
-  chopstx_create (PRIO_CDC, STACK_ADDR_CDC, STACK_SIZE_CDC, cdc_main, NULL);
+  chopstx_create (prio, stack_addr, stack_size, cdc_main, NULL);
 }
 
 struct cdc *

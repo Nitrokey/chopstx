@@ -12,7 +12,6 @@ TIOCGICOUNT
 
 
 TODO:
-* SEND_BREAK support
 * Use of DMA for serial communication
 * RS-232 support: GPIO with DTR (out), DCD (in), DSR (in), RI (in)
 * serial config setting of CTSRTS?

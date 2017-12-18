@@ -293,6 +293,16 @@ rb_ll_get (struct rb *rb)
   return r;
 }
 
+static void
+rb_ll_flush (struct rb *rb)
+{
+  chopstx_mutex_lock (&rb->m);
+  while (!rb->empty)
+    rb_del (rb);
+  chopstx_cond_signal (&rb->space_available);
+  chopstx_mutex_unlock (&rb->m);
+}
+
 /*
  * Application: consumer
  * Hardware:    generator
@@ -328,7 +338,8 @@ rb_write (struct rb *rb, uint8_t *buf, uint16_t buflen)
   int i = 0;
 
   chopstx_mutex_lock (&rb->m);
-  while (i < buflen)
+
+  do
     {
       while (rb->full)
 	chopstx_cond_wait (&rb->space_available, &rb->m);
@@ -337,11 +348,16 @@ rb_write (struct rb *rb, uint8_t *buf, uint16_t buflen)
 	{
 	  rb_add (rb, buf[i++]);
 	  if (rb->full)
-	    break;
+	    {
+	      chopstx_cond_signal (&rb->data_available);
+	      break;
+	    }
 	}
-
-      chopstx_cond_signal (&rb->data_available);
     }
+  while (i < buflen);
+
+  if (i)
+    chopstx_cond_signal (&rb->data_available);
   chopstx_mutex_unlock (&rb->m);
 }
 
@@ -554,7 +570,13 @@ usart_read (uint8_t dev_no, char *buf, uint16_t buflen)
   else
     return -1;
 
-  return rb_read (rb, (uint8_t *)buf, buflen);
+  if (buf == NULL && buflen == 0)
+    {
+      rb_ll_flush (rb);
+      return 0;
+    }
+  else
+    return rb_read (rb, (uint8_t *)buf, buflen);
 }
 
 int
@@ -569,7 +591,10 @@ usart_write (uint8_t dev_no, char *buf, uint16_t buflen)
   else
     return -1;
 
-  rb_write (rb, (uint8_t *)buf, buflen);
+  if (buf == NULL && buflen == 0)
+    rb_ll_flush (rb);
+  else
+    rb_write (rb, (uint8_t *)buf, buflen);
   return 0;
 }
 
