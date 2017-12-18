@@ -3,14 +3,21 @@ This is an application example using ST Nucleo F103 board.
 SB62 and SB63 should be soldered.
 ST-Link/V2 is disconnected (SB13 and SB14).
 
+NOTE:
+
+Using the USB CDC-ACM for serial communication is a kind of wrong,
+because it's designed for modem;  No way to control CTSRTS. 
+
+TIOCGICOUNT
+
+
 TODO:
-* serial config setting
-  * CTSRTS? How by USB? By vendor specific control?
-* stats report control
-  * USB communication class interface notification (interrupt ENDP2) support
-    SERIAL_STATE
 * SEND_BREAK support
 * Use of DMA for serial communication
 * RS-232 support: GPIO with DTR (out), DCD (in), DSR (in), RI (in)
+* serial config setting of CTSRTS?
+  By vendor specific control?
+* stats report control
+  By vendor specific control?
 * Half-duplex support
 * Support of other communication mode: smartcard, IrDA, etc.

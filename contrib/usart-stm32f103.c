@@ -172,9 +172,16 @@ usart_config (uint8_t dev_no, uint32_t config_bits)
   return 0;
 }
 
+static int (*ss_notify_callback) (uint8_t dev_no, uint16_t notify_bits);
+
 void
-usart_init (uint16_t prio, uintptr_t stack_addr, size_t stack_size)
+usart_init (uint16_t prio, uintptr_t stack_addr, size_t stack_size,
+	    int (*cb) (uint8_t dev_no, uint16_t notify_bits))
 {
+  ss_notify_callback = cb;
+  usart2_stat.dev_no = 2;
+  usart3_stat.dev_no = 3;
+
   /* Enable USART2 and USART3 clocks, and strobe reset.  */
   RCC->APB1ENR |= ((1 << 18) | (1 << 17));
   RCC->APB1RSTR = ((1 << 18) | (1 << 17));
@@ -381,11 +388,20 @@ static struct chx_poll_head *usart_poll[4];
 static int usart2_tx_ready;
 static int usart3_tx_ready;
 
+#define UART_STATE_BITMAP_RX_CARRIER (1 << 0)
+#define UART_STATE_BITMAP_TX_CARRIER (1 << 1)
+#define UART_STATE_BITMAP_BREAK      (1 << 2)
+#define UART_STATE_BITMAP_RINGSIGNAL (1 << 3)
+#define UART_STATE_BITMAP_FRAMING    (1 << 4)
+#define UART_STATE_BITMAP_PARITY     (1 << 5)
+#define UART_STATE_BITMAP_OVERRUN    (1 << 6)
+
 static int
 handle_intr (struct USART *USARTx, struct rb *rb2a, struct usart_stat *stat)
 {
   int tx_ready = 0;
   uint32_t r = USARTx->SR;
+  int notify_bits = 0;
 
   if ((r & USART_SR_TXE))
     {
@@ -406,15 +422,23 @@ handle_intr (struct USART *USARTx, struct rb *rb2a, struct usart_stat *stat)
 	stat->err_rx_noise++;
       else if ((r & USART_SR_FE))
 	{
+	  /* NOTE: Noway to distinguish framing error and break  */
+
 	  stat->rx_break++;
-	  /* XXX: break event report to upper layer? */
+	  notify_bits |= UART_STATE_BITMAP_BREAK;
 	}
       else if ((r & USART_SR_PE))
-	stat->err_rx_parity++;
+	{
+	  stat->err_rx_parity++;
+	  notify_bits |= UART_STATE_BITMAP_PARITY;
+	}
       else
 	{
 	  if ((r & USART_SR_ORE))
-	    stat->err_rx_overrun++;
+	    {
+	      stat->err_rx_overrun++;
+	      notify_bits |= UART_STATE_BITMAP_OVERRUN;
+	    }
 
 	  /* XXX: if CS is 7-bit, mask it, or else parity bit in upper layer */
 	  if (rb_ll_put (rb2a, (data & 0xff)) < 0)
@@ -428,6 +452,13 @@ handle_intr (struct USART *USARTx, struct rb *rb2a, struct usart_stat *stat)
       uint32_t data = USARTx->DR;
       asm volatile ("" : : "r" (data) : "memory");
       stat->err_rx_overrun++;
+      notify_bits |= UART_STATE_BITMAP_OVERRUN;
+    }
+
+  if (notify_bits)
+    {
+      if ((*ss_notify_callback) (stat->dev_no, notify_bits))
+	stat->err_notify_overflow++;
     }
 
   return tx_ready;
@@ -551,4 +582,18 @@ usart_stat (uint8_t dev_no)
     return &usart3_stat;
   else
     return NULL;
+}
+
+int
+usart_send_break (uint8_t dev_no)
+{
+  struct USART *USARTx = get_usart_dev (dev_no);
+  if (USARTx == NULL)
+    return -1;
+
+  if ((USARTx->CR1 & 0x01))
+    return 1;			/* Busy sending break, which was requested before.  */
+
+  USARTx->CR1 |= 0x01;
+  return 0;
 }

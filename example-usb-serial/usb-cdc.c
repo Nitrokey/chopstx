@@ -40,7 +40,8 @@ struct cdc {
   uint32_t flag_connected   : 1;
   uint32_t flag_output_ready: 1;
   uint32_t flag_input_avail : 1;
-  uint32_t                  : 22;
+  uint32_t flag_notify_busy : 1;
+  uint32_t                  :21;
   struct line_coding line_coding;
 };
 
@@ -84,15 +85,18 @@ cdc_get (int interface, uint8_t ep_num)
 #define ENDP0_TXADDR        (0x80)
 #define ENDP1_TXADDR        (0xc0)
 #define ENDP2_TXADDR        (0x100)
-#define ENDP3_RXADDR        (0x108)
-#define ENDP4_TXADDR        (0x148)
-#define ENDP5_TXADDR        (0x188)
-#define ENDP6_RXADDR        (0x190)
+#define ENDP3_RXADDR        (0x10A)
+#define ENDP4_TXADDR        (0x14A)
+#define ENDP5_TXADDR        (0x18A)
+#define ENDP6_RXADDR        (0x194)
+/* 0x1d4 = 468, 44-byte available */
 
 #define USB_CDC_REQ_SET_LINE_CODING             0x20
 #define USB_CDC_REQ_GET_LINE_CODING             0x21
 #define USB_CDC_REQ_SET_CONTROL_LINE_STATE      0x22
 #define USB_CDC_REQ_SEND_BREAK                  0x23
+
+#define USB_CDC_NOTIFY_SERIAL_STATE		0x20
 
 /* USB Device Descriptor */
 static const uint8_t vcom_device_desc[18] = {
@@ -169,7 +173,7 @@ static const uint8_t vcom_config_desc[] = {
   ENDPOINT_DESCRIPTOR,
   ENDP2|0x80,    /* bEndpointAddress.    */
   0x03,          /* bmAttributes (Interrupt).        */
-  0x08, 0x00,	 /* wMaxPacketSize.                  */
+  0x0A, 0x00,	 /* wMaxPacketSize.                  */
   0xFF,		 /* bInterval.                       */
   /* Interface Descriptor.*/
   9,
@@ -242,7 +246,7 @@ static const uint8_t vcom_config_desc[] = {
   ENDPOINT_DESCRIPTOR,
   ENDP5|0x80,    /* bEndpointAddress.    */
   0x03,          /* bmAttributes (Interrupt).        */
-  0x08, 0x00,	 /* wMaxPacketSize.                  */
+  0x0A, 0x00,	 /* wMaxPacketSize.                  */
   0xFF,		 /* bInterval.                       */
   /* Interface Descriptor.*/
   9,
@@ -675,20 +679,20 @@ usb_tx_done (uint8_t ep_num, uint16_t len)
 
   (void)len;
 
-  if (ep_num == ENDP1 || ep_num == ENDP4)
+  chopstx_mutex_lock (&s->mtx);
+  if (ep_num == s->endp1)
     {
-      chopstx_mutex_lock (&s->mtx);
       if (s->flag_output_ready == 0)
 	{
 	  s->flag_output_ready = 1;
 	  chopstx_cond_signal (&s->cnd_tx);
 	}
-      chopstx_mutex_unlock (&s->mtx);
     }
-  else if (ep_num == ENDP2 || ep_num == ENDP5)
+  else if (ep_num == s->endp2)
     {
-      /* Nothing */
+      s->flag_notify_busy = 0;
     }
+  chopstx_mutex_unlock (&s->mtx);
 }
 
 
@@ -697,7 +701,7 @@ usb_rx_ready (uint8_t ep_num, uint16_t len)
 {
   struct cdc *s = cdc_get (-1, ep_num);
 
-  if (ep_num == ENDP3 || ep_num == ENDP6)
+  if (ep_num == s->endp3)
     {
       usb_lld_rxcpy (s->input, ep_num, 0, len);
       s->flag_input_avail = 1;
@@ -1042,4 +1046,40 @@ cdc_recv (struct cdc *s, char *buf, uint32_t *timeout)
   chopstx_mutex_unlock (&s->mtx);
 
   return r;
+}
+
+
+int
+cdc_ss_notify (struct cdc *s, uint16_t state_bits)
+{
+  int busy;
+  uint8_t notification[10];
+  int interface;
+
+  if (s == &cdc_table[0])
+    interface = 0;
+  else
+    interface = 2;
+
+  /* Little endian */
+  notification[0] = REQUEST_DIR | CLASS_REQUEST | INTERFACE_RECIPIENT;
+  notification[1] = USB_CDC_NOTIFY_SERIAL_STATE;
+  notification[2] = notification[3] = 0;
+  notification[4] = interface;
+  notification[5] = 0;
+  notification[6] = 2;
+  notification[7] = 0;
+  notification[8] = (state_bits & 0xff);
+  notification[9] = (state_bits >> 8);
+
+  chopstx_mutex_lock (&s->mtx);
+  busy = s->flag_notify_busy;
+  if (!busy)
+    {
+      usb_lld_write (s->endp2, notification, sizeof notification);
+      s->flag_notify_busy = 1;
+    }
+  chopstx_mutex_unlock (&s->mtx);
+
+  return busy;
 }

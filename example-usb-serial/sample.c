@@ -120,13 +120,28 @@ cdc_to_usart_loop (void *arg)
   return NULL;
 }
 
+static struct cdc_usart cdc_usart0;
+static struct cdc_usart cdc_usart1;
+
+static int
+ss_notify (uint8_t dev_no, uint16_t state_bits)
+{
+  struct cdc *s;
+
+  if (dev_no == cdc_usart0.dev_no)
+    s = cdc_usart0.cdc;
+  else if (dev_no == cdc_usart1.dev_no)
+    s = cdc_usart1.cdc;
+  else
+    return -1;
+
+  return cdc_ss_notify (s, state_bits);
+}
+
 
 int
 main (int argc, const char *argv[])
 {
-  struct cdc_usart cdc_usart0;
-  struct cdc_usart cdc_usart1;
-
   (void)argc;
   (void)argv;
 
@@ -135,7 +150,7 @@ main (int argc, const char *argv[])
   cdc_init ();
   cdc_wait_configured ();
 
-  usart_init (PRIO_USART, STACK_ADDR_USART, STACK_SIZE_USART);
+  usart_init (PRIO_USART, STACK_ADDR_USART, STACK_SIZE_USART, ss_notify);
 
   cdc_usart0.cdc = cdc_open (0);
   cdc_usart0.dev_no = 2;
