@@ -1,7 +1,7 @@
 \input texinfo                      @c -*-texinfo-*-
 @c %**start of header
 @setfilename chopstx.info
-@set VERSION 1.6
+@set VERSION 1.7
 @settitle Chopstx Reference Manual
 @c Unify some of the indices.
 @syncodeindex tp fn
@@ -60,7 +60,8 @@ section entitled ``Copying''.
 @menu
 * Introduction::                 What is Chopstx.
 * Threads and only Threads::     Threads and only Threads.
-* Note: Use of sleep mode::      Use it carefully.
+* Poll or Pole::                 Poll or Pole.
+* Note (Use of sleep mode)::     Use it carefully.
 * API::                          API.
 
 Appendix
@@ -90,10 +91,15 @@ Cortex-M3 and GNU/Linux emulation.  Specifically, it is used for
 STM32F030, MKL27Z, STM32F103 and as a command on GNU/Linux.
 
 While most RTOSes come with many features, drivers, and stacks,
-Chopstx just offers a RT thread library.
+Chopstx just offers an RT thread library.
 
 With Chopstx, interrupt handling is also done by a thread.  This
 enables coherent code for ease of maintenance.
+
+While threads are important, we don't need more threads than
+necessary.  Chopstx provides a feature of poll, so that we can
+minimize use of threads.
+
 
 @node Threads and only Threads
 @chapter Threads and only Threads
@@ -129,8 +135,17 @@ support more performance (frequency).  In general, such an example is
 best suited by hardware (not software).
 
 
-@node Note: Use of sleep mode
-@chapter Note: Use of sleep mode
+@node Poll or Pole
+@chapter Poll or Pole
+Chopstx provides the @code{chopstx_poll} function to wait on multiple events.
+
+Using @code{chopstx_poll}, we can write an application by event-driven
+programming style, with minimum number of threads, avoiding
+complicated dependency between threads.
+
+
+@node Note (Use of sleep mode)
+@chapter Note (Use of sleep mode)
 
 Calling the chopstx_conf_idle function (> 0) to allow the idle thread
 going to sleep.  MCU will be in sleep mode when no threads are

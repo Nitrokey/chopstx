@@ -287,7 +287,7 @@ chx_request_preemption (uint16_t prio)
  *
  * Returns:
  *          1 on wakeup by others.
- *          0 on normal wakeup (timer expiration, getting lock).
+ *          0 on normal wakeup (timer expiration, lock aquirement).
  *         -1 on cancellation.
  */
 static uintptr_t __attribute__ ((naked, noinline))

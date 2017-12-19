@@ -48,6 +48,7 @@ NIIBE Yutaka:
 
     Under contract of g10 Code GmbH, wrote:
         mcu/usb-usbip.c
+	contrib/usart-stm32f103.c
 
 Paul Fertser:
     Added Blue Pill support.

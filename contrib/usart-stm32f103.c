@@ -617,7 +617,7 @@ usart_send_break (uint8_t dev_no)
     return -1;
 
   if ((USARTx->CR1 & 0x01))
-    return 1;			/* Busy sending break, which was requested before.  */
+    return 1;	/* Busy sending break, which was requested before.  */
 
   USARTx->CR1 |= 0x01;
   return 0;
