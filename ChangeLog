@@ -1,3 +1,7 @@
+2018-01-09  Anthony Romano <romanoanthony061@gmail.com>
+
+	* contrib/adc-stm32f103.c: Support IN8 config.
+
 2017-12-19  NIIBE Yutaka  <gniibe@fsij.org>
 
 	* VERSION: 1.7.
