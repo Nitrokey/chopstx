@@ -3,7 +3,7 @@
  *                   In this ADC driver, there are NeuG specific parts.
  *                   You need to modify to use this as generic ADC driver.
  *
- * Copyright (C) 2011, 2012, 2013, 2015, 2016
+ * Copyright (C) 2011, 2012, 2013, 2015, 2016, 2017, 2018
  *               Free Software Initiative of Japan
  * Author: NIIBE Yutaka <gniibe@fsij.org>
  *
@@ -32,7 +32,6 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <chopstx.h>
-#include <mcu/stm32.h>
 #include <mcu/stm32f103.h>
 #include "adc.h"
 

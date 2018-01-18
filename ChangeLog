@@ -1,3 +1,7 @@
+2018-01-18  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* mcu/stm32f103.h: Include stm32.h and cortex-m.h.
+
 2018-01-09  Anthony Romano <romanoanthony061@gmail.com>
 
 	* contrib/adc-stm32f103.c: Support IN8 config.

@@ -1,3 +1,6 @@
+#include <mcu/stm32.h>
+#include <mcu/cortex-m.h>
+
 #define  CRC_CR_RESET                        0x00000001
 
 struct CRC {
