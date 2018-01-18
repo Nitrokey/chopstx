@@ -586,8 +586,7 @@ usb_set_interface (struct usb_dev *dev)
   else
     {
       vcom_setup_endpoints_for_interface (interface, 0);
-      usb_lld_ctrl_ack (dev);
-      return 0;
+      return usb_lld_ctrl_ack (dev);
     }
 }
 
@@ -852,7 +851,7 @@ cdc_main (void *arg)
 		continue;
 	      }
 	}
-     }
+    }
 
   return NULL;
 }
