@@ -1,6 +1,6 @@
 Chopstx - Threads and only Threads
-							 Version 1.7
-							  2017-12-19
+							 Version 1.8
+							  2018-01-19
 							Niibe Yutaka
 					     Flying Stone Technology
 
@@ -27,7 +27,7 @@ Note that this library is _not_ related to the hand game:
     https://en.wikipedia.org/wiki/Chopsticks_(hand_game)
 
 Thanks to Yao Wei and Enrico Zini for giving me an opportunity
-visiting the wiki page above.
+visiting the wiki page above, when my children were playing the game.
 
 
 License

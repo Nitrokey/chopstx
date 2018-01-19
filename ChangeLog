@@ -1,3 +1,8 @@
+2018-01-19  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* VERSION: 1.8.
+	* doc/chopstx.texi (VERSION): 1.8.
+
 2018-01-18  NIIBE Yutaka  <gniibe@fsij.org>
 
 	* mcu/stm32f103.h: Include stm32.h and cortex-m.h.

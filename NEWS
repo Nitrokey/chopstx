@@ -3,12 +3,13 @@ NEWS - Noteworthy changes
 
 * Major changes in Chopstx 1.8
 
-  Released 2018-01-XX
+  Released 2018-01-19
 
-** Minor API fix
+** Minor driver API fix
 In version 1.6, part of mcu/stm32f103.h was moved into mcu/cortex-m.h
 and mcu/stm32.h.  Now, mcu/stm32f103.h automatically includes
-mcu/cortex-m.h and mcu/stm32.h.
+mcu/cortex-m.h and mcu/stm32.h, so that it doesn't break existing
+applications.
 
 
 * Major changes in Chopstx 1.7
