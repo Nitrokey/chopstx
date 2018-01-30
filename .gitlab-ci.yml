@@ -1,6 +1,9 @@
+image: debian:stable
+
 pages:
   script:
-  - cd doc && texi2html chopstx.texi 
+  - apt-get update && apt-get -y install texi2html
+  - mkdir -p html && cd html && texi2html ../doc/chopstx.texi
   artifacts:
     paths:
-    - doc
+    - html
