@@ -5,6 +5,7 @@ before_script:
 
 pages:
   stage: deploy
+  script:
   - mkdir -p html && (cd html && texi2html ../doc/chopstx.texi)
   - mv html/ public
   artifacts:
