@@ -1,0 +1,6 @@
+pages:
+  script:
+  - cd doc && texi2html chopstx.texi 
+  artifacts:
+    paths:
+    - doc
