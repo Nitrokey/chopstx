@@ -127,6 +127,7 @@ static struct RCC *const RCC = (struct RCC *)RCC_BASE;
 #define STM32_ADCPRE_DIV8	(3 << 14)
 
 #define STM32_USBPRE_DIV1P5     (0 << 22)
+#define STM32_USBPRE_DIV2       (3 << 22) /* Not for STM32, but GD32F103 */
 
 #define STM32_MCO_NOCLOCK	(0 << 24)
 

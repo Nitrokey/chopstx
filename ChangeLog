@@ -1,3 +1,22 @@
+2018-04-26  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* board/board-blue-pill-g.h: New.  Define STM32_ADCPRE and
+	STM32_USBPRE for 96MHz clock.
+	* mcu/stm32.h (STM32_USBPRE_DIV2): New for GD32F103.
+	* mcu/clk_gpio_init-stm32.c: Allow constants, which are defined by
+	board.h	(STM32_ADCPRE and STM32_USBPRE).
+	* mcu/chx-stm32f103.c: Use STM32_ADCPRE and STM32_USBPRE.
+
+	* mcu/usb-stm32f103.c (usb_lld_init): BTABLE setting at
+	initialization.
+	(usb_lld_reset): Not at each reset.
+
+	* contrib/adc-stm32f103.c [MCU_STM32F1_GD32F1]: Use continuous
+	sampling with no DELIBARATELY_DO_IT_WRONG_START_STOP.
+	(adc_init): Wait after ADC_CR2_ADON.
+	(adc_start): Likewise.  Enabling by ADC_CR2_ADON after all other
+	registers configuration.
+
 2018-01-19  NIIBE Yutaka  <gniibe@fsij.org>
 
 	* VERSION: 1.8.

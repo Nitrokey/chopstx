@@ -34,6 +34,8 @@
 #include <chopstx.h>
 #include <mcu/stm32f103.h>
 #include "adc.h"
+#include "board.h"
+#include "sys.h"
 
 #define STM32_ADC_ADC1_DMA_PRIORITY         2
 
@@ -69,7 +71,9 @@
 #define ADC_CHANNEL_VREFINT     17
 
 #define DELIBARATELY_DO_IT_WRONG_VREF_SAMPLE_TIME
+#ifndef MCU_STM32F1_GD32F1
 #define DELIBARATELY_DO_IT_WRONG_START_STOP
+#endif
 
 #ifdef DELIBARATELY_DO_IT_WRONG_VREF_SAMPLE_TIME
 #define ADC_SAMPLE_VREF ADC_SAMPLE_1P5
@@ -114,6 +118,8 @@ adc_init (void)
 
   ADC1->CR1 = 0;
   ADC1->CR2 = ADC_CR2_ADON;
+  chopstx_usec_wait (1000);
+
   ADC1->CR2 = ADC_CR2_ADON | ADC_CR2_RSTCAL;
   while ((ADC1->CR2 & ADC_CR2_RSTCAL) != 0)
     ;
@@ -124,6 +130,8 @@ adc_init (void)
 
   ADC2->CR1 = 0;
   ADC2->CR2 = ADC_CR2_ADON;
+  chopstx_usec_wait (1000);
+
   ADC2->CR2 = ADC_CR2_ADON | ADC_CR2_RSTCAL;
   while ((ADC2->CR2 & ADC_CR2_RSTCAL) != 0)
     ;
@@ -136,9 +144,6 @@ adc_init (void)
   chopstx_claim_irq (&adc_intr, INTR_REQ_DMA1_Channel1);
   return 0;
 }
-
-#include "board.h"
-#include "sys.h"
 
 static void
 get_adc_config (uint32_t config[4])
@@ -212,24 +217,26 @@ adc_start (void)
 
   RCC->APB2ENR |= (RCC_APB2ENR_ADC1EN | RCC_APB2ENR_ADC2EN);
 
-  ADC1->CR1 = (ADC_CR1_DUALMOD_2 | ADC_CR1_DUALMOD_1 | ADC_CR1_DUALMOD_0
-	       | ADC_CR1_SCAN);
-  ADC1->CR2 = (ADC_CR2_TSVREFE | ADC_CR2_EXTTRIG | ADC_CR2_SWSTART
-	       | ADC_CR2_EXTSEL | ADC_CR2_DMA | ADC_CR2_CONT | ADC_CR2_ADON);
   ADC1->SMPR1 = NEUG_ADC_SETTING1_SMPR1;
   ADC1->SMPR2 = NEUG_ADC_SETTING1_SMPR2;
   ADC1->SQR1 = ADC_SQR1_NUM_CH(NEUG_ADC_SETTING1_NUM_CHANNELS);
   ADC1->SQR2 = 0;
   ADC1->SQR3 = NEUG_ADC_SETTING1_SQR3;
-
-  ADC2->CR1 = (ADC_CR1_DUALMOD_2 | ADC_CR1_DUALMOD_1 | ADC_CR1_DUALMOD_0
+  ADC1->CR1 = (ADC_CR1_DUALMOD_2 | ADC_CR1_DUALMOD_1 | ADC_CR1_DUALMOD_0
 	       | ADC_CR1_SCAN);
-  ADC2->CR2 = ADC_CR2_EXTTRIG | ADC_CR2_CONT | ADC_CR2_ADON;
+  ADC1->CR2 = (ADC_CR2_TSVREFE | ADC_CR2_EXTTRIG | ADC_CR2_SWSTART
+	       | ADC_CR2_EXTSEL | ADC_CR2_DMA | ADC_CR2_CONT | ADC_CR2_ADON);
+  chopstx_usec_wait (1000);
+
   ADC2->SMPR1 = config[0];
   ADC2->SMPR2 = config[1];
   ADC2->SQR1 = config[2];
   ADC2->SQR2 = 0;
   ADC2->SQR3 = config[3];
+  ADC2->CR1 = (ADC_CR1_DUALMOD_2 | ADC_CR1_DUALMOD_1 | ADC_CR1_DUALMOD_0
+	       | ADC_CR1_SCAN);
+  ADC2->CR2 = ADC_CR2_EXTTRIG | ADC_CR2_CONT | ADC_CR2_ADON;
+  chopstx_usec_wait (1000);
 
 #ifdef DELIBARATELY_DO_IT_WRONG_START_STOP
   /*
