@@ -18,6 +18,7 @@ extern void EP6_OUT_Callback (uint16_t len);
 
 #define MSC_MASS_STORAGE_RESET_COMMAND 0xFF
 extern int fraucheky_enabled (void);
+extern void fraucheky_init (void);
 extern void fraucheky_main (void);
 
 extern void fraucheky_setup_endpoints_for_interface (struct usb_dev *dev, int stop);
@@ -303,6 +304,7 @@ main (int argc, char **argv)
   bDeviceState = USB_DEVICE_STATE_UNCONNECTED;
   usb_thd = chopstx_create (PRIO_USB, STACK_ADDR_USB, STACK_SIZE_USB,
 			    usb_main, NULL);
+  fraucheky_init ();
   while (bDeviceState != USB_DEVICE_STATE_CONFIGURED)
     chopstx_usec_wait (250*1000);
   fraucheky_main ();
