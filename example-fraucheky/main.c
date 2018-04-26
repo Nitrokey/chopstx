@@ -41,10 +41,6 @@ usb_device_reset (struct usb_dev *dev)
   /* Initialize Endpoint 0.  */
   usb_lld_setup_endp (dev, ENDP0, 1, 1);
 
-  /* Stop the interface */
-  for (i = 0; i < NUM_INTERFACES; i++)
-    setup_endpoints_for_interface (dev, i, 1);
-
   /* Notify upper layer.  */
   chopstx_mutex_lock (&usb_mtx);
   bDeviceState = USB_DEVICE_STATE_ATTACHED;
