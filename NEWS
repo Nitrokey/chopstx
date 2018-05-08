@@ -1,6 +1,24 @@
 NEWS - Noteworthy changes
 
 
+* Major changes in Chopstx 1.9
+
+  Released 2018-05-09
+
+** GD32F103 support
+GD32F103 is an alternative implementation of STM32F103 by Giga Device,
+which can run at 96MHz.
+
+** Minor USB driver fix for STM32F103
+BTABLE setting should be done for initialization, not for USB RESET.
+
+** Minor ADC driver change for GD32F103
+ADC on GD32F103 is another implementation and its behavior is somewhat
+different.  It requires waits after enabling.  So, we use continuous
+samping.  Still, we observe enough noise (> 4.7 bit/byte) for each ADC
+sampling.
+
+
 * Major changes in Chopstx 1.8
 
   Released 2018-01-19

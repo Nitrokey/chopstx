@@ -13,13 +13,14 @@
 #define GPIO_LED_BASE   GPIOC_BASE
 #define GPIO_LED_CLEAR_TO_EMIT          13
 #define GPIO_USB_BASE   GPIOA_BASE
-#define GPIO_USB_SET_TO_ENABLE          12
 #undef  GPIO_OTHER_BASE
 
 /*
  * Port A setup.
  * PA11 - Push Pull output 10MHz 0 default (until USB enabled) (USBDM)
  * PA12 - Push Pull output 10MHz 0 default (until USB enabled) (USBDP)
+ *
+ * Port C setup.
  * PC13 - Push pull output 50MHz (LED 1:ON 0:OFF)
  * ------------------------ Default
  * PAx  - input with pull-up

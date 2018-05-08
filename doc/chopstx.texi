@@ -11,7 +11,7 @@
 This manual is for Chopstx (version @value{VERSION}).
 
 @noindent
-Copyright @copyright{} 2013, 2015, 2016, 2017 Flying Stone Technology @*
+Copyright @copyright{} 2013, 2015, 2016, 2017, 2018 Flying Stone Technology @*
 
 @quotation
 Permission is granted to copy, distribute and/or modify this document
@@ -155,6 +155,16 @@ able to be into stop or stand-by mode, which is MCU dependent.
 If you use this sleep feature, please consider and implement your
 program carefully.  Enabling sleep, it may result a bricked board; A
 board with no RESET pin cannot be debugged by JTAG/SWD.
+
+
+@node Compile-time macro
+@chapter Compile-time macro
+
+@subheading MHZ
+@anchor{MHZ}
+@defmac {MHZ}
+Running CPU clock in MHz.  Used for chopstx_usec_wait.
+@end defmac
 
 
 @node API

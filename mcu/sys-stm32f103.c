@@ -82,7 +82,7 @@ usb_lld_sys_init (void)
     {
       usb_lld_sys_shutdown ();
       /* Disconnect requires SE0 (>= 2.5uS).  */
-      wait (300);
+      wait (5*MHZ);
     }
 
   usb_cable_config (1);
