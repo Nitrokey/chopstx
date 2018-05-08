@@ -1,7 +1,7 @@
 /*
  * sys-stm32f103.c - system routines for the initial page for STM32F103.
  *
- * Copyright (C) 2013, 2014, 2015, 2016, 2017
+ * Copyright (C) 2013, 2014, 2015, 2016, 2017, 2018
  *               Flying Stone Technology
  * Author: NIIBE Yutaka <gniibe@fsij.org>
  *
@@ -255,6 +255,9 @@ flash_protect (void)
     {
       FLASH->OPTKEYR = FLASH_KEY1;
       FLASH->OPTKEYR = FLASH_KEY2;
+
+      while (!(FLASH->CR & FLASH_CR_OPTWRE))
+	;
 
       FLASH->CR |= FLASH_CR_OPTER;
       FLASH->CR |= FLASH_CR_STRT;

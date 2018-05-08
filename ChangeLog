@@ -5,6 +5,7 @@
 	* doc/chopstx.texi (Compile-time macro): Add chapter.
 
 	* mcu/sys-stm32f103.c (usb_lld_sys_init): Use MHZ.
+	(flash_protect): Fix for GD32F103.
 
 2018-04-26  NIIBE Yutaka  <gniibe@fsij.org>
 

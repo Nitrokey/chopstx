@@ -9,14 +9,17 @@ NEWS - Noteworthy changes
 GD32F103 is an alternative implementation of STM32F103 by Giga Device,
 which can run at 96MHz.
 
-** Minor USB driver fix for STM32F103
-BTABLE setting should be done for initialization, not for USB RESET.
+** Minor USB driver fix for STM32F103/GD32F103
+BTABLE setting should be done at initialization, not at USB RESET.
+
+** Minor SYS driver fix for GD32F103
+flash_protect should check FLASH_CR_OPTWRE.
 
 ** Minor ADC driver change for GD32F103
 ADC on GD32F103 is another implementation and its behavior is somewhat
 different.  It requires waits after enabling.  So, we use continuous
-samping.  Still, we observe enough noise (> 4.7 bit/byte) for each ADC
-sampling.
+sampling, instead of start and stop for each sample.  Still, we
+observe enough noise (> 4.7 bit/byte) for each ADC sampling.
 
 
 * Major changes in Chopstx 1.8
