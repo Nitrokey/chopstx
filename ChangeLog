@@ -1,8 +1,13 @@
+2018-05-09  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* VERSION: 1.9.
+	* doc/chopstx.texi (VERSION): 1.9.
+
 2018-05-08  NIIBE Yutaka  <gniibe@fsij.org>
 
 	* board/board-blue-pill.h (GPIO_USB_SET_TO_ENABLE): Remove.
 
-	* doc/chopstx.texi (Compile-time macro): Add chapter.
+	* doc/chopstx.texi (Compile-time macro): New chapter.
 
 	* mcu/sys-stm32f103.c (usb_lld_sys_init): Use MHZ.
 	(flash_protect): Fix for GD32F103.

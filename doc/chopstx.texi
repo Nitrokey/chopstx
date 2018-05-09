@@ -1,7 +1,7 @@
 \input texinfo                      @c -*-texinfo-*-
 @c %**start of header
 @setfilename chopstx.info
-@set VERSION 1.8
+@set VERSION 1.9
 @settitle Chopstx Reference Manual
 @c Unify some of the indices.
 @syncodeindex tp fn
@@ -62,6 +62,7 @@ section entitled ``Copying''.
 * Threads and only Threads::     Threads and only Threads.
 * Poll or Pole::                 Poll or Pole.
 * Note (Use of sleep mode)::     Use it carefully.
+* Compile-time macro::           Macro to be defined.
 * API::                          API.
 
 Appendix
@@ -88,7 +89,7 @@ Indexes
 
 Chopstx is an RT thread library for ARM Cortex-M0, Cortex-M0plus,
 Cortex-M3 and GNU/Linux emulation.  Specifically, it is used for
-STM32F030, MKL27Z, STM32F103 and as a command on GNU/Linux.
+STM32F030, MKL27Z, STM32F103, GD32F103 and as a command on GNU/Linux.
 
 While most RTOSes come with many features, drivers, and stacks,
 Chopstx just offers an RT thread library.
@@ -159,6 +160,11 @@ board with no RESET pin cannot be debugged by JTAG/SWD.
 
 @node Compile-time macro
 @chapter Compile-time macro
+
+Compiling Chopstx, a macro MHZ should be supplied.
+
+For example, when using the makefile rule of chopstx/rules.mk, please
+define the make variable DEFS with -DMHZ=72 before inclusion of the rule file.
 
 @subheading MHZ
 @anchor{MHZ}

@@ -1,14 +1,14 @@
 Chopstx - Threads and only Threads
-							 Version 1.8
-							  2018-01-19
+							 Version 1.9
+							  2018-05-09
 							Niibe Yutaka
 					     Flying Stone Technology
 
 What's Chopstx?
 ===============
 
-Chopstx is an RT thread library for STM32F103 (ARM Cortex-M3),
-STM32F030 (ARM Cortex-M0), MKL27Z (ARM Cortex-M0plus), and
+Chopstx is an RT thread library for STM32F103 and GD32F103 (ARM
+Cortex-M3), STM32F030 (ARM Cortex-M0), MKL27Z (ARM Cortex-M0plus), and
 emulation on GNU/Linux.
 
 While most RTOSes come with many features, drivers, and protocol
@@ -48,6 +48,8 @@ CDC-ACM demo by:
    $ cd example-cdc
    $ ln -sf ../board/board-olimex-stm32-h103.h board.h
    $ make
+
+If you want to try GD32F103, Add -DMHZ=96 to DEFS in Makefile.
 
 For a specific board named FSM-55, an example of LED matrix dynamic
 driver is provided.  See the directory: example-fsm-55.
