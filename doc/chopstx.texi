@@ -1,7 +1,7 @@
 \input texinfo                      @c -*-texinfo-*-
 @c %**start of header
 @setfilename chopstx.info
-@set VERSION 1.5
+@set VERSION 1.9
 @settitle Chopstx Reference Manual
 @c Unify some of the indices.
 @syncodeindex tp fn
@@ -11,7 +11,7 @@
 This manual is for Chopstx (version @value{VERSION}).
 
 @noindent
-Copyright @copyright{} 2013, 2015, 2016 Flying Stone Technology @*
+Copyright @copyright{} 2013, 2015, 2016, 2017, 2018 Flying Stone Technology @*
 
 @quotation
 Permission is granted to copy, distribute and/or modify this document
@@ -59,6 +59,10 @@ section entitled ``Copying''.
 
 @menu
 * Introduction::                 What is Chopstx.
+* Threads and only Threads::     Threads and only Threads.
+* Poll or Pole::                 Poll or Pole.
+* Note (Use of sleep mode)::     Use it carefully.
+* Compile-time macro::           Macro to be defined.
 * API::                          API.
 
 Appendix
@@ -83,15 +87,90 @@ Indexes
 @node Introduction
 @chapter Introduction
 
-Chopstx is an RT thread library for ARM Cortex-M0, Cortex-M0plus and
-Cortex-M3.  Specifically, it is used for STM32F030, MKL27Z and
-STM32F103.
+Chopstx is an RT thread library for ARM Cortex-M0, Cortex-M0plus,
+Cortex-M3 and GNU/Linux emulation.  Specifically, it is used for
+STM32F030, MKL27Z, STM32F103, GD32F103 and as a command on GNU/Linux.
 
 While most RTOSes come with many features, drivers, and stacks,
-Chopstx just offers a RT thread library.
+Chopstx just offers an RT thread library.
 
 With Chopstx, interrupt handling is also done by a thread.  This
 enables coherent code for ease of maintenance.
+
+While threads are important, we don't need more threads than
+necessary.  Chopstx provides a feature of poll, so that we can
+minimize use of threads.
+
+
+@node Threads and only Threads
+@chapter Threads and only Threads
+
+Chopstx doesn't use the feature of (prioritized) nested vector
+interrupt mechanism at all.  All interrupts are equally handled by a
+single entry of chx_handle_intr which just wakes up corresponding
+thread.  This is the feature of Chopstx.
+
+Nested vector interrupt machanism would be useful for interrupt-driven
+programming style for specific application targets, or, some other
+programing style like the one with spl of Unix.  Some engineers
+(especially, hardware side) still seem to believe that it is a good
+feature to have.  But from the view point of programming and
+maintenance of software, this is one of the most difficult part with
+little benefit, if any.
+
+With traditional interrupt handling, a demarcation of what should be
+done by interrupt handler, bottom half, and thead is crucial for
+applications' performance.  And because the demarcation should be done
+at an early stage of an application development, it has a tendency,
+many parts are getting demanding higher priority.  Amount of code for
+higher priority interrupt hander is getting bigger and bigger, while
+losing performance.
+
+On the other hand, ``Threads (and only Threads)'' programming style
+gives us best flexibility and it can make an application more
+predictable, deterministic and easy to maintain.
+
+There are some applications, like square wave generator, which are not
+suited to this programming style; Another programming style can
+support more performance (frequency).  In general, such an example is
+best suited by hardware (not software).
+
+
+@node Poll or Pole
+@chapter Poll or Pole
+Chopstx provides the @code{chopstx_poll} function to wait on multiple events.
+
+Using @code{chopstx_poll}, we can write an application by event-driven
+programming style, with minimum number of threads, avoiding
+complicated dependency between threads.
+
+
+@node Note (Use of sleep mode)
+@chapter Note (Use of sleep mode)
+
+Calling the chopstx_conf_idle function (> 0) to allow the idle thread
+going to sleep.  MCU will be in sleep mode when no threads are
+running.  By setting relevant bits of system registers, MCU will be
+able to be into stop or stand-by mode, which is MCU dependent.
+
+If you use this sleep feature, please consider and implement your
+program carefully.  Enabling sleep, it may result a bricked board; A
+board with no RESET pin cannot be debugged by JTAG/SWD.
+
+
+@node Compile-time macro
+@chapter Compile-time macro
+
+Compiling Chopstx, a macro MHZ should be supplied.
+
+For example, when using the makefile rule of chopstx/rules.mk, please
+define the make variable DEFS with -DMHZ=72 before inclusion of the rule file.
+
+@subheading MHZ
+@anchor{MHZ}
+@defmac {MHZ}
+Running CPU clock in MHz.  Used for chopstx_usec_wait.
+@end defmac
 
 
 @node API

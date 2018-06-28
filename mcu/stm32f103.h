@@ -1,40 +1,5 @@
-#define PERIPH_BASE	0x40000000
-#define APB1PERIPH_BASE PERIPH_BASE
-#define APB2PERIPH_BASE	(PERIPH_BASE + 0x10000)
-#define AHBPERIPH_BASE	(PERIPH_BASE + 0x20000)
-
-struct RCC {
-  volatile uint32_t CR;
-  volatile uint32_t CFGR;
-  volatile uint32_t CIR;
-  volatile uint32_t APB2RSTR;
-  volatile uint32_t APB1RSTR;
-  volatile uint32_t AHBENR;
-  volatile uint32_t APB2ENR;
-  volatile uint32_t APB1ENR;
-  volatile uint32_t BDCR;
-  volatile uint32_t CSR;
-};
-
-#define RCC_BASE		(AHBPERIPH_BASE + 0x1000)
-static struct RCC *const RCC = (struct RCC *)RCC_BASE;
-
-#define RCC_AHBENR_DMA1EN       0x00000001
-#define RCC_AHBENR_CRCEN        0x00000040
-
-#define RCC_APB2ENR_ADC1EN      0x00000200
-#define RCC_APB2ENR_ADC2EN      0x00000400
-#define RCC_APB2ENR_TIM1EN      0x00000800
-#define RCC_APB1ENR_TIM2EN      0x00000001
-#define RCC_APB1ENR_TIM3EN      0x00000002
-#define RCC_APB1ENR_TIM4EN      0x00000004
-
-#define RCC_APB2RSTR_ADC1RST    0x00000200
-#define RCC_APB2RSTR_ADC2RST    0x00000400
-#define RCC_APB2RSTR_TIM1RST    0x00000800
-#define RCC_APB1RSTR_TIM2RST    0x00000001
-#define RCC_APB1RSTR_TIM3RST    0x00000002
-#define RCC_APB1RSTR_TIM4RST    0x00000004
+#include <mcu/stm32.h>
+#include <mcu/cortex-m.h>
 
 #define  CRC_CR_RESET                        0x00000001
 
@@ -181,36 +146,6 @@ static struct DMA *const DMA1 = (struct DMA *)DMA1_BASE;
 #define DMA1_Channel1_BASE    (AHBPERIPH_BASE + 0x0008)
 static struct DMA_Channel *const DMA1_Channel1 =
   (struct DMA_Channel *)DMA1_Channel1_BASE;
-
-/* System Control Block */
-struct SCB
-{
-  volatile uint32_t CPUID;
-  volatile uint32_t ICSR;
-  volatile uint32_t VTOR;
-  volatile uint32_t AIRCR;
-  volatile uint32_t SCR;
-  volatile uint32_t CCR;
-  volatile uint8_t  SHP[12];
-  volatile uint32_t SHCSR;
-  volatile uint32_t CFSR;
-  volatile uint32_t HFSR;
-  volatile uint32_t DFSR;
-  volatile uint32_t MMFAR;
-  volatile uint32_t BFAR;
-  volatile uint32_t AFSR;
-  volatile uint32_t PFR[2];
-  volatile uint32_t DFR;
-  volatile uint32_t ADR;
-  volatile uint32_t MMFR[4];
-  volatile uint32_t ISAR[5];
-  uint32_t RESERVED0[5];
-  volatile uint32_t CPACR;
-};
-
-#define SCS_BASE 0xE000E000
-#define SCB_BASE (SCS_BASE + 0x0D00)
-static struct SCB *const SCB = (struct SCB *)SCB_BASE;
 
 /* Timer */
 struct TIM
@@ -698,3 +633,12 @@ static struct AFIO *const AFIO = (struct AFIO *)AFIO_BASE;
 
 #define AFIO_MAPR_TIM3_REMAP_PARTIALREMAP 0x00000800
 #define AFIO_MAPR_SWJ_CFG_DISABLE         0x04000000
+
+
+struct DBGMCU {
+  volatile uint32_t CR;
+};
+
+#define DBGMCU_BASE	0xE0042004
+#define DBG_SLEEP	1
+static struct DBGMCU *const DBGMCU = (struct DBGMCU *)DBGMCU_BASE;

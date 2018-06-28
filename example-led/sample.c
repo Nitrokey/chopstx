@@ -72,14 +72,17 @@ blk (void *arg)
 #define PRIO_BLK 2
 #endif
 
-extern uint8_t __process1_stack_base__[], __process1_stack_size__[];
-extern uint8_t __process2_stack_base__[], __process2_stack_size__[];
+#define STACK_MAIN
+#define STACK_PROCESS_1
+#define STACK_PROCESS_2
+#include "stack-def.h"
 
-#define STACK_ADDR_PWM ((uint32_t)__process1_stack_base__)
-#define STACK_SIZE_PWM ((uint32_t)__process1_stack_size__)
 
-#define STACK_ADDR_BLK ((uint32_t)__process2_stack_base__)
-#define STACK_SIZE_BLK ((uint32_t)__process2_stack_size__)
+#define STACK_ADDR_PWM ((uint32_t)process1_base)
+#define STACK_SIZE_PWM (sizeof process1_base)
+
+#define STACK_ADDR_BLK ((uint32_t)process2_base)
+#define STACK_SIZE_BLK (sizeof process2_base)
 
 
 int

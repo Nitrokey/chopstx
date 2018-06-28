@@ -64,6 +64,7 @@ enum {
   /* Device reset and suspend.  */
   USB_EVENT_DEVICE_RESET,
   USB_EVENT_DEVICE_SUSPEND,
+  USB_EVENT_DEVICE_WAKEUP,
   /* Device Requests (Control WRITE Transfer): Standard */
   USB_EVENT_SET_CONFIGURATION,
   USB_EVENT_SET_INTERFACE,
@@ -83,12 +84,13 @@ enum {
 };
 
 enum DEVICE_STATE {
-  UNCONNECTED,
-  ATTACHED,
-  POWERED,
-  SUSPENDED,
-  ADDRESSED,
-  CONFIGURED
+  USB_DEVICE_STATE_UNCONNECTED = 0,  /* No USB */
+  USB_DEVICE_STATE_ATTACHED    = 1,
+  USB_DEVICE_STATE_POWERED     = 2,
+  USB_DEVICE_STATE_DEFAULT     = 3,
+  USB_DEVICE_STATE_ADDRESSED   = 4,
+  USB_DEVICE_STATE_CONFIGURED  = 5,
+  USB_DEVICE_STATE_SUSPEND     = 128 /* Or-ed to other states */
 };
 
 void usb_lld_init (struct usb_dev *dev, uint8_t feature);
@@ -135,12 +137,15 @@ void usb_lld_prepare_shutdown (void);
 void usb_lld_shutdown (void);
 
 #if defined(MCU_KINETIS_L)
+#define INTR_REQ_USB 24
 void usb_lld_tx_enable_buf (int ep_num, const void *buf, size_t len);
 void usb_lld_rx_enable_buf (int ep_num, void *buf, size_t len);
 
 void usb_lld_setup_endp (struct usb_dev *dev, int ep_num, int rx_en, int tx_en);
 void usb_lld_stall (int ep_num);
 #elif defined(GNU_LINUX_EMULATION)
+#include <signal.h>
+#define INTR_REQ_USB SIGUSR1
 void usb_lld_tx_enable_buf (int ep_num, const void *buf, size_t len);
 void usb_lld_rx_enable_buf (int ep_num, void *buf, size_t len);
 
@@ -148,6 +153,7 @@ void usb_lld_setup_endp (struct usb_dev *dev, int ep_num, int rx_en, int tx_en);
 void usb_lld_stall_tx (int ep_num);
 void usb_lld_stall_rx (int ep_num);
 #else
+#define INTR_REQ_USB 20
 /* EP_TYPE[1:0] EndPoint TYPE */
 #define EP_BULK        (0x0000) /* EndPoint BULK        */
 #define EP_CONTROL     (0x0200) /* EndPoint CONTROL     */

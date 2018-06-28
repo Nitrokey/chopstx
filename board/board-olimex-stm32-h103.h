@@ -1,6 +1,7 @@
 #define BOARD_NAME "Olimex STM32-H103"
 #define BOARD_ID    0xf92bb594
 
+#define MCU_STM32F1 1
 #define STM32F10X_MD		/* Medium-density device */
 
 #define STM32_PLLXTPRE                  STM32_PLLXTPRE_DIV1
@@ -30,11 +31,3 @@
 
 #define RCC_ENR_IOP_EN      RCC_APB2ENR_IOPCEN
 #define RCC_RSTR_IOP_RST    RCC_APB2RSTR_IOPCRST
-
-/* NeuG settings for ADC2.  */
-#define NEUG_ADC_SETTING2_SMPR1 ADC_SMPR1_SMP_AN10(ADC_SAMPLE_1P5) \
-                              | ADC_SMPR1_SMP_AN11(ADC_SAMPLE_1P5)
-#define NEUG_ADC_SETTING2_SMPR2 0
-#define NEUG_ADC_SETTING2_SQR3  ADC_SQR3_SQ1_N(ADC_CHANNEL_IN10)   \
-                              | ADC_SQR3_SQ2_N(ADC_CHANNEL_IN11)
-#define NEUG_ADC_SETTING2_NUM_CHANNELS 2

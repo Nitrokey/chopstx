@@ -1,14 +1,14 @@
 Chopstx - Threads and only Threads
-							 Version 1.5
-							  2017-10-10
+							 Version 1.9
+							  2018-05-09
 							Niibe Yutaka
 					     Flying Stone Technology
 
 What's Chopstx?
 ===============
 
-Chopstx is an RT thread library for STM32F103 (ARM Cortex-M3),
-STM32F030 (ARM Cortex-M0), MKL27Z (ARM Cortex-M0plus), and
+Chopstx is an RT thread library for STM32F103 and GD32F103 (ARM
+Cortex-M3), STM32F030 (ARM Cortex-M0), MKL27Z (ARM Cortex-M0plus), and
 emulation on GNU/Linux.
 
 While most RTOSes come with many features, drivers, and protocol
@@ -17,12 +17,17 @@ stacks, Chopstx just offers a simple RT thread library.
 With Chopstx, interrupt handling is also done by a thread.  This
 enables coherent code for ease of maintenance.
 
-This library is _not_ related to the hand game:
+While threads are important, we don't need more threads than
+necessary.  Chopstx provides a feature of poll, so that we can
+minimize use of threads.
+
+
+Note that this library is _not_ related to the hand game:
 
     https://en.wikipedia.org/wiki/Chopsticks_(hand_game)
 
-Thanks to Yao Wei and Enrico Zini for giving me the opportunity
-visiting the wiki page.
+Thanks to Yao Wei and Enrico Zini for giving me an opportunity
+visiting the wiki page above, when my children were playing the game.
 
 
 License
@@ -43,6 +48,8 @@ CDC-ACM demo by:
    $ cd example-cdc
    $ ln -sf ../board/board-olimex-stm32-h103.h board.h
    $ make
+
+If you want to try GD32F103, Add -DMHZ=96 to DEFS in Makefile.
 
 For a specific board named FSM-55, an example of LED matrix dynamic
 driver is provided.  See the directory: example-fsm-55.

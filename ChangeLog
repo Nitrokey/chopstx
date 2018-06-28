@@ -1,3 +1,191 @@
+2018-05-09  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* VERSION: 1.9.
+	* doc/chopstx.texi (VERSION): 1.9.
+
+2018-05-08  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* board/board-blue-pill.h (GPIO_USB_SET_TO_ENABLE): Remove.
+
+	* doc/chopstx.texi (Compile-time macro): New chapter.
+
+	* mcu/sys-stm32f103.c (usb_lld_sys_init): Use MHZ.
+	(flash_protect): Fix for GD32F103.
+
+2018-04-26  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* board/board-blue-pill-g.h: New.  Define STM32_ADCPRE and
+	STM32_USBPRE for 96MHz clock.
+	* mcu/stm32.h (STM32_USBPRE_DIV2): New for GD32F103.
+	* mcu/clk_gpio_init-stm32.c: Allow constants, which are defined by
+	board.h	(STM32_ADCPRE and STM32_USBPRE).
+	* mcu/chx-stm32f103.c: Use STM32_ADCPRE and STM32_USBPRE.
+
+	* mcu/usb-stm32f103.c (usb_lld_init): BTABLE setting at
+	initialization.
+	(usb_lld_reset): Not at each reset.
+
+	* contrib/adc-stm32f103.c [MCU_STM32F1_GD32F1]: Use continuous
+	sampling with no DELIBARATELY_DO_IT_WRONG_START_STOP.
+	(adc_init): Wait after ADC_CR2_ADON.
+	(adc_start): Likewise.  Enabling by ADC_CR2_ADON after all other
+	registers configuration.
+
+2018-01-19  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* VERSION: 1.8.
+	* doc/chopstx.texi (VERSION): 1.8.
+
+2018-01-18  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* mcu/stm32f103.h: Include stm32.h and cortex-m.h.
+
+2018-01-09  Anthony Romano <romanoanthony061@gmail.com>
+
+	* contrib/adc-stm32f103.c: Support IN8 config.
+
+2017-12-19  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* VERSION: 1.7.
+	* doc/chopstx.texi (VERSION): 1.7.
+
+2017-12-18  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* contrib/usart-stm32f103.c: New.
+	* example-usb-serial: New example.
+
+2017-12-16  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* chopstx.c (chx_timer_expired): Bug fix of wake up.
+	(chx_mutex_unlock): Avoid non-deterministic thing.
+
+2017-12-14  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* board/board-st-nucleo-f103.h: Update.
+
+	* mcu/sys-stm32f103.h (BOARD_ID_FST_01G): New.
+
+	* contrib/adc-stm32f103.c (get_adc_config): Add a case for
+	BOARD_ID_FST_01G and BOARD_ID_ST_NUCLEO_F103.
+
+2017-11-24  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* VERSION: 1.6.
+	* doc/chopstx.texi (VERSION): 1.6.
+	* doc/chopstx-api.texi: Regenerated.
+
+2017-11-21  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* example-fsm-55: Update using stack-def.h.
+
+2017-11-20  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* example-led: Update using stack-def.h.
+
+	* chopstx-cortex-m.c [__ARM_ARCH_6M__] (chx_sched): Fix.
+
+2017-11-18  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* example-fsm-55/hh.c (main): Just return.
+
+2017-11-17  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* mcu/chx-stm32f103.c (configure_clock): Change prescaler on
+	sleep.
+
+	* mcu/clk_gpio_init-stm32.c (clock_init): Don't turn on CRC
+	module.
+
+	* mcu/clk_gpio_init-stm32.c (STM32_*): Move to...
+	* mcu/stm32.h (STM32_*): ... this header file.
+
+	* mcu/stm32f103.h, mcu/clk_gpio_init-stm32.c (RCC): Move to...
+	* mcu/stm32.h (RCC): ... this header file.
+
+	* example-fsm-55: Update for new sleep API.
+
+	* rules.mk (CSRC): Add mcu/chx-$(CHIP).c.
+
+	* chopstx-cortex-m.c (idle, chx_sleep_mode): Remove.
+	(chx_sched, preempt): Call chx_idle.
+	* mcu/chx-mkl27z.c, mcu/chx-stm32f0.c, mcu/chx-stm32f103.c: New.
+	* mcu/stm32.h: New.
+
+	* chopstx-gnu-linux.c (chx_sleep_mode): Move to...
+	* mcu/chx-gnu-linux.c: Here.
+
+	* mcu/stm32f103.h (DBGMCU): New.
+
+	* mcu/cortex-m.h: New.
+	* mcu/sys-stm32f0.c, mcu/sys-stm32f103.c: Use mcu/cortex-m.h.
+
+	* chopstx.c (chopstx_conf_idle): Call chx_sleep_mode before
+	changing chx_allow_sleep.
+
+	* board/board-blue-pill.h, board/board-cq-starm.h,
+	board/board-fst-01-00.h, board/board-fst-01.h,
+	board/board-fst-01g.h, board/board-maple-mini.h,
+	board/board-nitrokey-start.h, board/board-olimex-stm32-h103.h,
+	board/board-st-dongle.h, board/board-st-nucleo-f103.h,
+	board/board-stbee-mini.h, board/board-stbee.h,
+	board/board-stm32-primer2.h: Add MCU_STM32F1.
+
+2017-11-16  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* chopstx.h (chopstx_poll): API change.
+	* chopstx.c (chopstx_poll): Use const pointer.
+
+	* chopstx-cortex-m.c (idle): Support WFE.
+	[!MCU_STM32F0] (chx_sleep_mode): Clock feed by HSI.
+
+2017-11-15  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* chopstx.c (chopstx_conf_idle): Call chx_sleep_mode.
+	* chopstx-cortex-m.c (chx_sleep_mode): New.
+	* chopstx-gnu-linux.c (chx_sleep_mode): New.
+
+2017-11-15  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* example-fsm-55/hh.c (main): Add call to chopstx_conf_idle.
+	* example-fsm-55/Makefile (DEFS): Remove USE_WFI_FOR_IDLE.
+
+	* chopstx.c (chx_init): Initialize sleep lock.
+	(chopstx_conf_idle): New.
+	* chopstx-cortex-m.c (idle): Support sleep.
+
+	* mcu/usb-stm32f103.c (usb_lld_event_handler): Fix suspend/resume.
+
+2017-11-14  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* usb_lld.h (DEVICE_STATE): Add prefix USB_DEVICE_STATE_.
+	(USB_DEVICE_STATE_DEFAULT): New.
+
+	* mcu/usb-stm32f103.c (usb_lld_init): Suspend/resume init.
+	(usb_lld_event_handler): Add suspend/resume support.
+
+	* example-cdc/usb-cdc.c: Follow the change of usb_lld.h.
+	* example-cdc-gnu-linux/usb-cdc.c: Ditto.
+	* example-fs-bb48/usb-cdc.c: Ditto.
+	* example-fraucheky/main.c: Ditto.
+	* example-fraucheky/Makefile (USE_SYS): Add for debug.
+
+2017-11-13  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* mcu/usb-stm32f103.c (usb_lld_init): Set up interrupt on errors.
+
+	* usb_lld.h (USB_EVENT_DEVICE_WAKEUP): New.
+	(INTR_REQ_USB): Define here.
+	* mcu/usb-usbip.c, example-cdc/usb-cdc.c,
+	example-fraucheky/main.c, example-fs-bb48/usb-cdc.c: Change
+	for INTR_REQ_USB.
+
+2017-11-10  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* chopstx-cortex-m.c (svc): Replace stack top to TP.
+	(chx_sched): Return ->v correctly.
+
+	* chopstx.c (chx_timer_expired): Fix timeout.
+
 2017-10-11  NIIBE Yutaka  <gniibe@fsij.org>
 
 	* mcu/sys-stm32f103.h (nonreturn_handler0, nonreturn_handler1): New.

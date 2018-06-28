@@ -1,6 +1,7 @@
 #define BOARD_NAME "FST-01-00"
 #define BOARD_ID    0x613870a9
 
+#define MCU_STM32F1 1
 #define STM32F10X_MD		/* Medium-density device */
 
 #define STM32_PLLXTPRE                  STM32_PLLXTPRE_DIV1

@@ -6,7 +6,7 @@
 #include "board.h"
 
 #define PERIPH_BASE	0x40000000
-#define APBPERIPH_BASE   PERIPH_BASE
+#define APB1PERIPH_BASE  PERIPH_BASE
 #define APB2PERIPH_BASE	(PERIPH_BASE + 0x10000)
 
 struct GPIO {

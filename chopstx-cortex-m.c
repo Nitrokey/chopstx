@@ -229,18 +229,6 @@ chx_cpu_sched_unlock (void)
 }
 
 
-static void __attribute__((naked, used))
-idle (void)
-{
-#if defined(USE_WFI_FOR_IDLE)
-  for (;;)
-    asm volatile ("wfi" : : : "memory");
-#else
-  for (;;);
-#endif
-}
-
-
 void
 chx_handle_intr (void)
 {
@@ -299,7 +287,7 @@ chx_request_preemption (uint16_t prio)
  *
  * Returns:
  *          1 on wakeup by others.
- *          0 on normal wakeup.
+ *          0 on normal wakeup (timer expiration, lock aquirement).
  *         -1 on cancellation.
  */
 static uintptr_t __attribute__ ((naked, noinline))
@@ -309,25 +297,24 @@ chx_sched (uint32_t yield)
 
 #if defined(__ARM_ARCH_7M__)
   asm volatile (
-	"svc	#0\n\t"
-	"bx	lr"
+	"svc	#0"
 	: "=r" (tp) : "0" (yield): "memory");
 #else
   register uint32_t arg_yield asm ("r1");
 
   /* Build stack data as if it were an exception entry.  */
   /*
-   * r0:  0                     scratch
+   * r0:  TP                    scratch
    * r1:  0                     scratch
    * r2:  0                     scratch
    * r3:  0                     scratch
    * r12: 0                     scratch
    * lr   as-is
-   * pc:  return address (= lr)
+   * pc:  return address (= .L_CONTEXT_SWITCH_FINISH)
    * psr: INITIAL_XPSR          scratch
    */
   asm ("mov	r1, lr\n\t"
-       "mov	r2, r1\n\t"
+       "ldr	r2, =.L_CONTEXT_SWITCH_FINISH\n\t"
        "mov	r3, #128\n\t"
        "lsl	r3, #17\n\t"
        "push	{r1, r2, r3}\n\t"
@@ -335,16 +322,16 @@ chx_sched (uint32_t yield)
        "mov	r2, r1\n\t"
        "mov	r3, r1\n\t"
        "push	{r1, r2, r3}\n\t"
-       "push	{r1, r2}"
-       : /* no output*/
-       : /* no input */
-       : "r1", "r2", "r3", "memory");
-
-  /* Save registers onto CHX_THREAD struct.  */
-  asm ("mov	r1, r0\n\t"
+       "mov	r1, r0\n\t"
        "ldr	r2, =running\n\t"
        "ldr	r0, [r2]\n\t"
-       "add	r0, #20\n\t"
+       "push	{r0, r3}"
+       :  "=r" (tp), "=r" (arg_yield)
+       : "0" (yield)
+       : "r2", "r3", "memory");
+
+  /* Save registers onto CHX_THREAD struct.  */
+  asm ("add	r0, #20\n\t"
        "stm	r0!, {r4, r5, r6, r7}\n\t"
        "mov	r2, r8\n\t"
        "mov	r3, r9\n\t"
@@ -353,8 +340,8 @@ chx_sched (uint32_t yield)
        "mov	r6, sp\n\t"
        "stm	r0!, {r2, r3, r4, r5, r6}\n\t"
        "sub	r0, #56"
-       : "=r" (tp), "=r" (arg_yield)
-       : "0" (yield)
+       : /* no output */
+       : "r" (tp)
        : "r2", "r3", "r4", "r5", "r6", "r7", "memory");
 
   if (arg_yield)
@@ -383,7 +370,7 @@ chx_sched (uint32_t yield)
 		/* Spawn an IDLE thread.  */
 		"ldr	r1, =__main_stack_end__\n\t"
 		"mov	sp, r1\n\t"
-		"ldr	r0, =idle\n\t"	     /* PC = idle */
+		"ldr	r0, =chx_idle\n\t" /* PC = idle */
 		/**/
 		/* Unmask interrupts.  */
 		"cpsie	i\n\t"
@@ -391,11 +378,7 @@ chx_sched (uint32_t yield)
 
 		/* Normal context switch */
 	"0:\n\t"
-		"add	r0, #16\n\t" /* ->V */
-		"ldr	r1, [r0]\n\t"
-		"str	r1, [sp]\n\t"
-		/**/
-		"add	r0, #4\n\t"
+		"add	r0, #20\n\t"
 		"ldm	r0!, {r4, r5, r6, r7}\n\t"
 		"ldm	r0!, {r1, r2, r3}\n\t"
 		"mov	r8, r1\n\t"
@@ -455,12 +438,17 @@ chx_sched (uint32_t yield)
 		"mov	r12, r0\n\t"
 		"pop	{r0, r1, r2, r3}\n\t"
 		"add	sp, #12\n\t"
-		"pop	{pc}"
+		"pop	{pc}\n\t"
+	".L_CONTEXT_SWITCH_FINISH:"
 		: "=r" (tp)		/* Return value in R0 */
 		: "0" (tp)
 		: "memory");
 #endif
 
+  asm volatile ("bx	lr"
+		: "=r" (tp)
+		: "0" (tp->v)
+		: "memory");
   return (uintptr_t)tp;
 }
 
@@ -631,7 +619,7 @@ preempt (void)
 	"mov	r3, #0\n\t"
 	"stm	r0!, {r1, r2, r3}\n\t"
 	"stm	r0!, {r1, r2, r3}\n\t"
-	"ldr	r1, =idle\n\t"	     /* PC = idle */
+	"ldr	r1, =chx_idle\n\t" /* PC = idle */
 	"mov	r2, #0x010\n\t"
 	"lsl	r2, r2, #20\n\t" /* xPSR = T-flag set (Thumb) */
 	"stm	r0!, {r1, r2}\n\t"
@@ -675,7 +663,8 @@ svc (void)
        "mov	r5, r11\n\t"
        "mrs	r6, PSP\n\t" /* r13(=SP) in user space.  */
        "stm	r1!, {r2, r3, r4, r5, r6}\n\t"
-       "ldr	r1, [r6]"
+       "ldr	r1, [r6]\n\t"
+       "str	r0, [r6]"
        : "=r" (tp), "=r" (orig_r0)
        : /* no input */
        : "r2", "r3", "r4", "r5", "r6", "memory");
@@ -697,10 +686,6 @@ svc (void)
     }
 
   asm volatile (
-	"cbz	r0, 0f\n\t"
-	"ldr	r1, [r0, #16]\n\t" /* ->V */
-	"str	r1, [sp]\n\t"
-    "0:\n\t"
 	"b	.L_CONTEXT_SWITCH"
 	: /* no output */ : "r" (tp) : "memory");
 }

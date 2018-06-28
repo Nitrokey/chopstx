@@ -41,6 +41,7 @@ struct endpoint_ctl {
 };
 static struct endpoint_ctl ep[16];
 
+#if 0
 struct USB_CONF {
   const uint8_t PERID;       /* Peripheral ID register              */
   uint8_t rsvd0[3];          /*                                     */
@@ -51,6 +52,7 @@ struct USB_CONF {
   volatile uint8_t ADDINFO;  /* Peripheral Additional Info register */
 };
 static struct USB_CONF *const USB_CONF = (struct USB_CONF *)0x40072000;
+#endif
 
 struct USB_CTRL0 {
   volatile uint8_t OTGCTL;   /* OTG Control register                */

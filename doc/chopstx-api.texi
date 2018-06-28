@@ -176,7 +176,7 @@ Returns old state which is 0 when it was enabled.
 
 @subheading chopstx_poll
 @anchor{chopstx_poll}
-@deftypefun {int} {chopstx_poll} (uint32_t * @var{usec_p}, int @var{n}, struct chx_poll_head * [] @var{pd_array})
+@deftypefun {int} {chopstx_poll} (uint32_t * @var{usec_p}, int @var{n}, struct chx_poll_head *const [] @var{pd_array})
 @var{usec_p}: Pointer to usec for timeout.  Forever if NULL.
 
 @var{n}: Number of poll descriptors
@@ -199,5 +199,25 @@ dynamically changing schedule priorities complicates the system.
 Only a possible valid usage of this function is in the main thread
 which starts its execution with priority of CHX_PRIO_MAIN_INIT, and
 let it change its priority after initialization of other threads.
+@end deftypefun
+
+@subheading chx_sleep_mode
+@anchor{chx_sleep_mode}
+@deftypefun {extern void} {chx_sleep_mode} (int @var{enable_sleep})
+@var{enable_sleep}: Enable sleep on idle or not
+
+If @var{enable_sleep} is > 0, allow sleep for the idle thread.
+
+Behavior of @var{enable_sleep} >= 1 depends on MCU.
+
+For STM32F0, 1 for Sleep (CPU clock OFF only), 2 for Stop (Wakeup
+by EXTI, voltage regulator on), 3 for Stop (Wakeup by EXTI, voltage
+regulator low-power), 4 for Standby (Wakeup by RESET, voltage
+regulator off).
+
+For STM32F103, 1 for normal sleep, and 2 for sleep with lower 8MHz
+clock.
+
+Return previous value of @var{enable_sleep}.
 @end deftypefun
 

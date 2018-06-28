@@ -79,7 +79,11 @@ chx_fatal (uint32_t err_code)
 #include "chopstx-cortex-m.h"
 #endif
 
-/* RUNNING: the current thread. */
+/* ALLOW_SLEEP for the idle thread.  */
+int chx_allow_sleep;
+static struct chx_spinlock chx_enable_sleep_lock;
+
+/* RUNNING: the current thread.  */
 struct chx_thread *running;
 
 struct chx_queue {
@@ -382,6 +386,7 @@ chx_timer_expired (void)
     {
       uint32_t next_tick = tp->v;
 
+      tp->v = (uintptr_t)0;
       chx_ready_enqueue (tp);
       if (tp == running)	/* tp->flag_sched_rr == 1 */
 	prio = MAX_PRIO;
@@ -398,6 +403,7 @@ chx_timer_expired (void)
 	       tp = tp_next)
 	    {
 	      next_tick = tp->v;
+	      tp->v = (uintptr_t)0;
 	      tp_next = (struct chx_thread *)tp->next;
 	      ll_dequeue ((struct chx_pq *)tp);
 	      chx_ready_enqueue (tp);
@@ -440,6 +446,7 @@ chx_init (struct chx_thread *tp)
 {
   chx_prio_init ();
   chx_init_arch (tp);
+  chx_spin_init (&chx_enable_sleep_lock);
 
   q_ready.q.next = q_ready.q.prev = (struct chx_pq *)&q_ready.q;
   chx_spin_init (&q_ready.lock);
@@ -569,6 +576,7 @@ chx_mutex_unlock (chopstx_mutex_t *mutex)
       uint16_t newprio = running->prio_orig;
       chopstx_mutex_t *m;
 
+      tp->v = (uintptr_t)0;
       chx_ready_enqueue (tp);
 
       /* Examine mutexes we hold, and determine new priority for running.  */
@@ -1316,7 +1324,7 @@ chx_proxy_init (struct chx_px *px, uint32_t *cp)
  * Returns number of active descriptors.
  */
 int
-chopstx_poll (uint32_t *usec_p, int n, struct chx_poll_head *pd_array[])
+chopstx_poll (uint32_t *usec_p, int n, struct chx_poll_head *const pd_array[])
 {
   uint32_t counter = 0;
   int i;
@@ -1468,4 +1476,39 @@ chopstx_setpriority (chopstx_prio_t prio_new)
     chx_cpu_sched_unlock ();
 
   return prio_orig;
+}
+
+
+/**
+ * chopstx_conf_idle - Configure IDLE thread
+ * @enable_sleep: Enable sleep on idle or not
+ *
+ * If @enable_sleep is > 0, allow sleep for the idle thread.
+ *
+ * Behavior of @enable_sleep >= 1 depends on MCU.
+ *
+ * For STM32F0, 1 for Sleep (CPU clock OFF only), 2 for Stop (Wakeup
+ * by EXTI, voltage regulator on), 3 for Stop (Wakeup by EXTI, voltage
+ * regulator low-power), 4 for Standby (Wakeup by RESET, voltage
+ * regulator off).
+ *
+ * For STM32F103, 1 for normal sleep, and 2 for sleep with lower 8MHz
+ * clock.
+ *
+ * Return previous value of @enable_sleep.
+ */
+extern void chx_sleep_mode (int enable_sleep);
+
+int
+chopstx_conf_idle (int enable_sleep)
+{
+  int r;
+
+  chx_spin_lock (&chx_enable_sleep_lock);
+  r = chx_allow_sleep;
+  chx_sleep_mode (enable_sleep);
+  chx_allow_sleep = enable_sleep;
+  chx_spin_unlock (&chx_enable_sleep_lock);
+
+  return r;
 }

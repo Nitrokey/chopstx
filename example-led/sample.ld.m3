@@ -1,12 +1,6 @@
 /*
  * ST32F103 memory setup.
  */
-__main_stack_size__      = 0x0100; /* Idle+Exception handlers */
-__process0_stack_size__  = 0x0100; /* Main program            */
-__process1_stack_size__  = 0x0100; /* first thread program    */
-__process2_stack_size__  = 0x0100; /* second thread program   */
-__process3_stack_size__  = 0x0100; /* third thread program    */
-
 MEMORY
 {
     flash0 : org = 0x08000000, len = 4k
@@ -78,34 +72,14 @@ SECTIONS
     _etext = .;
     _textdata = _etext;
 
-    .process_stack :
+    .stacks (NOLOAD) :
     {
+        *(.main_stack)
+        *(.process_stack.0)
+        *(.process_stack.1)
+        *(.process_stack.2)
+        *(.process_stack.3)
         . = ALIGN(8);
-        __process3_stack_base__ = .;
-        . += __process3_stack_size__;
-        . = ALIGN(8);
-        __process3_stack_end__ = .;
-        __process2_stack_base__ = .;
-        . += __process2_stack_size__;
-        . = ALIGN(8);
-        __process2_stack_end__ = .;
-        __process1_stack_base__ = .;
-        . += __process1_stack_size__;
-        . = ALIGN(8);
-        __process1_stack_end__ = .;
-        __process0_stack_base__ = .;
-        . += __process0_stack_size__;
-        . = ALIGN(8);
-        __process0_stack_end__ = .;
-    } > ram
-
-    .main_stack :
-    {
-        . = ALIGN(8);
-        __main_stack_base__ = .;
-        . += __main_stack_size__;
-        . = ALIGN(8);
-        __main_stack_end__ = .;
     } > ram
 
     .data :

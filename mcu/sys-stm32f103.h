@@ -1,6 +1,7 @@
 #define BOARD_ID_CQ_STARM          0xc5480875
 #define BOARD_ID_FST_01_00         0x613870a9
 #define BOARD_ID_FST_01            0x696886af
+#define BOARD_ID_FST_01G           0x8801277f
 #define BOARD_ID_MAPLE_MINI        0x7a445272
 #define BOARD_ID_OLIMEX_STM32_H103 0xf92bb594
 #define BOARD_ID_STBEE_MINI        0x1f341961

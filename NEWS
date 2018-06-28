@@ -1,6 +1,81 @@
 NEWS - Noteworthy changes
 
 
+* Major changes in Chopstx 1.9
+
+  Released 2018-05-09
+
+** GD32F103 support
+GD32F103 is an alternative implementation of STM32F103 by Giga Device,
+which can run at 96MHz.
+
+** Minor USB driver fix for STM32F103/GD32F103
+BTABLE setting should be done at initialization, not at USB RESET.
+
+** Minor SYS driver fix for GD32F103
+flash_protect should check FLASH_CR_OPTWRE.
+
+** Minor ADC driver change for GD32F103
+ADC on GD32F103 is another implementation and its behavior is somewhat
+different.  It requires waits after enabling.  So, we use continuous
+sampling, instead of start and stop for each sample.  Still, we
+observe enough noise (> 4.7 bit/byte) for each ADC sampling.
+
+
+* Major changes in Chopstx 1.8
+
+  Released 2018-01-19
+
+** Minor driver API fix
+In version 1.6, part of mcu/stm32f103.h was moved into mcu/cortex-m.h
+and mcu/stm32.h.  Now, mcu/stm32f103.h automatically includes
+mcu/cortex-m.h and mcu/stm32.h, so that it doesn't break existing
+applications.
+
+
+* Major changes in Chopstx 1.7
+
+  Released 2017-12-19
+
+** Fix: timer wakeup
+Timer expiration had a bug.  When it is waken up, the wake up doesn't
+handle as a timer expiration when there are multiple threads on same
+timing of expire.  It confuses as if it were forced wakeup.
+
+** New driver: USART for STM32.
+USART driver for STM32 is added.
+
+
+* Major changes in Chopstx 1.6
+
+  Released 2017-11-24
+
+** Fix cancellation
+In Chopstx 1.4 and 1.5, cancellation doesn't work for real MCU.  This
+is due to the change of chx_sched interface, introduced for GNU/Linux
+emulation.  This bug is fixed.
+
+** New feature: sleep mode
+New function chopstx_conf_idle is added to support sleep.  Note that
+use of sleep by this feature requires careful preparation.  For
+example, enabling sleep, a board with no RESET pin cannot be debugged
+by JTAG/SWD.  Setting of DBGMCU_CR (0xE0042004) is required beforehand
+(hardware default is zero).
+
+** API change: chopstx_poll
+This is a kind of clarification.  The third argument is now an array
+of constant pointers.  We don't touch the array itself, just use it.
+This allows having the array in read-only memory and can contribute
+less use of RAM.
+
+** USB API changes
+INTR_REQ_USB is now defined by usb_lld.h.  Enumeration type of
+DEVICE_STATE now has USB_DEVICE_STATE_ prefix.
+
+** USB driver change
+USB suspend and wakeup events are supported for STM32F103.
+
+
 * Major changes in Chopstx 1.5
 
   Released 2017-10-10

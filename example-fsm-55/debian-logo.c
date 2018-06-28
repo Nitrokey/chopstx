@@ -7,7 +7,7 @@
 static uint8_t main_finished;
 
 #define PERIPH_BASE	0x40000000
-#define APBPERIPH_BASE   PERIPH_BASE
+#define APB1PERIPH_BASE  PERIPH_BASE
 #define APB2PERIPH_BASE	(PERIPH_BASE + 0x10000)
 #define AHBPERIPH_BASE	(PERIPH_BASE + 0x20000)
 #define AHB2PERIPH_BASE	(PERIPH_BASE + 0x08000000)
@@ -163,17 +163,19 @@ button (void *arg)
   return NULL;
 }
 
+#define STACK_MAIN
+#define STACK_PROCESS_1
+#define STACK_PROCESS_2
+#include "stack-def.h"
+
 #define PRIO_LED 3
 #define PRIO_BUTTON 2
 
-extern uint8_t __process1_stack_base__[], __process1_stack_size__[];
-extern uint8_t __process2_stack_base__[], __process2_stack_size__[];
+#define STACK_ADDR_LED ((uint32_t)process1_base)
+#define STACK_SIZE_LED (sizeof process1_base)
 
-#define STACK_ADDR_LED ((uint32_t)__process1_stack_base__)
-#define STACK_SIZE_LED ((uint32_t)__process1_stack_size__)
-
-#define STACK_ADDR_BUTTON ((uint32_t)__process2_stack_base__)
-#define STACK_SIZE_BUTTON ((uint32_t)__process2_stack_size__)
+#define STACK_ADDR_BUTTON ((uint32_t)process2_base)
+#define STACK_SIZE_BUTTON (sizeof process2_base)
 
 #define DATA55(x0,x1,x2,x3,x4) (x0<<20)|(x1<<15)|(x2<<10)|(x3<< 5)|(x4<< 0)
 #define SIZE55(img) (sizeof (img) / sizeof (uint32_t))
@@ -365,8 +367,6 @@ text_display (uint8_t kind)
 }
 
 
-static void setup_scr_sleepdeep (void);
-
 int
 main (int argc, const char *argv[])
 {
@@ -377,6 +377,8 @@ main (int argc, const char *argv[])
 
   (void)argc;
   (void)argv;
+
+  chopstx_conf_idle (1);
 
   chopstx_mutex_init (&mtx);
   chopstx_cond_init (&cnd0);
@@ -418,56 +420,6 @@ main (int argc, const char *argv[])
   chopstx_join (button_thd, NULL);
   chopstx_join (led_thd, NULL);
 
-  setup_scr_sleepdeep ();
-  for (;;)
-    asm volatile ("wfi" : : : "memory");
-
+  chopstx_conf_idle (4);
   return 0;
-}
-
-struct SCB
-{
-  volatile uint32_t CPUID;
-  volatile uint32_t ICSR;
-  volatile uint32_t VTOR;
-  volatile uint32_t AIRCR;
-  volatile uint32_t SCR;
-  volatile uint32_t CCR;
-  volatile uint8_t  SHP[12];
-  volatile uint32_t SHCSR;
-  volatile uint32_t CFSR;
-  volatile uint32_t HFSR;
-  volatile uint32_t DFSR;
-  volatile uint32_t MMFAR;
-  volatile uint32_t BFAR;
-  volatile uint32_t AFSR;
-  volatile uint32_t PFR[2];
-  volatile uint32_t DFR;
-  volatile uint32_t ADR;
-  volatile uint32_t MMFR[4];
-  volatile uint32_t ISAR[5];
-};
-
-#define SCS_BASE	(0xE000E000)
-#define SCB_BASE	(SCS_BASE +  0x0D00)
-static struct SCB *const SCB = ((struct SCB *)SCB_BASE);
-
-#define SCB_SCR_SLEEPDEEP (1 << 2)
-
-struct PWR
-{
-  volatile uint32_t CR;
-  volatile uint32_t CSR;
-};
-#define PWR_CR_PDDS 0x0002
-#define PWR_CR_CWUF 0x0004
-
-#define PWR_BASE	(APBPERIPH_BASE + 0x00007000)
-#define PWR		((struct PWR *) PWR_BASE)
-
-static void setup_scr_sleepdeep (void)
-{
-  PWR->CR |= PWR_CR_CWUF;
-  PWR->CR |= PWR_CR_PDDS;
-  SCB->SCR |= SCB_SCR_SLEEPDEEP;
 }

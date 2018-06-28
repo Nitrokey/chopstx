@@ -3,7 +3,7 @@
  *                   In this ADC driver, there are NeuG specific parts.
  *                   You need to modify to use this as generic ADC driver.
  *
- * Copyright (C) 2011, 2012, 2013, 2015, 2016
+ * Copyright (C) 2011, 2012, 2013, 2015, 2016, 2017, 2018
  *               Free Software Initiative of Japan
  * Author: NIIBE Yutaka <gniibe@fsij.org>
  *
@@ -34,6 +34,8 @@
 #include <chopstx.h>
 #include <mcu/stm32f103.h>
 #include "adc.h"
+#include "board.h"
+#include "sys.h"
 
 #define STM32_ADC_ADC1_DMA_PRIORITY         2
 
@@ -46,6 +48,7 @@
 #define ADC_SMPR2_SMP_AN0(n)    ((n) << 0)
 #define ADC_SMPR2_SMP_AN1(n)    ((n) << 3)
 #define ADC_SMPR2_SMP_AN2(n)    ((n) << 6)
+#define ADC_SMPR2_SMP_AN8(n)    ((n) << 24)
 #define ADC_SMPR2_SMP_AN9(n)    ((n) << 27)
 
 #define ADC_SQR1_NUM_CH(n)      (((n) - 1) << 20)
@@ -60,6 +63,7 @@
 #define ADC_CHANNEL_IN0         0
 #define ADC_CHANNEL_IN1         1
 #define ADC_CHANNEL_IN2         2
+#define ADC_CHANNEL_IN8         8
 #define ADC_CHANNEL_IN9         9
 #define ADC_CHANNEL_IN10        10
 #define ADC_CHANNEL_IN11        11
@@ -67,7 +71,9 @@
 #define ADC_CHANNEL_VREFINT     17
 
 #define DELIBARATELY_DO_IT_WRONG_VREF_SAMPLE_TIME
+#ifndef MCU_STM32F1_GD32F1
 #define DELIBARATELY_DO_IT_WRONG_START_STOP
+#endif
 
 #ifdef DELIBARATELY_DO_IT_WRONG_VREF_SAMPLE_TIME
 #define ADC_SAMPLE_VREF ADC_SAMPLE_1P5
@@ -112,6 +118,8 @@ adc_init (void)
 
   ADC1->CR1 = 0;
   ADC1->CR2 = ADC_CR2_ADON;
+  chopstx_usec_wait (1000);
+
   ADC1->CR2 = ADC_CR2_ADON | ADC_CR2_RSTCAL;
   while ((ADC1->CR2 & ADC_CR2_RSTCAL) != 0)
     ;
@@ -122,6 +130,8 @@ adc_init (void)
 
   ADC2->CR1 = 0;
   ADC2->CR2 = ADC_CR2_ADON;
+  chopstx_usec_wait (1000);
+
   ADC2->CR2 = ADC_CR2_ADON | ADC_CR2_RSTCAL;
   while ((ADC2->CR2 & ADC_CR2_RSTCAL) != 0)
     ;
@@ -135,15 +145,13 @@ adc_init (void)
   return 0;
 }
 
-#include "board.h"
-#include "sys.h"
-
 static void
 get_adc_config (uint32_t config[4])
 {
   config[2] = ADC_SQR1_NUM_CH(2);
   switch (SYS_BOARD_ID)
     {
+    case BOARD_ID_FST_01G:
     case BOARD_ID_FST_01:
       config[0] = 0;
       config[1] = ADC_SMPR2_SMP_AN0(ADC_SAMPLE_1P5)
@@ -169,13 +177,20 @@ get_adc_config (uint32_t config[4])
 		| ADC_SQR3_SQ2_N(ADC_CHANNEL_IN2);
       break;
 
+    case BOARD_ID_ST_NUCLEO_F103:
+      config[0] = 0;
+      config[1] = ADC_SMPR2_SMP_AN8(ADC_SAMPLE_1P5)
+		| ADC_SMPR2_SMP_AN9(ADC_SAMPLE_1P5);
+      config[3] = ADC_SQR3_SQ1_N(ADC_CHANNEL_IN8)
+		| ADC_SQR3_SQ2_N(ADC_CHANNEL_IN9);
+      break;
+
     case BOARD_ID_CQ_STARM:
     case BOARD_ID_FST_01_00:
     case BOARD_ID_MAPLE_MINI:
     case BOARD_ID_STM32_PRIMER2:
     case BOARD_ID_STM8S_DISCOVERY:
     case BOARD_ID_ST_DONGLE:
-    case BOARD_ID_ST_NUCLEO_F103:
     case BOARD_ID_NITROKEY_START:
     default:
       config[0] = 0;
@@ -202,24 +217,26 @@ adc_start (void)
 
   RCC->APB2ENR |= (RCC_APB2ENR_ADC1EN | RCC_APB2ENR_ADC2EN);
 
-  ADC1->CR1 = (ADC_CR1_DUALMOD_2 | ADC_CR1_DUALMOD_1 | ADC_CR1_DUALMOD_0
-	       | ADC_CR1_SCAN);
-  ADC1->CR2 = (ADC_CR2_TSVREFE | ADC_CR2_EXTTRIG | ADC_CR2_SWSTART
-	       | ADC_CR2_EXTSEL | ADC_CR2_DMA | ADC_CR2_CONT | ADC_CR2_ADON);
   ADC1->SMPR1 = NEUG_ADC_SETTING1_SMPR1;
   ADC1->SMPR2 = NEUG_ADC_SETTING1_SMPR2;
   ADC1->SQR1 = ADC_SQR1_NUM_CH(NEUG_ADC_SETTING1_NUM_CHANNELS);
   ADC1->SQR2 = 0;
   ADC1->SQR3 = NEUG_ADC_SETTING1_SQR3;
-
-  ADC2->CR1 = (ADC_CR1_DUALMOD_2 | ADC_CR1_DUALMOD_1 | ADC_CR1_DUALMOD_0
+  ADC1->CR1 = (ADC_CR1_DUALMOD_2 | ADC_CR1_DUALMOD_1 | ADC_CR1_DUALMOD_0
 	       | ADC_CR1_SCAN);
-  ADC2->CR2 = ADC_CR2_EXTTRIG | ADC_CR2_CONT | ADC_CR2_ADON;
+  ADC1->CR2 = (ADC_CR2_TSVREFE | ADC_CR2_EXTTRIG | ADC_CR2_SWSTART
+	       | ADC_CR2_EXTSEL | ADC_CR2_DMA | ADC_CR2_CONT | ADC_CR2_ADON);
+  chopstx_usec_wait (1000);
+
   ADC2->SMPR1 = config[0];
   ADC2->SMPR2 = config[1];
   ADC2->SQR1 = config[2];
   ADC2->SQR2 = 0;
   ADC2->SQR3 = config[3];
+  ADC2->CR1 = (ADC_CR1_DUALMOD_2 | ADC_CR1_DUALMOD_1 | ADC_CR1_DUALMOD_0
+	       | ADC_CR1_SCAN);
+  ADC2->CR2 = ADC_CR2_EXTTRIG | ADC_CR2_CONT | ADC_CR2_ADON;
+  chopstx_usec_wait (1000);
 
 #ifdef DELIBARATELY_DO_IT_WRONG_START_STOP
   /*

@@ -3,6 +3,7 @@
 /* echo -n "Blue Pill" | shasum -a 256 | sed -e 's/^.*\(........\)  -$/\1/' */
 #define BOARD_ID    0xa1099d43
 
+#define MCU_STM32F1 1
 #define STM32F10X_MD		/* Medium-density device */
 
 #define STM32_PLLXTPRE                  STM32_PLLXTPRE_DIV1
@@ -12,13 +13,14 @@
 #define GPIO_LED_BASE   GPIOC_BASE
 #define GPIO_LED_CLEAR_TO_EMIT          13
 #define GPIO_USB_BASE   GPIOA_BASE
-#define GPIO_USB_SET_TO_ENABLE          12
 #undef  GPIO_OTHER_BASE
 
 /*
  * Port A setup.
  * PA11 - Push Pull output 10MHz 0 default (until USB enabled) (USBDM)
  * PA12 - Push Pull output 10MHz 0 default (until USB enabled) (USBDP)
+ *
+ * Port C setup.
  * PC13 - Push pull output 50MHz (LED 1:ON 0:OFF)
  * ------------------------ Default
  * PAx  - input with pull-up

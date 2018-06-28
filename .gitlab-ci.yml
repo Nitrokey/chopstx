@@ -1,0 +1,15 @@
+image: debian:stable
+
+before_script:
+  - apt-get update && apt-get -y install texi2html
+
+pages:
+  stage: deploy
+  script:
+  - mkdir -p html && (cd html && texi2html ../doc/chopstx.texi)
+  - mv html/ public
+  artifacts:
+    paths:
+    - public
+  only:
+    - master

@@ -1,7 +1,8 @@
 /*
- * sys.c - system routines for the initial page for STM32F030 / STM32F103.
+ * sys-stm32f0.c - system routines for the initial page for STM32F030.
  *
- * Copyright (C) 2013, 2014, 2015, 2016 Flying Stone Technology
+ * Copyright (C) 2013, 2014, 2015, 2016, 2017
+ *               Flying Stone Technology
  * Author: NIIBE Yutaka <gniibe@fsij.org>
  *
  * Copying and distribution of this file, with or without modification,
@@ -18,6 +19,7 @@
 #include "board.h"
 
 #define STM32F0_USE_VECTOR_ON_RAM
+#include "mcu/cortex-m.h"
 #include "mcu/clk_gpio_init-stm32.c"
 
 
@@ -298,38 +300,11 @@ flash_erase_all_and_exec (void (*entry)(void))
   for (;;);
 }
 
-struct SCB
-{
-  volatile uint32_t CPUID;
-  volatile uint32_t ICSR;
-  volatile uint32_t VTOR;
-  volatile uint32_t AIRCR;
-  volatile uint32_t SCR;
-  volatile uint32_t CCR;
-  volatile uint8_t  SHP[12];
-  volatile uint32_t SHCSR;
-  volatile uint32_t CFSR;
-  volatile uint32_t HFSR;
-  volatile uint32_t DFSR;
-  volatile uint32_t MMFAR;
-  volatile uint32_t BFAR;
-  volatile uint32_t AFSR;
-  volatile uint32_t PFR[2];
-  volatile uint32_t DFR;
-  volatile uint32_t ADR;
-  volatile uint32_t MMFR[4];
-  volatile uint32_t ISAR[5];
-};
 
-#define SCS_BASE	(0xE000E000)
-#define SCB_BASE	(SCS_BASE +  0x0D00)
-static struct SCB *const SCB = (struct SCB *)SCB_BASE;
-
-#define SYSRESETREQ 0x04
 static void
 nvic_system_reset (void)
 {
-  SCB->AIRCR = (0x05FA0000 | (SCB->AIRCR & 0x70) | SYSRESETREQ);
+  SCB->AIRCR = (0x05FA0000 | (SCB->AIRCR & 0x70) | SCB_AIRCR_SYSRESETREQ);
   asm volatile ("dsb");
   for (;;);
 }

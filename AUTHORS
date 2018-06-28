@@ -19,7 +19,7 @@ Kenji Rikitake:
 
 Kiwamu Okabe:
     Wrote an OpenOCD scirpt:
-        example-fsm-55/stlink-v2.cfg
+	example-fsm-55/stlink-v2.cfg
 
 Mateusz Zalega:
     Added Nitrokey-Start support.
@@ -28,7 +28,7 @@ Mateusz Zalega:
 NIIBE Yutaka:
     Wrote the library:
 	chopstx.c, entry.c, eventflag.c,
-        chopstx.h, eventflag.h
+	chopstx.h, eventflag.h
     Wrote the drivers mcu/*:
     	clk_gpio_init-mkl27z.c, clk_gpio_init-stm32.c,
 	sys-stm32f103.c, sys-stm32f030.c, sys-mkl27z.c,
@@ -36,9 +36,10 @@ NIIBE Yutaka:
     Drew the logo:
 	chopstx.svg, chopstx.png
     Wrote examples:
-        example-led, example-cdc, example-fsm-55, example-fs-bb48
+	example-led, example-cdc, example-fsm-55, example-fs-bb48,
+	example-usb-serial
     Wrote board/*:
-        board-fst-01.h, board-fst-01-00.h,
+	board-fst-01.h, board-fst-01-00.h,
 	board-olimex-stm32-h103.h, board-stm8s-discovery.h
 	board-cq-starm.h, board-stbee-mini.h, board-stbee.h,
 
@@ -47,7 +48,8 @@ NIIBE Yutaka:
 	board-fs-bb48.h
 
     Under contract of g10 Code GmbH, wrote:
-        mcu/usb-usbip.c
+	mcu/usb-usbip.c
+	contrib/usart-stm32f103.c
 
 Paul Fertser:
     Added Blue Pill support.

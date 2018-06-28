@@ -6,6 +6,12 @@ ifneq ($(USE_EVENTFLAG),)
 CSRC += $(CHOPSTX)/eventflag.c
 endif
 
+ifeq ($(EMULATION),)
+CSRC += $(CHOPSTX)/mcu/chx-$(CHIP).c
+else
+CSRC += $(CHOPSTX)/mcu/chx-gnu-linux.c
+endif
+
 ifneq ($(USE_SYS),)
 CSRC += $(CHOPSTX)/mcu/sys-$(CHIP).c
 endif
@@ -18,6 +24,9 @@ endif
 endif
 ifneq ($(USE_ADC),)
 CSRC += $(CHOPSTX)/contrib/adc-$(CHIP).c
+endif
+ifneq ($(USE_USART),)
+CSRC += $(CHOPSTX)/contrib/usart-$(CHIP).c
 endif
 
 INCDIR += $(CHOPSTX)
