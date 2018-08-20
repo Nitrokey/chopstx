@@ -2169,10 +2169,10 @@ usb_lld_ctrl_send (struct usb_dev *dev, const void *buf, size_t buflen)
   data_p->len = buflen;
 
   /* Restrict the data length to be the one host asks for */
-  if (data_p->len > len_asked)
+  if (data_p->len >= len_asked)
     data_p->len = len_asked;
-
-  if (data_p->len != 0 && (data_p->len % USB_MAX_PACKET_SIZE) == 0)
+  /* ZLP is only required when host doesn't expect the end of packets.  */
+  else if (data_p->len != 0 && (data_p->len % USB_MAX_PACKET_SIZE) == 0)
     data_p->require_zlp = 1;
 
   if (data_p->len < USB_MAX_PACKET_SIZE)
