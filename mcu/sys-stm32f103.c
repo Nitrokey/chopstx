@@ -18,7 +18,6 @@
 #include <stdlib.h>
 #include "board.h"
 
-#include "mcu/cortex-m.h"
 #include "mcu/clk_gpio_init-stm32.c"
 
 

@@ -1,5 +1,11 @@
 2018-09-21  NIIBE Yutaka  <gniibe@fsij.org>
 
+	* mcu/stm32.h (struct GPIO, struct FLASH): Moved from...
+	* mcu/clk_gpio_init-stm32.c: ... here.
+	(AFIO_MAPR_SWJ_CFG_JTAGDISABLE): Move to ...
+	* mcu/stm32f103.h: ... here.
+	* mcu/sys-stm32f103.c: Don't include "mcu/cortex-m.h".
+
 	* board/board-fst-01sz.h: New.
 	* mcu/sys-stm32f103.h (BOARD_ID_FST_01SZ): New.
 	* contrib/adc-stm32f103.c (get_adc_config): Add BOARD_ID_FST_01SZ.

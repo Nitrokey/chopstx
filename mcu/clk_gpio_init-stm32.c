@@ -1,7 +1,7 @@
 /*
  * clk_gpio_init-stm32.c - Clock and GPIO initialization for STM32.
  *
- * Copyright (C) 2015  Flying Stone Technology
+ * Copyright (C) 2015, 2018  Flying Stone Technology
  * Author: NIIBE Yutaka <gniibe@fsij.org>
  *
  * This file is a part of Chopstx, a thread library for embedded.
@@ -26,7 +26,11 @@
  *
  */
 
+#if defined(MCU_STM32F0)
 #include <mcu/stm32.h>
+#else
+#include <mcu/stm32f103.h>
+#endif
 
 #if defined(MCU_STM32F0)
 #define STM32_PPRE1		STM32_PPRE1_DIV1
@@ -56,34 +60,6 @@
 #define STM32_SYSCLK		STM32_PLLCLKOUT
 #define STM32_HCLK		(STM32_SYSCLK / 1)
 
-
-#if defined(MCU_STM32F0)
-struct SYSCFG {
-  volatile uint32_t CFGR1;
-  uint32_t dummy0;
-  volatile uint32_t EXTICR[4];
-  volatile uint32_t CFGR2;
-};
-#define SYSCFG_CFGR1_MEM_MODE 0x03
-
-#define SYSCFG_BASE	(APB1PERIPH_BASE + 0x00010000)
-static struct SYSCFG *const SYSCFG = (struct SYSCFG *)SYSCFG_BASE;
-#endif
-
-struct FLASH {
-  volatile uint32_t ACR;
-  volatile uint32_t KEYR;
-  volatile uint32_t OPTKEYR;
-  volatile uint32_t SR;
-  volatile uint32_t CR;
-  volatile uint32_t AR;
-  volatile uint32_t RESERVED;
-  volatile uint32_t OBR;
-  volatile uint32_t WRPR;
-};
-
-#define FLASH_R_BASE	(AHBPERIPH_BASE + 0x2000)
-static struct FLASH *const FLASH = (struct FLASH *)FLASH_R_BASE;
 
 static void __attribute__((used))
 clock_init (void)
@@ -139,75 +115,6 @@ clock_init (void)
 #endif
 }
 
-
-#if defined(MCU_STM32F0)
-struct GPIO {
-  volatile uint32_t MODER;
-  volatile uint16_t OTYPER;
-  uint16_t dummy0;
-  volatile uint32_t OSPEEDR;
-  volatile uint32_t PUPDR;
-  volatile uint16_t IDR;
-  uint16_t dummy1;
-  volatile uint16_t ODR;
-  uint16_t dummy2;
-  volatile uint16_t BSRR;
-  uint16_t dummy3;
-  volatile uint32_t LCKR;
-  volatile uint32_t AFR[2];
-  volatile uint16_t BRR;
-  uint16_t dummy4;
-};
-
-#define GPIOA_BASE	(AHB2PERIPH_BASE + 0x0000)
-#define GPIOA		((struct GPIO *) GPIOA_BASE)
-#define GPIOB_BASE	(AHB2PERIPH_BASE + 0x0400)
-#define GPIOB		((struct GPIO *) GPIOB_BASE)
-#define GPIOC_BASE	(AHB2PERIPH_BASE + 0x0800)
-#define GPIOC		((struct GPIO *) GPIOC_BASE)
-#define GPIOD_BASE	(AHB2PERIPH_BASE + 0x0C00)
-#define GPIOD		((struct GPIO *) GPIOD_BASE)
-#define GPIOF_BASE	(AHB2PERIPH_BASE + 0x1400)
-#define GPIOF		((struct GPIO *) GPIOF_BASE)
-#else
-struct AFIO
-{
-  volatile uint32_t EVCR;
-  volatile uint32_t MAPR;
-  volatile uint32_t EXTICR[4];
-  uint32_t RESERVED0;
-  volatile uint32_t MAPR2;
-};
-
-#define AFIO_BASE 0x40010000
-static struct AFIO *const AFIO = (struct AFIO *)AFIO_BASE;
-
-#define AFIO_MAPR_TIM3_REMAP_PARTIALREMAP 0x00000800
-#define AFIO_MAPR_SWJ_CFG_DISABLE         0x04000000
-#define AFIO_MAPR_SWJ_CFG_JTAGDISABLE     0x02000000
-
-
-struct GPIO {
-  volatile uint32_t CRL;
-  volatile uint32_t CRH;
-  volatile uint32_t IDR;
-  volatile uint32_t ODR;
-  volatile uint32_t BSRR;
-  volatile uint32_t BRR;
-  volatile uint32_t LCKR;
-};
-
-#define GPIOA_BASE	(APB2PERIPH_BASE + 0x0800)
-#define GPIOA		((struct GPIO *) GPIOA_BASE)
-#define GPIOB_BASE	(APB2PERIPH_BASE + 0x0C00)
-#define GPIOB		((struct GPIO *) GPIOB_BASE)
-#define GPIOC_BASE	(APB2PERIPH_BASE + 0x1000)
-#define GPIOC		((struct GPIO *) GPIOC_BASE)
-#define GPIOD_BASE	(APB2PERIPH_BASE + 0x1400)
-#define GPIOD		((struct GPIO *) GPIOD_BASE)
-#define GPIOE_BASE	(APB2PERIPH_BASE + 0x1800)
-#define GPIOE		((struct GPIO *) GPIOE_BASE)
-#endif
 
 static struct GPIO *const GPIO_LED = (struct GPIO *)GPIO_LED_BASE;
 #ifdef GPIO_USB_BASE
