@@ -1,3 +1,9 @@
+2018-09-21  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* board/board-fst-01sz.h: New.
+	* mcu/sys-stm32f103.h (BOARD_ID_FST_01SZ): New.
+	* contrib/adc-stm32f103.c (get_adc_config): Add BOARD_ID_FST_01SZ.
+
 2018-08-20  NIIBE Yutaka  <gniibe@fsij.org>
 
 	* mcu/usb-stm32f103.c (usb_lld_ctrl_send): Fix for ZLP.
