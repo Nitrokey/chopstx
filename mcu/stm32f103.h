@@ -574,6 +574,8 @@ static struct EXTI *const EXTI = (struct EXTI *)EXTI_BASE;
 #define EXTI0_IRQ    6
 #define EXTI1_IRQ    7
 #define EXTI2_IRQ    8
+#define EXTI3_IRQ    9
+#define EXTI4_IRQ   10
 #define EXTI9_5_IRQ 23
 #define TIM2_IRQ    28
 #define TIM3_IRQ    29

@@ -22,7 +22,7 @@
  * Port A setup.
  * PA0  - input with pull-up: AN0 for NeuG
  * PA1  - input with pull-up: AN1 for NeuG
- * PA3  - input with pull-up: Hall sensor output
+ * PA3  - input with pull-up: Hall effect sensor output
  * PA8  - Push pull output 10MHz 0 default (LED 1:ON 0:OFF)
  * PA11 - Push Pull output 10MHz 0 default (until USB enabled) (USBDM)
  * PA12 - Push Pull output 10MHz 0 default (until USB enabled) (USBDP)
@@ -35,3 +35,13 @@
 
 #define RCC_ENR_IOP_EN      RCC_APB2ENR_IOPAEN
 #define RCC_RSTR_IOP_RST    RCC_APB2RSTR_IOPARST
+
+#if 0 /* For PA, AFIO setting is not needed.  */
+#define AFIO_EXTICR_INDEX     0
+#define AFIO_EXTICR1_EXTIx_Py AFIO_EXTICR1_EXTI3_PA
+#endif
+
+#define EXTI_PR               EXTI_PR_PR3
+#define EXTI_IMR              EXTI_IMR_MR3
+#define EXTI_RTSR_TR          EXTI_RTSR_TR3
+#define INTR_REQ_EXTI         EXTI3_IRQ
