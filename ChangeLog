@@ -1,3 +1,13 @@
+2018-09-26  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* chopstx.h (chopstx_intr_done): New function.
+	* chopstx.c (chopstx_intr_done): New function.
+	(chopstx_poll): Don't call chx_clr_intr.
+	Ensure data memory barrier for interrupt handling.
+
+	* chopstx-cortex-m.c (chx_dmb): New static function.
+	* chopstx-gnu-linux.c (chx_dmb): Ditto.
+
 2018-09-21  NIIBE Yutaka  <gniibe@fsij.org>
 
 	* mcu/stm32.h (struct GPIO, struct FLASH): Moved from...

@@ -1,7 +1,7 @@
 /*
  * chopstx.c - Threads and only threads.
  *
- * Copyright (C) 2013, 2014, 2015, 2016, 2017
+ * Copyright (C) 2013, 2014, 2015, 2016, 2017, 2018
  *               Flying Stone Technology
  * Author: NIIBE Yutaka <gniibe@fsij.org>
  *
@@ -1035,6 +1035,23 @@ chopstx_intr_wait (chopstx_intr_t *intr)
 
 
 /**
+ * chopstx_intr_done - Finish an IRQ handling
+ * @intr: Pointer to INTR structure
+ *
+ * Finish for the interrupt @intr occured.
+ *
+ */
+void
+chopstx_intr_done (chopstx_intr_t *intr)
+{
+  chx_dmb ();
+
+  if (intr->ready)
+    chx_clr_intr (intr->irq_num);
+}
+
+
+/**
  * chopstx_cleanup_push - Register a clean-up
  * @clp: Pointer to clean-up structure
  *
@@ -1332,6 +1349,7 @@ chopstx_poll (uint32_t *usec_p, int n, struct chx_poll_head *const pd_array[])
   struct chx_poll_head *pd;
   int r = 0;
 
+  chx_dmb ();
   chopstx_testcancel ();
 
   for (i = 0; i < n; i++)
@@ -1384,6 +1402,7 @@ chopstx_poll (uint32_t *usec_p, int n, struct chx_poll_head *const pd_array[])
       while (r == 0);
     }
 
+  chx_dmb ();
   for (i = 0; i < n; i++)
     {
       pd = pd_array[i];
@@ -1404,9 +1423,7 @@ chopstx_poll (uint32_t *usec_p, int n, struct chx_poll_head *const pd_array[])
 	{
 	  struct chx_intr *intr = (struct chx_intr *)pd;
 
-	  if (intr->ready)
-	    chx_clr_intr (intr->irq_num);
-	  else
+	  if (intr->ready == 0)
 	    {
 	      chx_spin_lock (&q_intr.lock);
 	      ll_dequeue ((struct chx_pq *)&px[i]);
