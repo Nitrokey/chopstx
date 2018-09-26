@@ -107,6 +107,10 @@ void adc3_conversion (uint32_t *result)
   /* Stop conversion.  */
   ADC3->CR2 &= ~ADC_CR2_JSWSTART;
 
+#if USE_ADC3_INTR
+  chopstx_intr_done (&adc3_intr);
+#endif
+
   return;
 }
 

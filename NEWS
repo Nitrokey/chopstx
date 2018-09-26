@@ -1,6 +1,18 @@
 NEWS - Noteworthy changes
 
 
+* Major changes in Chopstx 1.10
+
+  Released 2018-09-XX
+
+** Function chopstx_intr_wait is not deprecated, now.
+Once, it was said that it's deprecated, but it's active again.
+
+** API change: chopstx_poll, chopstx_intr_wait, chopstx_intr_done
+To avoid spurious interrupt, we introduce new function
+chopstx_intr_done, which should be called after interrupt handling.
+
+
 * Major changes in Chopstx 1.9
 
   Released 2018-05-09

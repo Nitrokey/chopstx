@@ -1,5 +1,19 @@
 2018-09-26  NIIBE Yutaka  <gniibe@fsij.org>
 
+	Fix for chopstx_intr_done.  No spurious interrupts.
+	* contrib/adc-mkl27z.c (adc_wait_completion): Fix.
+	* contrib/adc-stm32f103.c (adc_wait_completion): Likewise.
+	* contrib/usart-stm32f103.c (usart_main): Likewise.
+	* example-cdc-gnu-linux/usb-cdc.c (tty_main): Likewise.
+	* example-cdc/usb-cdc.c (tty_main): Likewise.
+	* example-fraucheky/main.c (usb_main): Likewise.
+	* example-fs-bb48/touch.c (touch_get): Likewise.
+	* example-fs-bb48/usb-cdc.c (tty_main): Likewise.
+	* example-primer2/primer2-ts.c (adc3_conversion): Likewise.
+	* example-usb-serial/usb-cdc.c (cdc_main): Likewise.
+
+2018-09-26  NIIBE Yutaka  <gniibe@fsij.org>
+
 	* chopstx.h (chopstx_intr_done): New function.
 	* chopstx.c (chopstx_intr_done): New function.
 	(chopstx_poll): Don't call chx_clr_intr.

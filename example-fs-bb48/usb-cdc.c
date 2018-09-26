@@ -708,6 +708,7 @@ tty_main (void *arg)
 	   *        
 	   */
 	  e = usb_lld_event_handler (&dev);
+	  chopstx_intr_done (&usb_intr);
 	  ep_num = USB_EVENT_ENDP (e);
 
 	  if (ep_num != 0)

@@ -185,6 +185,7 @@ usb_main (void *arg)
 
 	event_handle:
 	  e = usb_lld_event_handler (&dev);
+	  chopstx_intr_done (&interrupt);
 	  ep_num = USB_EVENT_ENDP (e);
 
 	  if (ep_num != 0)

@@ -316,11 +316,10 @@ int
 adc_wait_completion (void)
 {
   uint32_t flags;
-  struct chx_poll_head *pd_array[1] = { (struct chx_poll_head *)&adc_intr };
 
   while (1)
     {
-      chopstx_poll (NULL, 1, pd_array);
+      chopstx_intr_wait (&adc_intr);
       flags = DMA1->ISR & STM32_DMA_ISR_MASK; /* Channel 1 interrupt cause.  */
       /*
        * Clear interrupt cause of channel 1.
@@ -329,6 +328,7 @@ adc_wait_completion (void)
        * and TEIF.
        */
       DMA1->IFCR = (flags & ~1);
+      chopstx_intr_done (&adc_intr);
 
       if ((flags & STM32_DMA_ISR_TEIF) != 0)  /* DMA errors  */
 	{

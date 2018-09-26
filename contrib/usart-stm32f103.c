@@ -541,10 +541,16 @@ usart_main (void *arg)
       chopstx_poll (NULL, n, usart_poll);
 
       if (usart2_intr.ready)
-	usart2_tx_ready = handle_intr (USART2, &usart2_rb_h2a, &usart2_stat);
+	{
+	  usart2_tx_ready = handle_intr (USART2, &usart2_rb_h2a, &usart2_stat);
+	  chopstx_intr_done (&usart2_intr);
+	}
 
       if (usart3_intr.ready)
-	usart3_tx_ready = handle_intr (USART3, &usart3_rb_h2a, &usart3_stat);
+	{
+	  usart3_tx_ready = handle_intr (USART3, &usart3_rb_h2a, &usart3_stat);
+	  chopstx_intr_done (&usart3_intr);
+	}
 
       if (usart2_tx_ready && usart2_app_write_event.ready)
 	usart2_tx_ready = handle_tx_ready (USART2,

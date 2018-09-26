@@ -74,6 +74,7 @@ touch_get (void)
   TPM1->SC = 0;
   TPM1->CNT = 0xffff;	   /* Writing causes reset of the counter.  */
 
+  chopstx_intr_done (&tpm1_intr);
   return v;
 }
 
