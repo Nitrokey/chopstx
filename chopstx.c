@@ -1038,7 +1038,7 @@ chopstx_intr_wait (chopstx_intr_t *intr)
  * chopstx_intr_done - Finish an IRQ handling
  * @intr: Pointer to INTR structure
  *
- * Finish for the interrupt @intr occured.
+ * Finish for the interrupt @intr occurred.
  *
  */
 void
