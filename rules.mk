@@ -28,6 +28,9 @@ endif
 ifneq ($(USE_USART),)
 CSRC += $(CHOPSTX)/contrib/usart-$(CHIP).c
 endif
+ifneq ($(USE_ACKBTN),)
+CSRC += $(CHOPSTX)/contrib/ackbtn-$(CHIP).c
+endif
 
 INCDIR += $(CHOPSTX)
 

@@ -155,7 +155,7 @@ gpio_init (void)
   AFIO->MAPR |= AFIO_MAPR_SOMETHING;
 #endif
 
-  /* LED is mandatory.  If it's on an independent port, we configure it.  */
+  /* LED is mandatory.  We configure it always.  */
   GPIO_LED->ODR = VAL_GPIO_LED_ODR;
   GPIO_LED->CRH = VAL_GPIO_LED_CRH;
   GPIO_LED->CRL = VAL_GPIO_LED_CRL;

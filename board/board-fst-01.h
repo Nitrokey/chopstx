@@ -71,6 +71,7 @@
  * Those will be removed soon, once such an driver will be improved
  * in new style.
  */
+#if defined(PINPAD_CIR_SUPPORT)
 /* For pin-cir settings of Gnuk */
 #define TIMx                  TIM2
 #define INTR_REQ_TIM          TIM2_IRQ
@@ -83,3 +84,4 @@
 #define ENABLE_RCC_APB1
 #define RCC_APBnENR_TIMxEN    RCC_APB1ENR_TIM2EN
 #define RCC_APBnRSTR_TIMxRST  RCC_APB1RSTR_TIM2RST
+#endif

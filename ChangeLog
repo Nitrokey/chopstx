@@ -1,3 +1,8 @@
+2018-09-27  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* contrib/ackbtn-stm32f103.c: New.
+	* rules.mk [USE_ACKBTN] (CSRC): Add ack-button support.
+
 2018-09-26  NIIBE Yutaka  <gniibe@fsij.org>
 
 	Fix for chopstx_intr_done.  No spurious interrupts.
