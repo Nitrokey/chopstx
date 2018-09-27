@@ -29,9 +29,10 @@
 #include <stdint.h>
 #include <string.h>
 #include <chopstx.h>
+#include <mcu/stm32f103.h>
 
 #include "board.h"
-#include "mcu/stm32f103.h"
+#include "sys.h"
 
 static uint32_t pin_config;
 
