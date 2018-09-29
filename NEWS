@@ -3,7 +3,7 @@ NEWS - Noteworthy changes
 
 * Major changes in Chopstx 1.10
 
-  Released 2018-09-XX
+  Released 2018-09-29
 
 ** Function chopstx_intr_wait is not deprecated, now.
 Once, it was said that it's deprecated, but it's active again
@@ -14,8 +14,8 @@ To avoid spurious interrupt, we introduce new function
 chopstx_intr_done, which should be called after interrupt handling.
 
 ** New driver: Acknowledge button for FST-01SZ
-Use case is waiting user's acknowledge.  We use EXTI interrupt feature
-of STM32.
+The use case is waiting user's acknowledge.  We use EXTI interrupt
+feature of STM32.
 
 
 * Major changes in Chopstx 1.9

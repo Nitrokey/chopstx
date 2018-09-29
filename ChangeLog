@@ -1,3 +1,8 @@
+2018-09-29  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* VERSION: 1.10.
+	* doc/chopstx.texi (VERSION): 1.10.
+
 2018-09-27  NIIBE Yutaka  <gniibe@fsij.org>
 
 	* contrib/ackbtn-stm32f103.c: New.
