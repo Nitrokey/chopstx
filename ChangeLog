@@ -1,3 +1,18 @@
+2018-10-01  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* contrib/ackbtn-stm32f103.c (PINCFG_EDGE): New.
+	(ackbtn_init): Use PINCFG_EDGE bit.
+	(ackbtn_enable): Configure the edge detector here.
+	(ackbtn_disable): Disable the edge detector.
+
+	* chopstx.c (chopstx_poll): Don't clear ->ready here.
+	(chx_cond_hook): Set ->ready = 0 when condition does
+	not meet.
+	(chopstx_claim_irq): Make sure clearing the interrupt.
+	(chx_intr_hook): Add the case when ->ready == 1.
+	(chopstx_intr_done): Set ->ready = 0.
+	(chx_join_hook): Set ->ready = 0 when it is still alive.
+
 2018-09-29  NIIBE Yutaka  <gniibe@fsij.org>
 
 	* VERSION: 1.10.

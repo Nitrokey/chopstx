@@ -35,6 +35,8 @@
 #include "sys.h"
 
 static uint32_t pin_config;
+#define PINCFG_EDGE        0x80000000
+#define PINCFG_EDGE_RISING PINCFG_EDGE
 
 void
 ackbtn_init (chopstx_intr_t *intr)
@@ -42,7 +44,6 @@ ackbtn_init (chopstx_intr_t *intr)
   uint8_t irq_num;
   uint32_t afio_exticr_index;
   uint32_t afio_exticr_extiX_pY;
-  int rising_edge;
 
   switch (SYS_BOARD_ID)
     {
@@ -53,36 +54,43 @@ ackbtn_init (chopstx_intr_t *intr)
       afio_exticr_extiX_pY = AFIO_EXTICR1_EXTI3_PA;
       irq_num = EXTI3_IRQ;
       pin_config = 0x0008; /* EXTI_PR_PR3 == EXTI_IMR_MR3 == EXTI_RTSR_TR3 */
-      rising_edge = 1;
+      pin_config |= PINCFG_EDGE_RISING;
       break;
     }
-
-  chopstx_claim_irq (intr, irq_num);
 
   /* Configure EXTI line */
   if (afio_exticr_extiX_pY)
     AFIO->EXTICR[afio_exticr_index] |= afio_exticr_extiX_pY;
 
   /* Interrupt is masked, now */
-  EXTI->IMR &= ~pin_config;
+  EXTI->IMR &= ~(pin_config & ~PINCFG_EDGE);
 
-  /* Configure which edge is detected */
-  if (rising_edge)
-    EXTI->RTSR |= pin_config;
-  else
-    EXTI->FTSR |= pin_config;
+  chopstx_claim_irq (intr, irq_num);
 }
 
 void
 ackbtn_enable (void)
 {
-  EXTI->PR |= pin_config;	/* Clear pending interrupt */
-  EXTI->IMR |= pin_config;	/* Enable interrupt clearing the mask */
+  /* Clear pending interrupt */
+  EXTI->PR |= (pin_config & ~PINCFG_EDGE);
+  /* Enable interrupt, clearing the mask */
+  EXTI->IMR |= (pin_config & ~PINCFG_EDGE);
+
+  /* Configure which edge is detected */
+  if ((pin_config & PINCFG_EDGE))
+    EXTI->RTSR |= (pin_config & ~PINCFG_EDGE);
+  else
+    EXTI->FTSR |= (pin_config & ~PINCFG_EDGE);
 }
 
 void
 ackbtn_disable (void)
 {
-  EXTI->IMR &= ~pin_config;	/* Disable interrupt having the mask */
-  EXTI->PR |= pin_config;	/* Clear pending interrupt */
+  /* Disable interrupt having the mask */
+  EXTI->IMR &= ~(pin_config & ~PINCFG_EDGE);
+ /* Clear pending interrupt */
+
+  /* Disable edge detection */
+  EXTI->RTSR &= ~(pin_config & ~PINCFG_EDGE);
+  EXTI->FTSR &= ~(pin_config & ~PINCFG_EDGE);
 }

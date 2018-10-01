@@ -1,6 +1,22 @@
 NEWS - Noteworthy changes
 
 
+* Major changes in Chopstx 1.11
+
+  Released 2018-10-01
+
+** Support calling chopstx_poll with intr->ready==1.
+In version <= 1.10, it assumed that all events should be handled after
+chopstx_poll, before calling chopstx_poll again.  With having
+chopstx_intr_done, it's OK now that chopstx_poll can be called again
+not examining/handling all poll descriptors, but only parts of them.
+
+** Acknowledge button change.
+In 1.10, the action was "memorized" by the edge detector.  Now, edge
+detector is disabled by ackbtn_disable, and it is enabled by
+ackbtn_enable.  So, the status is cleared correctly.
+
+
 * Major changes in Chopstx 1.10
 
   Released 2018-09-29

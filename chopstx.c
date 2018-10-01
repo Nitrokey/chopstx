@@ -999,6 +999,7 @@ chopstx_claim_irq (chopstx_intr_t *intr, uint8_t irq_num)
   chx_cpu_sched_lock ();
   chx_spin_lock (&q_intr.lock);
   chx_disable_intr (irq_num);
+  chx_clr_intr (irq_num);
   chx_set_intr_prio (irq_num);
   chx_spin_unlock (&q_intr.lock);
   chx_cpu_sched_unlock ();
