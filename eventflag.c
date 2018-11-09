@@ -1,7 +1,7 @@
 /*
  * eventflag.c - Eventflag
  *
- * Copyright (C) 2013, 2016  Flying Stone Technology
+ * Copyright (C) 2013, 2016, 2018  Flying Stone Technology
  * Author: NIIBE Yutaka <gniibe@fsij.org>
  *
  * This file is a part of Chopstx, a thread library for embedded.
@@ -104,6 +104,17 @@ eventflag_wait (struct eventflag *ev)
   chopstx_mutex_unlock (&ev->mutex);
 
   return m;
+}
+
+
+void
+eventflag_wait_all (struct eventflag *ev, eventmask_t m)
+{
+  chopstx_mutex_lock (&ev->mutex);
+  while ((ev->flags & m) != m)
+    chopstx_cond_wait (&ev->cond, &ev->mutex);
+  ev->flags &= ~m;
+  chopstx_mutex_unlock (&ev->mutex);
 }
 
 

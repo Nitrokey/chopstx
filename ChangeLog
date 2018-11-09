@@ -1,3 +1,7 @@
+2018-11-09  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* eventflag.c (eventflag_wait_all): New.
+
 2018-10-02  NIIBE Yutaka  <gniibe@fsij.org>
 
 	* VERSION: 1.11.
