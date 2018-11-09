@@ -36,8 +36,20 @@ void
 eventflag_init (struct eventflag *ev)
 {
   ev->flags = 0;
+  ev->mask = ~0;
   chopstx_cond_init (&ev->cond);
   chopstx_mutex_init (&ev->mutex);
+}
+
+
+void
+eventflag_set_mask (struct eventflag *ev, eventmask_t m)
+{
+  chopstx_mutex_lock (&ev->mutex);
+  ev->mask = m;
+  if ((ev->flags & ev->mask))
+    chopstx_cond_signal (&ev->cond);
+  chopstx_mutex_unlock (&ev->mutex);
 }
 
 
@@ -46,7 +58,7 @@ eventflag_check (void *arg)
 {
   struct eventflag *ev = arg;
 
-  return ev->flags != 0;
+  return (ev->flags & ev->mask) != 0;
 }
 
 
@@ -69,7 +81,7 @@ eventflag_get (struct eventflag *ev)
   eventmask_t m;
 
   chopstx_mutex_lock (&ev->mutex);
-  n = __builtin_ffs (ev->flags);
+  n = __builtin_ffs ((ev->flags & ev->mask));
   if (n)
     {
       m = (1 << (n - 1));
@@ -90,10 +102,10 @@ eventflag_wait (struct eventflag *ev)
   eventmask_t m;
 
   chopstx_mutex_lock (&ev->mutex);
-  if (!ev->flags)
+  while (!(ev->flags & ev->mask))
     chopstx_cond_wait (&ev->cond, &ev->mutex);
 
-  n = __builtin_ffs (ev->flags);
+  n = __builtin_ffs ((ev->flags & ev->mask));
   if (n) /* Always n > 0 when waked up, but make sure no bad things.  */
     {
       m = (1 << (n - 1));
@@ -104,17 +116,6 @@ eventflag_wait (struct eventflag *ev)
   chopstx_mutex_unlock (&ev->mutex);
 
   return m;
-}
-
-
-void
-eventflag_wait_all (struct eventflag *ev, eventmask_t m)
-{
-  chopstx_mutex_lock (&ev->mutex);
-  while ((ev->flags & m) != m)
-    chopstx_cond_wait (&ev->cond, &ev->mutex);
-  ev->flags &= ~m;
-  chopstx_mutex_unlock (&ev->mutex);
 }
 
 
@@ -135,6 +136,7 @@ eventflag_signal (struct eventflag *ev, eventmask_t m)
 {
   chopstx_mutex_lock (&ev->mutex);
   ev->flags |= m;
-  chopstx_cond_signal (&ev->cond);
+  if ((ev->flags & ev->mask))
+    chopstx_cond_signal (&ev->cond);
   chopstx_mutex_unlock (&ev->mutex);
 }
