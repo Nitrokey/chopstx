@@ -1,6 +1,21 @@
 NEWS - Noteworthy changes
 
 
+* Major changes in Chopstx 1.12
+
+  Released 2018-11-12
+
+** Enhance API of eventflag
+New function eventflag_set_mask is added, so that we can only handle
+specified events.  See Gnuk 1.2.12 for an example (while USB Tx is
+busy, the USB thread only accepts EV_TX_FINISHED event, leaving
+other events).
+
+** Acknowledge button support for FST-01 and FST-01G
+While FST-01 and FST-01G don't have any button in the original design,
+it may be PA2 when user put a hall sensor or a switch.
+
+
 * Major changes in Chopstx 1.11
 
   Released 2018-10-02
@@ -17,7 +32,7 @@ Now, the edge detector is disabled by ackbtn_disable, and it is
 enabled by ackbtn_enable.  So, the status is cleared correctly.
 
 ** New board support: FST-01SZ
-It's still under development.  Programming-wise, it will keep same.
+It's still under development.  Programming-wise, it will be kept same.
 
 
 * Major changes in Chopstx 1.10

@@ -27,19 +27,30 @@ Mateusz Zalega:
 
 NIIBE Yutaka:
     Wrote the library:
-	chopstx.c, entry.c, eventflag.c,
-	chopstx.h, eventflag.h
+	chopstx.c, chopstx.h,
+	chopstx-cortex-m.c, chopstx-cortex-m.h,
+	chopstx-gnu-linux.c, chopstx-gnu-linux.h,
+	entry.c,
+	eventflag.c, eventflag.h
     Wrote the drivers mcu/*:
+	chx-gnu-linux.c, chx-mkl27z.c, chx-stm32f0.c, chx-stm32f103.c,
     	clk_gpio_init-mkl27z.c, clk_gpio_init-stm32.c,
-	sys-stm32f103.c, sys-stm32f030.c, sys-mkl27z.c,
-	adc-stm32f103.c, adc-mkl27z.c
+	cortex-m.h, mkl27z.h, stm32.h, stm32f103.h,
+	sys-gnu-linux.c,sys-gnu-linux.h,
+	sys-mkl27z.c, sys-mkl27z.h,
+	sys-stm32f0.c, sys-stm32f0.h
+	sys-stm32f103.c, sys-stm32f103.h,
+	usb-stm32f103.c, usb-mkl27z.c
+    Wrote the drivers:
+	controb/adc-mkl27z.c
     Drew the logo:
 	chopstx.svg, chopstx.png
     Wrote examples:
 	example-led, example-cdc, example-fsm-55, example-fs-bb48,
-	example-usb-serial
+	example-usb-serial, example-cdc-gnu-linux
     Wrote board/*:
-	board-fst-01.h, board-fst-01-00.h,
+        board-fst-01sz.h,
+	board-fst-01g.h, board-fst-01.h, board-fst-01-00.h,
 	board-olimex-stm32-h103.h, board-stm8s-discovery.h
 	board-cq-starm.h, board-stbee-mini.h, board-stbee.h,
 
@@ -47,9 +58,14 @@ NIIBE Yutaka:
 
 	board-fs-bb48.h
 
+    For Free Software Initiative of Japan, wrote:
+	contrib/adc-stm32f103.c,
+	contrib/adc-gnu-linux.c
+
     Under contract of g10 Code GmbH, wrote:
 	mcu/usb-usbip.c
 	contrib/usart-stm32f103.c
+	contrib/ackbtn-stm32f103.c
 
 Paul Fertser:
     Added Blue Pill support.

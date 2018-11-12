@@ -1,5 +1,8 @@
 2018-11-12  NIIBE Yutaka  <gniibe@fsij.org>
 
+	* VERSION: 1.12.
+	* doc/chopstx.texi (VERSION): 1.12.
+
 	* contrib/ackbtn-stm32f103.c (ackbtn_init): Support FST-01 and
 	FST-01G, using PA2.
 	(ackbtn_disable): Fix to correctly clear pending interrupt.
