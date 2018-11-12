@@ -1,3 +1,9 @@
+2018-11-12  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* contrib/ackbtn-stm32f103.c (ackbtn_init): Support FST-01 and
+	FST-01G, using PA2.
+	(ackbtn_disable): Fix to correctly clear pending interrupt.
+
 2018-11-09  NIIBE Yutaka  <gniibe@fsij.org>
 
 	* eventflag.c (eventflag_set_mask): New.

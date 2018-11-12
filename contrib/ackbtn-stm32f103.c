@@ -34,6 +34,14 @@
 #include "board.h"
 #include "sys.h"
 
+/*
+ * All EXTI registers (EXTI_IMR, EXTI_EMR, EXTI_PR , EXTI_RTSR, and
+ * EXTI_FTSR) have same structure, where each bit of X is used for
+ * line X, from 0 up to 19.
+ *
+ * We use 31-bit of PIN_CONFIG to represent if it's for rising edge or
+ * falling edge.
+ */
 static uint32_t pin_config;
 #define PINCFG_EDGE        0x80000000
 #define PINCFG_EDGE_RISING PINCFG_EDGE
@@ -47,6 +55,16 @@ ackbtn_init (chopstx_intr_t *intr)
 
   switch (SYS_BOARD_ID)
     {
+    case BOARD_ID_FST_01:
+    case BOARD_ID_FST_01G:
+      /* PA2 can be connected to a hall sensor or a switch */
+      afio_exticr_index = 0;
+      afio_exticr_extiX_pY = AFIO_EXTICR1_EXTI2_PA;
+      irq_num = EXTI2_IRQ;
+      pin_config = 0x0004; /* EXTI_PR_PR2 == EXTI_IMR_MR2 == EXTI_RTSR_TR2 */
+      pin_config |= PINCFG_EDGE_RISING;
+      break;
+
     case BOARD_ID_FST_01SZ:
     default:
       /* PA3 is connected to a hall sensor DRV5032FA */
@@ -88,7 +106,8 @@ ackbtn_disable (void)
 {
   /* Disable interrupt having the mask */
   EXTI->IMR &= ~(pin_config & ~PINCFG_EDGE);
- /* Clear pending interrupt */
+  /* Clear pending interrupt */
+  EXTI->PR |= (pin_config & ~PINCFG_EDGE);
 
   /* Disable edge detection */
   EXTI->RTSR &= ~(pin_config & ~PINCFG_EDGE);
