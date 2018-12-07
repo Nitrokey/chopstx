@@ -1,3 +1,10 @@
+2018-12-07  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* chopstx.c (chx_timer_dequeue): Return ticks remained.
+	(chx_wakeup, chopstx_mutex_lock): Use return value of
+	chx_timer_dequeue.
+	(chx_snooze): Update *USEC_P, accordingly.
+
 2018-11-12  NIIBE Yutaka  <gniibe@fsij.org>
 
 	* VERSION: 1.12.

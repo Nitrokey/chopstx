@@ -107,7 +107,7 @@ static struct chx_queue q_intr;
 static void chx_request_preemption (uint16_t prio);
 static int chx_wakeup (struct chx_pq *p);
 static struct chx_thread * chx_timer_insert (struct chx_thread *tp, uint32_t usec);
-static void chx_timer_dequeue (struct chx_thread *tp);
+static uint32_t chx_timer_dequeue (struct chx_thread *tp);
 
 
 
@@ -349,12 +349,14 @@ chx_timer_insert (struct chx_thread *tp, uint32_t usec)
 }
 
 
-static void
+static uint32_t
 chx_timer_dequeue (struct chx_thread *tp)
 {
   struct chx_thread *tp_prev;
+  uint32_t ticks_remained;
 
   chx_spin_lock (&q_timer.lock);
+  ticks_remained = chx_systick_get ();
   tp_prev = (struct chx_thread *)tp->prev;
   if (tp_prev == (struct chx_thread *)&q_timer.q)
     {
@@ -362,16 +364,22 @@ chx_timer_dequeue (struct chx_thread *tp)
 	chx_set_timer (tp_prev, 0); /* Cancel timer*/
       else
 	{			/* Update timer.  */
-	  uint32_t next_ticks = chx_systick_get () + tp->v;
-
-	  chx_set_timer (tp_prev, next_ticks);
+	  ticks_remained += tp->v;
+	  chx_set_timer (tp_prev, ticks_remained);
 	}
     }
   else
-    tp_prev->v += tp->v;
+    {
+      struct chx_pq *p;
+
+      tp_prev->v += tp->v;
+      for (p = q_timer.q.next; p != (struct chx_pq *)tp; p = p->next)
+	ticks_remained += p->v;
+    }
   ll_dequeue ((struct chx_pq *)tp);
   tp->v = 0;
   chx_spin_unlock (&q_timer.lock);
+  return ticks_remained;
 }
 
 
@@ -502,9 +510,11 @@ chx_wakeup (struct chx_pq *pq)
       tp = px->master;
       if (tp->state == THREAD_WAIT_POLL)
 	{
-	  tp->v = (uintptr_t)1;
 	  if (tp->parent == &q_timer.q)
-	    chx_timer_dequeue (tp);
+	    tp->v = (uintptr_t)chx_timer_dequeue (tp);
+	  else
+	    tp->v = (uintptr_t)1;
+
 	  chx_ready_enqueue (tp);
 	  if (!running || tp->prio > running->prio)
 	    yield = 1;
@@ -679,6 +689,11 @@ chx_snooze (uint32_t state, uint32_t *usec_p)
   r = chx_sched (CHX_SLEEP);
   if (r == 0)
     *usec_p -= usec0;
+  else if (r > 0)
+    {
+      *usec_p -= (usec0 - r / MHZ);
+      r = 1;
+    }
 
   return r;
 }
@@ -803,9 +818,10 @@ chopstx_mutex_lock (chopstx_mutex_t *mutex)
 	  if (tp0->state == THREAD_WAIT_TIME
 	      || tp0->state == THREAD_WAIT_POLL)
 	    {
-	      tp0->v = (uintptr_t)1;
 	      if (tp0->parent == &q_timer.q)
-		chx_timer_dequeue (tp0);
+		tp0->v = (uintptr_t)chx_timer_dequeue (tp0);
+	      else
+		tp0->v = (uintptr_t)1;
 
 	      chx_ready_enqueue (tp0);
 	      tp0 = NULL;
@@ -1347,7 +1363,8 @@ chx_proxy_init (struct chx_px *px, uint32_t *cp)
 
 /**
  * chopstx_poll - wait for condition variable, thread's exit, or IRQ
- * @usec_p: Pointer to usec for timeout.  Forever if NULL.
+ * @usec_p: Pointer to usec for timeout.  Forever if NULL.  It is
+ * updated on return
  * @n: Number of poll descriptors
  * @pd_array: Pointer to an array of poll descriptor pointer which
  * should be one of:

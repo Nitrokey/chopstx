@@ -293,8 +293,8 @@ chx_request_preemption (uint16_t prio)
  * 	AAPCS: ARM Architecture Procedure Call Standard
  *
  * Returns:
- *          1 on wakeup by others.
- *          0 on normal wakeup (timer expiration, lock aquirement).
+ *       >= 1 on wakeup by others, value means ticks remained for sleep.
+ *          0 on normal wakeup (timer expiration, lock acquirement).
  *         -1 on cancellation.
  */
 static uintptr_t __attribute__ ((naked, noinline))
