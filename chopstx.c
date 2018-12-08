@@ -361,20 +361,18 @@ chx_timer_dequeue (struct chx_thread *tp)
   if (tp_prev == (struct chx_thread *)&q_timer.q)
     {
       if (tp->next == (struct chx_pq *)&q_timer.q)
-	chx_set_timer (tp_prev, 0); /* Cancel timer*/
+	chx_systick_reload (0);                      /* Cancel timer.  */
       else
-	{			/* Update timer.  */
-	  ticks_remained += tp->v;
-	  chx_set_timer (tp_prev, ticks_remained);
-	}
+	chx_systick_reload (ticks_remained + tp->v); /* Update timer.  */
     }
   else
     {
       struct chx_pq *p;
 
-      tp_prev->v += tp->v;
       for (p = q_timer.q.next; p != (struct chx_pq *)tp; p = p->next)
 	ticks_remained += p->v;
+
+      tp_prev->v += tp->v;
     }
   ll_dequeue ((struct chx_pq *)tp);
   tp->v = 0;
