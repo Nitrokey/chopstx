@@ -1,7 +1,7 @@
 /*
  * usb-stm32f103.c - USB driver for STM32F103
  *
- * Copyright (C) 2016, 2017  Flying Stone Technology
+ * Copyright (C) 2016, 2017, 2018  Flying Stone Technology
  * Author: NIIBE Yutaka <gniibe@fsij.org>
  *
  * This file is a part of Chopstx, a thread library for embedded.

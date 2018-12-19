@@ -1,7 +1,7 @@
 /*
  * usb-usbip.c - USB Device Emulation (server side) by USBIP
  *
- * Copyright (C) 2017 g10 Code GmbH
+ * Copyright (C) 2017, 2018  g10 Code GmbH
  * Author: NIIBE Yutaka <gniibe@fsij.org>
  *
  * This file is a part of Chopstx, a thread library for embedded.

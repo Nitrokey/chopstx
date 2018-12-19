@@ -1,7 +1,7 @@
 /*
  * usb-mkl27z.c - USB driver for MKL27Z
  *
- * Copyright (C) 2016  Flying Stone Technology
+ * Copyright (C) 2016, 2018  Flying Stone Technology
  * Author: NIIBE Yutaka <gniibe@fsij.org>
  *
  * This file is a part of Chopstx, a thread library for embedded.
