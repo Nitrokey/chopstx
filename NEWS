@@ -1,6 +1,15 @@
 NEWS - Noteworthy changes
 
 
+* Major changes in Chopstx 1.13
+
+  Released 2018-12-19
+
+** API fix (redefinition): chopstx_poll
+In old implementations, when chopstx_poll returns by non-timeout
+event, *USEC_P is not updated.  Now, it is updated.
+
+
 * Major changes in Chopstx 1.12
 
   Released 2018-11-12
