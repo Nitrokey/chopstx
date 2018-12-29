@@ -340,13 +340,13 @@ reset (void)
 #else
   extern const uint32_t FT0[256], FT1[256], FT2[256];
   asm volatile ("cpsid	i\n\t"		/* Mask all interrupts. */
-		"ldr	r0, 1f\n\t"     /* r0 = SCR */
+		"ldr	r0, 1f\n\t"     /* r0 = SCB start */
 		"mov	r1, pc\n\t"	/* r1 = (PC + 0x1000) & ~0x0fff */
 		"mov	r2, #0x1000\n\t"
 		"add	r1, r1, r2\n\t"
 		"sub	r2, r2, #1\n\t"
 		"bic	r1, r1, r2\n\t"
-		"str	r1, [r0, #8]\n\t"	/* Set SCR->VCR */
+		"str	r1, [r0, #8]\n\t"	/* Set SCB->VTOR */
 		"ldr	r0, [r1], #4\n\t"
 		"msr	MSP, r0\n\t"	/* Main (exception handler) stack. */
 		"ldr	r0, [r1]\n\t"	/* Reset handler.                  */
