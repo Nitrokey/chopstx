@@ -168,6 +168,19 @@ usart_config (uint8_t dev_no, uint32_t config_bits)
   else
     USARTx->CR3 = 0;
 
+  if ((config_bits & MASK_MODE))
+    {
+      if ((config_bits & MASK_MODE) == MODE_SMARTCARD)
+	{
+	  USARTx->CR2 |= (0x1 << 11);
+	  USARTx->CR3 |= (1 << 5);
+	}
+      else if ((config_bits & MASK_MODE) == MODE_IRDA)
+	USARTx->CR3 |= (1 << 1);
+      else if ((config_bits & MASK_MODE) == MODE_IRDA_LP)
+	USARTx->CR3 |= (1 << 2) | (1 << 1);
+    }
+
   USARTx->CR1 = cr1_config;
   return 0;
 }
