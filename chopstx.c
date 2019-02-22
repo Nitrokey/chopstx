@@ -567,19 +567,21 @@ chx_exit (void *retval)
 
 /*
  * Lower layer mutex unlocking.  Called with schedule lock held.
+ * Return PRIO of the thread which is waken up.
  */
 static chopstx_prio_t
 chx_mutex_unlock (chopstx_mutex_t *mutex)
 {
   struct chx_thread *tp;
-  chopstx_prio_t prio = 0;
 
   mutex->owner = NULL;
   running->mutex_list = mutex->list;
   mutex->list = NULL;
 
   tp = (struct chx_thread *)ll_pop (&mutex->q);
-  if (tp)
+  if (!tp)
+    return 0;
+  else
     {
       uint16_t newprio = running->prio_orig;
       chopstx_mutex_t *m;
@@ -595,11 +597,8 @@ chx_mutex_unlock (chopstx_mutex_t *mutex)
       /* Then, assign it.  */
       running->prio = newprio;
 
-      if (prio < tp->prio)
-	prio = tp->prio;
+      return tp->prio;
     }
-
-  return prio;
 }
 
 #define CHOPSTX_PRIO_MASK ((1 << CHOPSTX_PRIO_BITS) - 1)
