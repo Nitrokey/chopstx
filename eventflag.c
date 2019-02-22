@@ -74,6 +74,9 @@ eventflag_prepare_poll (struct eventflag *ev, chopstx_poll_cond_t *poll_desc)
 }
 
 
+/* When multiple events are marked, event with lower bit has precedence.
+   Because __builtin_ffs returns the least significant 1-bit.  */
+
 eventmask_t
 eventflag_get (struct eventflag *ev)
 {
