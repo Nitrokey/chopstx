@@ -45,9 +45,9 @@ PAR_BITS  3
 
 /* non-POSIX, non-USB-CDC configs */
 #define MODE_SMARTCARD (1 << 30)
-#define MODE_IRDA      (2 << 30)
-#define MODE_IRDA_LP   (3 << 30)
-#define MASK_MODE      (0x3 << 30)
+#define MODE_IRDA      (2UL << 30)
+#define MODE_IRDA_LP   (3UL << 30)
+#define MASK_MODE      (0x3UL << 30)
 /* 0: standard, 1: smartcard, 2: IrDA, 3: IrDA-LP */
 
 struct usart_stat {

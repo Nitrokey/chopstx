@@ -1,7 +1,7 @@
 /*
  * usart-stm32.c - USART driver for STM32F103 (USART2 and USART3)
  *
- * Copyright (C) 2017  g10 Code GmbH
+ * Copyright (C) 2017, 2019  g10 Code GmbH
  * Author: NIIBE Yutaka <gniibe@fsij.org>
  *
  * This file is a part of Chopstx, a thread library for embedded.
