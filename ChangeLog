@@ -1,3 +1,13 @@
+2019-02-28  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* contrib/usart.h (BSCARD): New.
+	* contrib/usart-stm32f103.c (BSCARD): Baudrate for smartcard.
+	(usart_config_clken): New.
+	(usart_config): Fix for MODE_SMARTCARD.
+
+	* board/board-st-nucleo-f103.h: Define pins for smartcard
+	interface.
+
 2019-02-21  NIIBE Yutaka  <gniibe@fsij.org>
 
 	* contrib/usart.h (MODE_SMARTCARD, MODE_IRDA, MODE_IRDA_LP)

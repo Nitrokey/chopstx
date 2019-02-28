@@ -104,12 +104,25 @@ static const struct brr_setting brr_table[] = {
   { B230400, (   9 << 4)|12},
   { B460800, (   4 << 4)|14},
   { B921600, (   2 << 4)|7},
+  { BSCARD,  ( 232 << 4)|8},
 };
 
 static void *usart_main (void *arg);
 
 static struct usart_stat usart2_stat;
 static struct usart_stat usart3_stat;
+
+void
+usart_config_clken (uint8_t dev_no, int on)
+{
+  struct USART *USARTx = get_usart_dev (dev_no);
+
+  if (on)
+    USARTx->CR2 |= (1 << 11);
+  else
+    USARTx->CR2 &= ~(1 << 11);
+}
+
 
 int
 usart_config (uint8_t dev_no, uint32_t config_bits)
@@ -172,8 +185,8 @@ usart_config (uint8_t dev_no, uint32_t config_bits)
     {
       if ((config_bits & MASK_MODE) == MODE_SMARTCARD)
 	{
-	  USARTx->CR2 |= (0x1 << 11);
-	  USARTx->CR3 |= (1 << 5);
+	  USARTx->GTPR = (16 << 8) | 5;
+	  USARTx->CR3 |= ((1 << 5) | (1 << 4));
 	}
       else if ((config_bits & MASK_MODE) == MODE_IRDA)
 	USARTx->CR3 |= (1 << 1);

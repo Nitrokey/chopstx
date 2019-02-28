@@ -49,17 +49,26 @@
  * Port B setup.
  * PB0  - input with pull-up: AN8 for NeuG
  * PB1  - input with pull-up: AN9 for NeuG
- * PB10 - Alternate function push pull output 2MHz USART3-TX
- * PB11 - Input with pull-up                       USART3-RX
- * PB12 - Alternate function push pull output 2MHz USART3-CK
- * PB13 - Input with pull-up                       USART3-CTS
- * PB14 - Alternate function push pull output 2MHz USART3-RTS
+ * ---
+ * ---
+ * PB4  - Input with pull-up: Card insertion detect: 0 when detected
+ * ---
+ * PB6  - Output push pull 2MHz: Vcc for card: default 0
+ * ---
+ * PB8  - Output push pull 2MHz: Vpp for card: default 0
+ * PB9  - Output push pull 2MHz: RST for card: default 0
+ * PB10 - Alternate function open-drain output 50MHz USART3-TX
+ * PB11 - Input with pull-up                         USART3-RX
+ * PB12 - Alternate function push pull output  50MHz USART3-CK
+ * PB13 - Input with pull-up                         USART3-CTS
+ * PB14 - Alternate function push pull output  50MHz USART3-RTS
+ * ---
  * ------------------------ Default
  * PBx  - input with pull-up.
  */
-#define VAL_GPIO_OTHER_ODR          0xFFFFFFFF
-#define VAL_GPIO_OTHER_CRL          0x88888888      /*  PB7...PB0 */
-#define VAL_GPIO_OTHER_CRH          0x8A8A8A88      /* PB15...PB8 */
+#define VAL_GPIO_OTHER_ODR          0xFFFFFCBF
+#define VAL_GPIO_OTHER_CRL          0x82888888      /*  PB7...PB0 */
+#define VAL_GPIO_OTHER_CRH          0x8B8B8F22      /* PB15...PB8 */
 
 #define RCC_ENR_IOP_EN      (RCC_APB2ENR_IOPAEN | RCC_APB2ENR_IOPBEN)
 #define RCC_RSTR_IOP_RST    (RCC_APB2RSTR_IOPARST | RCC_APB2RSTR_IOPBRST)
