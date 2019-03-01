@@ -213,8 +213,6 @@ usart_init (uint16_t prio, uintptr_t stack_addr, size_t stack_size,
   RCC->APB1RSTR = ((1 << 18) | (1 << 17));
   RCC->APB1RSTR = 0;
 
-  usart_config (2, B115200 | CS8 | STOP1B);
-  usart_config (3, B115200 | CS8 | STOP1B);
   chopstx_create (prio, stack_addr, stack_size, usart_main, NULL);
 }
 

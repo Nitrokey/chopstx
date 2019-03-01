@@ -238,6 +238,9 @@ main (int argc, const char *argv[])
 
   usart_init (PRIO_USART, STACK_ADDR_USART, STACK_SIZE_USART, ss_notify);
 
+  usart_config (2, B115200 | CS8 | STOP1B);
+  usart_config (3, B115200 | CS8 | STOP1B);
+
   cdc_usart0.cdc = cdc_open (0);
   cdc_usart0.dev_no = 2;
   cdc_usart1.cdc = cdc_open (1);
