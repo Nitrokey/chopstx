@@ -1,3 +1,21 @@
+2019-03-02  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* VERSION: 1.14.
+	* doc/chopstx.texi (VERSION): 1.14.
+
+2019-03-01  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* contrib/usart-stm32f103.c (usart_config): Fix SCEN setting
+	procedure.
+
+2019-03-01  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* contrib/usart-stm32f103.c (usart_config): Support parity error
+	interrupt setting.
+	(usart_init): Don't call usart_config here.
+	* example-usb-serial/sample.c: It's application calling
+	usart_config.
+
 2019-02-28  NIIBE Yutaka  <gniibe@fsij.org>
 
 	* contrib/usart.h (BSCARD): New.

@@ -1,12 +1,19 @@
 This is an application example using ST Nucleo F103 board.
 
-SB62 and SB63 should be soldered.
-ST-Link/V2 is disconnected (SB13 and SB14).
+SB62 and SB63 should be soldered to connect PA2 and PA3 to CN10
+connector.
+
+ST-Link/V2's TX and RX are disconnected (by removing SB13 and SB14).
+
+Smartcard can be connected, by using USART3_TX for I/O and USART3_CK
+for CLK, PB6 for Vcc, PB8 for Vpp, and PB9 for RST.
+
 
 NOTE:
 
 Using the USB CDC-ACM for serial communication is a kind of wrong,
-because it's designed for modem;  No way to control CTSRTS. 
+because it's designed for modem; In the protocol, we have no way to
+control the CTSRTS signal.
 
 TIOCGICOUNT
 
@@ -19,4 +26,4 @@ TODO:
 * stats report control
   By vendor specific control?
 * Half-duplex support
-* Support of other communication mode: smartcard, IrDA, etc.
+* Support of other communication mode: IrDA, etc.

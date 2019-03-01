@@ -1,6 +1,14 @@
 NEWS - Noteworthy changes
 
 
+* Major changes in Chopstx 1.14
+
+  Released 2019-03-02
+
+** Enhancement of driver: USART for STM32
+Now, it supports smartcard communication.
+
+
 * Major changes in Chopstx 1.13
 
   Released 2018-12-19
