@@ -181,6 +181,9 @@ usart_config (uint8_t dev_no, uint32_t config_bits)
   else
     USARTx->CR3 = 0;
 
+  USARTx->CR1 = cr1_config;
+
+  /* SCEN (smartcard enable) should be set _after_ CR1.  */
   if ((config_bits & MASK_MODE))
     {
       if ((config_bits & MASK_MODE) == MODE_SMARTCARD)
@@ -194,7 +197,6 @@ usart_config (uint8_t dev_no, uint32_t config_bits)
 	USARTx->CR3 |= (1 << 2) | (1 << 1);
     }
 
-  USARTx->CR1 = cr1_config;
   return 0;
 }
 
