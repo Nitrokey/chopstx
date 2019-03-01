@@ -149,9 +149,9 @@ usart_config (uint8_t dev_no, uint32_t config_bits)
     return -1;
 
   if ((config_bits & PARENB) == 0)
-    cr1_config &= ~USART_CR1_PCE;
+    cr1_config &= ~(USART_CR1_PCE | USART_CR1_PEIE);
   else
-    cr1_config |=  USART_CR1_PCE;
+    cr1_config |=  (USART_CR1_PCE | USART_CR1_PEIE);
 
   if ((config_bits & PARODD) == 0)
     cr1_config &= ~USART_CR1_PS;
