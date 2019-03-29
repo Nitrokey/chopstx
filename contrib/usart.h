@@ -75,4 +75,4 @@ int usart_send_break (uint8_t dev_no);
 void usart_config_clken (uint8_t dev_no, int on);
 
 void usart_read_prepare_poll (uint8_t dev_no, chopstx_poll_cond_t *poll_desc);
-int usart_read_ext (uint8_t dev_no, char *buf, uint16_t buflen, uint32 *timeout_p);
+int usart_read_ext (uint8_t dev_no, char *buf, uint16_t buflen, uint32_t *timeout_p);

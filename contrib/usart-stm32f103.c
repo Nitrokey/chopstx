@@ -635,10 +635,12 @@ usart_read_prepare_poll (uint8_t dev_no, chopstx_poll_cond_t *poll_desc)
 }
 
 int
-usart_read_ext (uint8_t dev_no, char *buf, uint16_t buflen, uint32 *timeout_p)
+usart_read_ext (uint8_t dev_no, char *buf, uint16_t buflen, uint32_t *timeout_p)
 {
   struct rb *rb;
   chopstx_poll_cond_t poll_desc;
+  struct chx_poll_head *ph[] = { (struct chx_poll_head *)&poll_desc };
+
   int r;
 
   if (dev_no == 2)
@@ -649,7 +651,7 @@ usart_read_ext (uint8_t dev_no, char *buf, uint16_t buflen, uint32 *timeout_p)
     return -1;
 
   rb_get_prepare_poll (rb, &poll_desc);
-  r = chopstx_poll (timeout_p, 1, (struct chx_poll_head *const)&poll_desc);
+  r = chopstx_poll (timeout_p, 1, ph);
   if (r == 0)
     return 0;
   else
