@@ -1,3 +1,8 @@
+2019-03-29  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* contrib/usart-stm32f103.c (usart_read_ext): New.
+	(usart_read_prepare_poll): New.
+
 2019-03-02  NIIBE Yutaka  <gniibe@fsij.org>
 
 	* VERSION: 1.14.

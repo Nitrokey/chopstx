@@ -394,6 +394,14 @@ rb_empty_check (void *arg)
   return rb->empty == 0;
 }
 
+/* Can be used two ways:
+ *
+ *   When the ring buffer is rb_a2h:
+ *     Hardware-side polling if data is available from application.
+ *
+ *   When the ring buffer is rb_h2a:
+ *     Application-side polling if data is available from hardware.
+ */
 static void
 rb_get_prepare_poll (struct rb *rb, chopstx_poll_cond_t *poll_desc)
 {
@@ -607,6 +615,43 @@ usart_read (uint8_t dev_no, char *buf, uint16_t buflen)
       rb_ll_flush (rb);
       return 0;
     }
+  else
+    return rb_read (rb, (uint8_t *)buf, buflen);
+}
+
+void
+usart_read_prepare_poll (uint8_t dev_no, chopstx_poll_cond_t *poll_desc)
+{
+  struct rb *rb;
+
+  if (dev_no == 2)
+    rb = &usart2_rb_h2a;
+  else if (dev_no == 3)
+    rb = &usart3_rb_h2a;
+  else
+    return;
+
+  rb_get_prepare_poll (rb, poll_desc);
+}
+
+int
+usart_read_ext (uint8_t dev_no, char *buf, uint16_t buflen, uint32 *timeout_p)
+{
+  struct rb *rb;
+  chopstx_poll_cond_t poll_desc;
+  int r;
+
+  if (dev_no == 2)
+    rb = &usart2_rb_h2a;
+  else if (dev_no == 3)
+    rb = &usart3_rb_h2a;
+  else
+    return -1;
+
+  rb_get_prepare_poll (rb, &poll_desc);
+  r = chopstx_poll (timeout_p, 1, (struct chx_poll_head *const)&poll_desc);
+  if (r == 0)
+    return 0;
   else
     return rb_read (rb, (uint8_t *)buf, buflen);
 }
