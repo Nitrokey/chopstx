@@ -1,3 +1,11 @@
+2019-03-30  Niibe Yutaka  <gniibe@fsij.org>
+
+	* contrib/usart-stm32f103.c (usart_config_brr): New.
+	(usart_config_re): New internal function.
+	(handle_intr, handle_tx_ready): Use TC for smartcard.
+	(usart_wait_write_completion): New internal function.
+	(usart_write): Support half-duplex smartcard mode.
+
 2019-03-29  NIIBE Yutaka  <gniibe@fsij.org>
 
 	* contrib/usart-stm32f103.c (usart_read_ext): New.

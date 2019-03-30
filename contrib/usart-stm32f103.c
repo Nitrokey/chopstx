@@ -74,6 +74,10 @@ static struct USART *const USART3 = (struct USART *)USART3_BASE;
 #define USART_CR1_RWU		(1 <<  1)
 #define USART_CR1_SBK		(1 <<  0)
 
+#define USART_CR3_CTSE		(1 <<  9)
+#define USART_CR3_RTSE		(1 <<  8)
+#define USART_CR3_SCEN		(1 <<  5)
+#define USART_CR3_NACK		(1 <<  4)
 
 static struct USART *
 get_usart_dev (uint8_t dev_no)
@@ -113,6 +117,25 @@ static struct usart_stat usart2_stat;
 static struct usart_stat usart3_stat;
 
 void
+usart_config_brr (uint8_t dev_no, uint16_t brr_value)
+{
+  struct USART *USARTx = get_usart_dev (dev_no);
+
+  USARTx->CR1 &= ~(USART_CR1_TE | USART_CR1_RE);
+  USARTx->BRR = brr_value;
+  USARTx->CR1 |= (USART_CR1_TE | USART_CR1_RE);
+}
+
+static void
+usart_config_re (struct USART *USARTx, int on)
+{
+  if (on)
+    USARTx->CR1 |= USART_CR1_RE;
+  else
+    USARTx->CR1 &= ~USART_CR1_RE;
+}
+
+void
 usart_config_clken (uint8_t dev_no, int on)
 {
   struct USART *USARTx = get_usart_dev (dev_no);
@@ -132,8 +155,9 @@ usart_config (uint8_t dev_no, uint32_t config_bits)
   int i;
   uint32_t cr1_config = (USART_CR1_UE | USART_CR1_RXNEIE
 			 | USART_CR1_TE | USART_CR1_RE);
-				/* TXEIE will be enabled when putting char */
-				/* No CTSIE, PEIE, TCIE, IDLEIE, LBDIE */
+				/* TXEIE/TCIE will be enabled when
+				   putting char */
+				/* No CTSIE, PEIE, IDLEIE, LBDIE */
   if (USARTx == NULL)
     return -1;
 
@@ -177,7 +201,7 @@ usart_config (uint8_t dev_no, uint32_t config_bits)
   USARTx->BRR = brr_table[i].brr_value;
 
   if ((config_bits & MASK_FLOW))
-    USARTx->CR3 = (1 << 9) | (1 << 8);
+    USARTx->CR3 = USART_CR3_CTSE | USART_CR3_RTSE;
   else
     USARTx->CR3 = 0;
 
@@ -189,7 +213,7 @@ usart_config (uint8_t dev_no, uint32_t config_bits)
       if ((config_bits & MASK_MODE) == MODE_SMARTCARD)
 	{
 	  USARTx->GTPR = (16 << 8) | 5;
-	  USARTx->CR3 |= ((1 << 5) | (1 << 4));
+	  USARTx->CR3 |= (USART_CR3_SCEN | USART_CR3_NACK);
 	}
       else if ((config_bits & MASK_MODE) == MODE_IRDA)
 	USARTx->CR3 |= (1 << 1);
@@ -234,6 +258,7 @@ struct rb {
   uint32_t full  : 1;
   uint32_t empty : 1;
 };
+/* full && empty -> data is consumed fully */
 
 /*
  * Note: size = 1024 can still work, regardless of the limit of 10-bit.
@@ -259,6 +284,8 @@ rb_add (struct rb *rb, uint8_t v)
     rb->tail = 0;
   if (rb->tail == rb->head)
     rb->full = 1;
+  else
+    rb->full = 0;
   rb->empty = 0;
 }
 
@@ -286,7 +313,7 @@ rb_ll_put (struct rb *rb, uint8_t v)
   int r;
 
   chopstx_mutex_lock (&rb->m);
-  if (rb->full)
+  if (rb->full && !rb->empty)
     r = -1;
   else
     {
@@ -309,12 +336,14 @@ rb_ll_get (struct rb *rb)
 
   chopstx_mutex_lock (&rb->m);
   if (rb->empty)
-    r = -1;
-  else
     {
-      r = rb_del (rb);
-      chopstx_cond_signal (&rb->space_available);
+      if (!rb->full)
+	rb->full = 1;
+      r = -1;
     }
+  else
+    r = rb_del (rb);
+  chopstx_cond_signal (&rb->space_available);
   chopstx_mutex_unlock (&rb->m);
   return r;
 }
@@ -367,7 +396,7 @@ rb_write (struct rb *rb, uint8_t *buf, uint16_t buflen)
 
   do
     {
-      while (rb->full)
+      while (rb->full && !rb->empty)
 	chopstx_cond_wait (&rb->space_available, &rb->m);
 
       while (i < buflen)
@@ -452,11 +481,23 @@ handle_intr (struct USART *USARTx, struct rb *rb2a, struct usart_stat *stat)
   int tx_ready = 0;
   uint32_t r = USARTx->SR;
   int notify_bits = 0;
+  int smartcard_mode = ((USARTx->CR3 & USART_CR3_SCEN) != 0);
 
-  if ((r & USART_SR_TXE))
+  if (smartcard_mode)
     {
-      tx_ready = 1;
-      USARTx->CR1 &= ~USART_CR1_TXEIE;
+      if ((r & USART_SR_TC))
+	{
+	  tx_ready = 1;
+	  USARTx->CR1 &= ~USART_CR1_TCIE;
+	}
+    }
+  else
+    {
+      if ((r & USART_SR_TXE))
+	{
+	  tx_ready = 1;
+	  USARTx->CR1 &= ~USART_CR1_TXEIE;
+	}
     }
 
   if ((r & USART_SR_RXNE))
@@ -515,8 +556,7 @@ handle_intr (struct USART *USARTx, struct rb *rb2a, struct usart_stat *stat)
 }
 
 static int
-handle_tx_ready (struct USART *USARTx, struct rb *rb2h,
-		 struct usart_stat *stat)
+handle_tx (struct USART *USARTx, struct rb *rb2h, struct usart_stat *stat)
 {
   int tx_ready = 1;
   int c = rb_ll_get (rb2h);
@@ -524,14 +564,26 @@ handle_tx_ready (struct USART *USARTx, struct rb *rb2h,
   if (c >= 0)
     {
       uint32_t r;
+      int smartcard_mode = ((USARTx->CR3 & USART_CR3_SCEN) != 0);
 
       USARTx->DR = (c & 0xff);
       stat->tx++;
       r = USARTx->SR;
-      if ((r & USART_SR_TXE) == 0)
+      if (smartcard_mode)
 	{
-	  tx_ready = 0;
-	  USARTx->CR1 |= USART_CR1_TXEIE;
+	  if ((r & USART_SR_TC) == 0)
+	    {
+	      tx_ready = 0;
+	      USARTx->CR1 |= USART_CR1_TCIE;
+	    }
+	}
+      else
+	{
+	  if ((r & USART_SR_TXE) == 0)
+	    {
+	      tx_ready = 0;
+	      USARTx->CR1 |= USART_CR1_TXEIE;
+	    }
 	}
     }
 
@@ -560,6 +612,8 @@ usart_main (void *arg)
   while (1)
     {
       int n = 0;
+      int usart2_tx_done = 0;
+      int usart3_tx_done = 0;
 
       usart_poll[n++] = (struct chx_poll_head *)&usart2_intr;
       usart_poll[n++] = (struct chx_poll_head *)&usart3_intr;
@@ -576,23 +630,23 @@ usart_main (void *arg)
 
       if (usart2_intr.ready)
 	{
-	  usart2_tx_ready = handle_intr (USART2, &usart2_rb_h2a, &usart2_stat);
+	  usart2_tx_done = handle_intr (USART2, &usart2_rb_h2a, &usart2_stat);
+	  usart2_tx_ready |= usart2_tx_done;
 	  chopstx_intr_done (&usart2_intr);
 	}
 
       if (usart3_intr.ready)
 	{
-	  usart3_tx_ready = handle_intr (USART3, &usart3_rb_h2a, &usart3_stat);
+	  usart3_tx_done = handle_intr (USART3, &usart3_rb_h2a, &usart3_stat);
+	  usart3_tx_ready |= usart3_tx_done;
 	  chopstx_intr_done (&usart3_intr);
 	}
 
-      if (usart2_tx_ready && usart2_app_write_event.ready)
-	usart2_tx_ready = handle_tx_ready (USART2,
-					   &usart2_rb_a2h, &usart2_stat);
+      if (usart2_tx_done || (usart2_tx_ready && usart2_app_write_event.ready))
+	usart2_tx_ready = handle_tx (USART2, &usart2_rb_a2h, &usart2_stat);
 
-      if (usart3_tx_ready && usart3_app_write_event.ready)
-	usart3_tx_ready = handle_tx_ready (USART3,
-					   &usart3_rb_a2h, &usart3_stat);
+      if (usart3_tx_done || (usart3_tx_ready && usart3_app_write_event.ready))
+	usart3_tx_ready = handle_tx (USART3, &usart3_rb_a2h, &usart3_stat);
     }
 
   return NULL;
@@ -658,6 +712,15 @@ usart_read_ext (uint8_t dev_no, char *buf, uint16_t buflen, uint32_t *timeout_p)
     return rb_read (rb, (uint8_t *)buf, buflen);
 }
 
+static void
+usart_wait_write_completion (struct rb *rb)
+{
+  chopstx_mutex_lock (&rb->m);
+  while (!(rb->empty && rb->full))
+    chopstx_cond_wait (&rb->space_available, &rb->m);
+  chopstx_mutex_unlock (&rb->m);
+}
+
 int
 usart_write (uint8_t dev_no, char *buf, uint16_t buflen)
 {
@@ -673,7 +736,22 @@ usart_write (uint8_t dev_no, char *buf, uint16_t buflen)
   if (buf == NULL && buflen == 0)
     rb_ll_flush (rb);
   else
-    rb_write (rb, (uint8_t *)buf, buflen);
+    {
+      struct USART *USARTx = get_usart_dev (dev_no);
+      int smartcard_mode = ((USARTx->CR3 & USART_CR3_SCEN) != 0);
+
+      if (smartcard_mode)
+	usart_config_re (USARTx, 0);
+
+      rb_write (rb, (uint8_t *)buf, buflen);
+
+      if (smartcard_mode)
+	{
+	  usart_wait_write_completion (rb);
+	  usart_config_re (USARTx, 1);
+	}
+    }
+
   return 0;
 }
 
