@@ -127,7 +127,7 @@ usart_config_brr (uint8_t dev_no, uint16_t brr_value)
 }
 
 static void
-usart_config_re (struct USART *USARTx, int on)
+usart_config_recv_enable (struct USART *USARTx, int on)
 {
   if (on)
     USARTx->CR1 |= USART_CR1_RE;
@@ -741,14 +741,14 @@ usart_write (uint8_t dev_no, char *buf, uint16_t buflen)
       int smartcard_mode = ((USARTx->CR3 & USART_CR3_SCEN) != 0);
 
       if (smartcard_mode)
-	usart_config_re (USARTx, 0);
+	usart_config_recv_enable (USARTx, 0);
 
       rb_write (rb, (uint8_t *)buf, buflen);
 
       if (smartcard_mode)
 	{
 	  usart_wait_write_completion (rb);
-	  usart_config_re (USARTx, 1);
+	  usart_config_recv_enable (USARTx, 1);
 	}
     }
 
