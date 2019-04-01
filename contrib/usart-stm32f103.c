@@ -212,7 +212,7 @@ usart_config (uint8_t dev_no, uint32_t config_bits)
     {
       if ((config_bits & MASK_MODE) == MODE_SMARTCARD)
 	{
-	  USARTx->GTPR = (16 << 8) | 5;
+	  USARTx->GTPR = (1 << 8) | 5;
 	  USARTx->CR3 |= (USART_CR3_SCEN | USART_CR3_NACK);
 	}
       else if ((config_bits & MASK_MODE) == MODE_IRDA)
