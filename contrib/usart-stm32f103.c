@@ -120,10 +120,12 @@ void
 usart_config_brr (uint8_t dev_no, uint16_t brr_value)
 {
   struct USART *USARTx = get_usart_dev (dev_no);
+  uint32_t save_bits;
 
+  save_bits = USARTx->CR1 & (USART_CR1_TE | USART_CR1_RE);
   USARTx->CR1 &= ~(USART_CR1_TE | USART_CR1_RE);
   USARTx->BRR = brr_value;
-  USARTx->CR1 |= (USART_CR1_TE | USART_CR1_RE);
+  USARTx->CR1 |= save_bits;
 }
 
 static void
@@ -226,19 +228,33 @@ usart_config (uint8_t dev_no, uint32_t config_bits)
 
 static int (*ss_notify_callback) (uint8_t dev_no, uint16_t notify_bits);
 
+#define INTR_REQ_USART2 38
+#define INTR_REQ_USART3 39
+
+static struct chx_intr usart2_intr;
+static struct chx_intr usart3_intr;
+
 void
-usart_init (uint16_t prio, uintptr_t stack_addr, size_t stack_size,
-	    int (*cb) (uint8_t dev_no, uint16_t notify_bits))
+usart_init0 (int (*cb) (uint8_t dev_no, uint16_t notify_bits))
 {
   ss_notify_callback = cb;
   usart2_stat.dev_no = 2;
   usart3_stat.dev_no = 3;
 
+  chopstx_claim_irq (&usart2_intr, INTR_REQ_USART2);
+  chopstx_claim_irq (&usart3_intr, INTR_REQ_USART3);
+
   /* Enable USART2 and USART3 clocks, and strobe reset.  */
   RCC->APB1ENR |= ((1 << 18) | (1 << 17));
   RCC->APB1RSTR = ((1 << 18) | (1 << 17));
   RCC->APB1RSTR = 0;
+}
 
+void
+usart_init (uint16_t prio, uintptr_t stack_addr, size_t stack_size,
+	    int (*cb) (uint8_t dev_no, uint16_t notify_bits))
+{
+  usart_init0 (cb);
   chopstx_create (prio, stack_addr, stack_size, usart_main, NULL);
 }
 
@@ -442,16 +458,10 @@ rb_get_prepare_poll (struct rb *rb, chopstx_poll_cond_t *poll_desc)
   poll_desc->arg   = rb;
 }
 
-#define INTR_REQ_USART2 38
-#define INTR_REQ_USART3 39
-
 static uint8_t buf_usart2_rb_a2h[256];
 static uint8_t buf_usart2_rb_h2a[512];
 static uint8_t buf_usart3_rb_a2h[256];
 static uint8_t buf_usart3_rb_h2a[512];
-
-static struct chx_intr usart2_intr;
-static struct chx_intr usart3_intr;
 
 static struct rb usart2_rb_a2h;
 static struct rb usart2_rb_h2a;
@@ -597,9 +607,6 @@ usart_main (void *arg)
 
   usart2_tx_ready = 1;
   usart3_tx_ready = 1;
-
-  chopstx_claim_irq (&usart2_intr, INTR_REQ_USART2);
-  chopstx_claim_irq (&usart3_intr, INTR_REQ_USART3);
 
   rb_init (&usart2_rb_a2h, buf_usart2_rb_a2h, sizeof buf_usart2_rb_a2h);
   rb_init (&usart2_rb_h2a, buf_usart2_rb_h2a, sizeof buf_usart2_rb_h2a);
@@ -778,4 +785,125 @@ usart_send_break (uint8_t dev_no)
 
   USARTx->CR1 |= 0x01;
   return 0;
+}
+
+int
+usart_block_sendrecv (uint8_t dev_no, const char *s_buf, uint16_t s_buflen,
+		      char *r_buf, uint16_t r_buflen,
+		      uint32_t *timeout_block_p, uint32_t timeout_char)
+{
+  uint32_t timeout;
+  uint8_t *p;
+  int len;
+  uint32_t r;
+  uint32_t data;
+  struct USART *USARTx = get_usart_dev (dev_no);
+  int smartcard_mode = ((USARTx->CR3 & USART_CR3_SCEN) != 0);
+  struct chx_intr *usartx_intr;
+  struct chx_poll_head *ph[1];
+
+  if (dev_no == 2)
+    usartx_intr = &usart2_intr;
+  else
+    usartx_intr = &usart3_intr;
+  ph[0] = (struct chx_poll_head *)usartx_intr;
+
+  p = (uint8_t *)s_buf;
+  if (p)
+    {
+      if (smartcard_mode)
+	usart_config_recv_enable (USARTx, 0);
+
+      if (smartcard_mode)
+	USARTx->CR1 |= USART_CR1_TCIE;
+      else
+	USARTx->CR1 |= USART_CR1_TXEIE;
+
+      /* Sending part */
+      while (1)
+	{
+	  chopstx_poll (NULL, 1, ph);
+
+	  r = USARTx->SR;
+
+	  /* Here, ignore recv error(s).  */
+	  if ((r & USART_SR_RXNE) || (r & USART_SR_ORE))
+	    {
+	      data = USARTx->DR;
+	      asm volatile ("" : : "r" (data) : "memory");
+	    }
+
+	  /* Not ready? Then, poll again.  */
+	  if (!(smartcard_mode && (r & USART_SR_TC))
+	      && !(!smartcard_mode && (r & USART_SR_TXE)))
+	    continue;
+
+	  if (s_buflen == 0)
+	    {
+	      if (smartcard_mode)
+		USARTx->CR1 &= ~USART_CR1_TCIE;
+	      else
+		USARTx->CR1 &= ~USART_CR1_TXEIE;
+	      chopstx_intr_done (usartx_intr);
+	      break;
+	    }
+	  else
+	    {
+	      chopstx_intr_done (usartx_intr);
+	      /* Keep TCIE or TXEIE bit */
+	      USARTx->DR = *p++;
+	      s_buflen--;
+	    }
+	}
+
+      if (smartcard_mode)
+	usart_config_recv_enable (USARTx, 1);
+    }
+
+  p = (uint8_t *)r_buf;
+  len = 0;
+
+  /* Receiving part */
+  r = chopstx_poll (timeout_block_p, 1, ph);
+  if (r == 0)
+    return 0;
+
+  while (1)
+    {
+      r = USARTx->SR;
+
+      data = USARTx->DR;
+      asm volatile ("" : : "r" (data) : "memory");
+
+      if ((r & USART_SR_RXNE))
+	{
+	  if ((r & USART_SR_NE) || (r & USART_SR_FE) || (r & USART_SR_PE))
+	    /* ignore error, for now.  XXX: ss_notify */
+	    ;
+	  else
+	    {
+	      *p++ = (data & 0xff);
+	      len++;
+	      r_buflen--;
+	      if (r_buflen == 0)
+		{
+		  chopstx_intr_done (usartx_intr);
+		  break;
+		}
+	    }
+	}
+      else if ((r & USART_SR_ORE))
+	{
+	  data = USARTx->DR;
+	  asm volatile ("" : : "r" (data) : "memory");
+	}
+
+      chopstx_intr_done (usartx_intr);
+      timeout = timeout_char;
+      r = chopstx_poll (&timeout, 1, ph);
+      if (r == 0)
+	break;
+    }
+
+  return len;
 }

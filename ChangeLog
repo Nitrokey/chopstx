@@ -1,3 +1,8 @@
+2019-04-08  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* contrib/usart-stm32f103.c (usart_block_sendrecv): New.
+	(usart_init0): New.
+
 2019-03-30  Niibe Yutaka  <gniibe@fsij.org>
 
 	* contrib/usart-stm32f103.c (usart_config_brr): New.
