@@ -833,31 +833,30 @@ usart_block_sendrecv (uint8_t dev_no, const char *s_buf, uint16_t s_buflen,
 	      asm volatile ("" : : "r" (data) : "memory");
 	    }
 
-	  /* Not ready? Then, poll again.  */
-	  if (!(smartcard_mode && (r & USART_SR_TC))
-	      && !(!smartcard_mode && (r & USART_SR_TXE)))
-	    continue;
-
-	  if (s_buflen == 0)
+	  if ((smartcard_mode && (r & USART_SR_TC))
+	      || (!smartcard_mode && (r & USART_SR_TXE)))
 	    {
-	      if (smartcard_mode)
-		USARTx->CR1 &= ~USART_CR1_TCIE;
+	      if (s_buflen == 0)
+		break;
 	      else
-		USARTx->CR1 &= ~USART_CR1_TXEIE;
-	      chopstx_intr_done (usartx_intr);
-	      break;
+		{
+		  /* Keep TCIE or TXEIE bit */
+		  USARTx->DR = *p++;
+		  s_buflen--;
+		}
 	    }
-	  else
-	    {
-	      chopstx_intr_done (usartx_intr);
-	      /* Keep TCIE or TXEIE bit */
-	      USARTx->DR = *p++;
-	      s_buflen--;
-	    }
+
+	  chopstx_intr_done (usartx_intr);
 	}
 
       if (smartcard_mode)
-	usart_config_recv_enable (USARTx, 1);
+	{
+	  usart_config_recv_enable (USARTx, 1);
+	  USARTx->CR1 &= ~USART_CR1_TCIE;
+	}
+      else
+	USARTx->CR1 &= ~USART_CR1_TXEIE;
+      chopstx_intr_done (usartx_intr);
     }
 
   p = (uint8_t *)r_buf;
