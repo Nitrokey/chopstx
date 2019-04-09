@@ -814,10 +814,7 @@ usart_block_sendrecv (uint8_t dev_no, const char *s_buf, uint16_t s_buflen,
       if (smartcard_mode)
 	usart_config_recv_enable (USARTx, 0);
 
-      if (smartcard_mode)
-	USARTx->CR1 |= USART_CR1_TCIE;
-      else
-	USARTx->CR1 |= USART_CR1_TXEIE;
+      USARTx->CR1 |= USART_CR1_TXEIE;
 
       /* Sending part */
       while (1)
@@ -833,14 +830,13 @@ usart_block_sendrecv (uint8_t dev_no, const char *s_buf, uint16_t s_buflen,
 	      asm volatile ("" : : "r" (data) : "memory");
 	    }
 
-	  if ((smartcard_mode && (r & USART_SR_TC))
-	      || (!smartcard_mode && (r & USART_SR_TXE)))
+	  if ((r & USART_SR_TXE))
 	    {
 	      if (s_buflen == 0)
 		break;
 	      else
 		{
-		  /* Keep TCIE or TXEIE bit */
+		  /* Keep TXEIE bit */
 		  USARTx->DR = *p++;
 		  s_buflen--;
 		}
@@ -849,23 +845,42 @@ usart_block_sendrecv (uint8_t dev_no, const char *s_buf, uint16_t s_buflen,
 	  chopstx_intr_done (usartx_intr);
 	}
 
+      USARTx->CR1 &= ~USART_CR1_TXEIE;
       if (smartcard_mode)
 	{
+	  if ((*timeout_block_p))
+	    do
+	      r = USARTx->SR;
+	    while (((r & USART_SR_TC) == 0));
 	  usart_config_recv_enable (USARTx, 1);
-	  USARTx->CR1 &= ~USART_CR1_TCIE;
 	}
-      else
-	USARTx->CR1 &= ~USART_CR1_TXEIE;
+      if (*timeout_block_p == 0)
+	{
+	  /* Ignoring the echo back, and busy wait the first character.  */
+	  do
+	    r = USARTx->SR;
+	  while (((r & USART_SR_TC) == 0));
+	  while (((r & USART_SR_RXNE) == 0))
+	    r = USARTx->SR;
+	  data = USARTx->DR;
+	  asm volatile ("" : : "r" (data) : "memory");
+	  do
+	    r = USARTx->SR;
+	  while (((r & USART_SR_RXNE) == 0));
+	  goto skip_wait;
+	}
+
       chopstx_intr_done (usartx_intr);
     }
-
-  p = (uint8_t *)r_buf;
-  len = 0;
 
   /* Receiving part */
   r = chopstx_poll (timeout_block_p, 1, ph);
   if (r == 0)
     return 0;
+
+ skip_wait:
+  p = (uint8_t *)r_buf;
+  len = 0;
 
   while (1)
     {
