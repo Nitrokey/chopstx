@@ -108,7 +108,7 @@ static const struct brr_setting brr_table[] = {
   { B230400, (   9 << 4)|12},
   { B460800, (   4 << 4)|14},
   { B921600, (   2 << 4)|7},
-  { BSCARD,  ( 232 << 4)|8},
+  { BSCARD,  ( 234 << 4)|6},
 };
 
 static void *usart_main (void *arg);
