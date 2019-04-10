@@ -1,7 +1,7 @@
 /*
  * entry.c - Entry routine when reset and interrupt vectors.
  *
- * Copyright (C) 2013, 2014, 2015, 2016, 2017
+ * Copyright (C) 2013, 2014, 2015, 2016, 2017, 2019
  *               Flying Stone Technology
  * Author: NIIBE Yutaka <gniibe@fsij.org>
  *
@@ -54,10 +54,12 @@ main (int argc, const char *argv[])
  * Avoid medium density specific code and prepare for high density
  * device, too.
  */
-#undef STM32F10X_MD
+#define STM32F10X_HD
 #else
 #if defined (MCU_KINETIS_L)
 #include "mcu/clk_gpio_init-mkl27z.c"
+#elif defined (MCU_STM32L4)
+#include "mcu/clk_gpio_init-stm32l.c"
 #else
 #include "mcu/clk_gpio_init-stm32.c"
 #endif
@@ -233,10 +235,23 @@ handler vector_table[] __attribute__ ((section(".startup.vectors"))) = {
   chx_handle_intr /* EXT15_10 */,  chx_handle_intr /* RTCAlarm */,
   chx_handle_intr /* USBWakeup */, chx_handle_intr,
 #endif
-#if !defined(STM32F10X_MD)
+#if defined(STM32F10X_HD)
   /* High-density chips have more; ... DMA2_Channel4_5 */
   chx_handle_intr,  chx_handle_intr,  chx_handle_intr,  chx_handle_intr,
   chx_handle_intr,  chx_handle_intr,  chx_handle_intr,  chx_handle_intr,
+  chx_handle_intr,  chx_handle_intr,  chx_handle_intr,  chx_handle_intr,
+  chx_handle_intr,  chx_handle_intr,  chx_handle_intr,  chx_handle_intr,
+#elif defined(MCU_STM32L4)
+  chx_handle_intr,  chx_handle_intr,  chx_handle_intr,  chx_handle_intr,
+  chx_handle_intr,  chx_handle_intr,  chx_handle_intr,  chx_handle_intr,
+  chx_handle_intr,  chx_handle_intr,  chx_handle_intr,  chx_handle_intr,
+  chx_handle_intr,  chx_handle_intr,  chx_handle_intr,  chx_handle_intr,
+
+  chx_handle_intr,  chx_handle_intr,  chx_handle_intr,  chx_handle_intr,
+  chx_handle_intr,  chx_handle_intr,  chx_handle_intr,  chx_handle_intr,
+  chx_handle_intr,  chx_handle_intr,  chx_handle_intr,  chx_handle_intr,
+  chx_handle_intr,  chx_handle_intr,  chx_handle_intr,  chx_handle_intr,
+
   chx_handle_intr,  chx_handle_intr,  chx_handle_intr,  chx_handle_intr,
   chx_handle_intr,  chx_handle_intr,  chx_handle_intr,  chx_handle_intr,
 #endif
