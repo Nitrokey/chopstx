@@ -20,7 +20,7 @@
 
 #define STM32F0_USE_VECTOR_ON_RAM
 #include "mcu/cortex-m.h"
-#include "mcu/clk_gpio_init-stm32.c"
+#include "mcu/clk_gpio_init-stm32f.c"
 
 
 static void

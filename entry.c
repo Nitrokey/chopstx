@@ -61,7 +61,7 @@ main (int argc, const char *argv[])
 #elif defined (MCU_STM32L4)
 #include "mcu/clk_gpio_init-stm32l.c"
 #else
-#include "mcu/clk_gpio_init-stm32.c"
+#include "mcu/clk_gpio_init-stm32f.c"
 #endif
 #endif
 

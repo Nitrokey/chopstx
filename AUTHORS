@@ -34,7 +34,7 @@ NIIBE Yutaka:
 	eventflag.c, eventflag.h
     Wrote the drivers mcu/*:
 	chx-gnu-linux.c, chx-mkl27z.c, chx-stm32f0.c, chx-stm32f103.c,
-    	clk_gpio_init-mkl27z.c, clk_gpio_init-stm32.c,
+    	clk_gpio_init-mkl27z.c, clk_gpio_init-stm32f.c,
 	cortex-m.h, mkl27z.h, stm32.h, stm32f103.h,
 	sys-gnu-linux.c,sys-gnu-linux.h,
 	sys-mkl27z.c, sys-mkl27z.h,

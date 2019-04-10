@@ -1,5 +1,7 @@
 2019-04-10  NIIBE Yutaka  <gniibe@fsij.org>
 
+	* mcu/clk_gpio_init-stm32f.c: Rename from clk_gpio_init-stm32.c.
+
 	* entry.c: Use STM32F10X_HD.
 	* board/board-stbee.h (STM32F10X_HD): Add.
 	* board/board-stm32-primer2.h (STM32F10X_HD): Add.
