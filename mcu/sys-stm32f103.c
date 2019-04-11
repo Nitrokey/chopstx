@@ -21,6 +21,15 @@
 #include "mcu/clk_gpio_init-stm32f.c"
 
 
+/*
+ * When a board supports USB self-powered configuration, there is a
+ * control to enable external pull-up 1K5 resistor.  The voltage
+ * source on the pull-up resistor should be only supplied when VBUS
+ * from the cable is available.  This routine is for such a board.
+ *
+ * For a board for USB bus-powered configuration, it is common that
+ * there is no such control, but 1K5 resistor is fixed to +3V3.
+ */
 static void
 usb_cable_config (int enable)
 {
