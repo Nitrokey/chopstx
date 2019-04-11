@@ -23,24 +23,25 @@
 /*
  * Port A setup.
  *
- * MODER: 10 11 - 11 01 - 01 11 - 10 10    11 11 - 11 11 - 11 10 - 11 11
+ * MODER: 10 10 - 10 01 - 01 11 - 10 10    11 11 - 11 11 - 11 10 - 11 11
  *
  * PA2  - USART2-TX: AF7
  * PA8  - USART1-CK: AF7
  * PA9  - USART1-TX: AF7 Open-drain pull-up
  * PA11 - Push Pull output medium-speed 0 (until USB enabled) (USBDM: AF10)
  * PA12 - Push Pull output medium-speed 0 (until USB enabled) (USBDP: AF10)
+ * PA13 - SWDIO
+ * PA14 - SWDCLK
  * PA15 - USART2-RX: AF3
  * ------------------------ Default
  * PAx  - analog input
  */
-#define VAL_GPIO_LED_MODER   0xBD7AFFEF
-#define VAL_GPIO_LED_OTYPER  0x00000200
-#define VAL_GPIO_LED_OSPEEDR 0xFB7FFFFF
-#define VAL_GPIO_LED_PUPDR   0x00040000
-
-#define VAL_GPIO_LED_AFRL    0x00000700
-#define VAL_GPIO_LED_AFRH    0x30000077
+#define VAL_GPIO_OTHER_MODER   0xA97AFFEF
+#define VAL_GPIO_OTHER_OTYPER  0x00000200
+#define VAL_GPIO_OTHER_OSPEEDR 0xFB7FFFFF
+#define VAL_GPIO_OTHER_PUPDR   0x00040000
+#define VAL_GPIO_OTHER_AFRL    0x00000700
+#define VAL_GPIO_OTHER_AFRH    0x30000077
 
 /*
  * Port B setup.
@@ -49,11 +50,13 @@
  *
  * PB3  - ON (LED 1:ON 0:OFF)
  * ------------------------ Default
- * PAx  - analog input
+ * PBx  - analog input
  */
-#define VAL_GPIO_OTHER_MODER   0xFFFFFF7F
-#define VAL_GPIO_OTHER_OTYPER  0x00000000
-#define VAL_GPIO_OTHER_OSPEEDR 0x00000000
-#define VAL_GPIO_OTHER_PUPDR   0x00000000
+#define VAL_GPIO_LED_MODER   0xFFFFFF7F
+#define VAL_GPIO_LED_OTYPER  0x00000000
+#define VAL_GPIO_LED_OSPEEDR 0x00000000
+#define VAL_GPIO_LED_PUPDR   0x00000000
+#define VAL_GPIO_LED_AFRL    0x00000000
+#define VAL_GPIO_LED_AFRH    0x00000000
 
 #define RCC_PHR_GPIO   (RCC_PHR_GPIOA | RCC_PHR_GPIOB)
