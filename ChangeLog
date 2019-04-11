@@ -1,3 +1,7 @@
+2019-04-11  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* chopstx-cortex-m.c: Support Cortex-M4 (not touching FPU).
+
 2019-04-10  NIIBE Yutaka  <gniibe@fsij.org>
 
 	* mcu/clk_gpio_init-stm32f.c: Rename from clk_gpio_init-stm32.c.

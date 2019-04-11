@@ -2,15 +2,20 @@
 
 PROJECT = sample
 
-### Currently, it's for STM32F0 Discovery.
+### Currently, it is for STM32 Nucleo L432
+### 
 ### Please change lines started with '###' for Cortex-M3 board.
+###
+### Please change lines started with '###' for Cortex-M0+ board
+### (STM32F0 Discovery).
 
 CHOPSTX = ..
-LDSCRIPT= sample.ld
+LDSCRIPT= sample.ld.m4
+### LDSCRIPT= sample.ld
 ### LDSCRIPT= sample.ld.m3
 CSRC = sample.c
 
-CHIP=stm32f0
+CHIP=stm32l4
 USE_SYS = yes
 
 ###################################
@@ -20,7 +25,8 @@ LD   = $(CROSS)gcc
 OBJCOPY   = $(CROSS)objcopy
 
 ### MCU   = cortex-m3
-MCU   = cortex-m0
+### MCU   = cortex-m0
+MCU   = cortex-m4
 CWARN = -Wall -Wextra -Wstrict-prototypes
 DEFS  = -DUSE_SYS3 -DFREE_STANDING -DMHZ=48
 ### DEFS  = -DFREE_STANDING -DUSE_SYS3 -DBUSY_LOOP -DCHX_FLAGS_MAIN=CHOPSTX_SCHED_RR

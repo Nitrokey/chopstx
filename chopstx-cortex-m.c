@@ -84,7 +84,7 @@ struct chx_stack_regs {
 #define CPU_EXCEPTION_PRIORITY_INTERRUPT     0x40
 #define CPU_EXCEPTION_PRIORITY_PENDSV        0x80
 #define CPU_EXCEPTION_PRIORITY_SVC           0x80 /* No use in this arch */
-#elif defined(__ARM_ARCH_7M__)
+#elif defined(__ARM_ARCH_7M__) || defined(__ARM_ARCH_7EM__)
 #define CPU_EXCEPTION_PRIORITY_SVC           0x30
 
 #define CPU_EXCEPTION_PRIORITY_INHIBIT_SCHED 0x40
@@ -306,7 +306,7 @@ chx_sched (uint32_t yield)
 {
   register struct chx_thread *tp asm ("r0");
 
-#if defined(__ARM_ARCH_7M__)
+#if defined(__ARM_ARCH_7M__) || defined(__ARM_ARCH_7EM__)
   asm volatile (
 	"svc	#0"
 	: "=r" (tp) : "0" (yield): "memory");
@@ -648,7 +648,7 @@ preempt (void)
 	: /* no output */ : "r" (tp) : "memory");
 }
 
-#if defined(__ARM_ARCH_7M__)
+#if defined(__ARM_ARCH_7M__) || defined(__ARM_ARCH_7EM__)
 /*
  * System call: switch to another thread.
  * There are two cases:
