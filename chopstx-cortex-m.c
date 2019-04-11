@@ -1,8 +1,8 @@
 /*
  * chopstx-cortex-m.c - Threads and only threads: Arch specific code
- *                      for Cortex-M0/M3
+ *                      for Cortex-M0/M3/M4
  *
- * Copyright (C) 2013, 2014, 2015, 2016, 2017, 2018
+ * Copyright (C) 2013, 2014, 2015, 2016, 2017, 2018, 2019
  *               Flying Stone Technology
  * Author: NIIBE Yutaka <gniibe@fsij.org>
  *
@@ -106,30 +106,34 @@ struct chx_stack_regs {
  * System tick
  */
 /* SysTick registers.  */
-static volatile uint32_t *const SYST_CSR = (uint32_t *)0xE000E010;
-static volatile uint32_t *const SYST_RVR = (uint32_t *)0xE000E014;
-static volatile uint32_t *const SYST_CVR = (uint32_t *)0xE000E018;
+struct SYST {
+  volatile uint32_t CSR;
+  volatile uint32_t RVR;
+  volatile uint32_t CVR;
+  const uint32_t CALIB;
+};
+static struct SYST *const SYST = (struct SYST *)0xE000E010;
 
 static void
 chx_systick_reset (void)
 {
-  *SYST_RVR = 0;
-  *SYST_CVR = 0;
-  *SYST_CSR = 7;
+  SYST->RVR = 0;
+  SYST->CVR = 0;
+  SYST->CSR = 7;
 }
 
 static void
 chx_systick_reload (uint32_t ticks)
 {
-  *SYST_RVR = ticks;
-  *SYST_CVR = 0;  /* write (any) to clear the counter to reload.  */
-  *SYST_RVR = 0;
+  SYST->RVR = ticks;
+  SYST->CVR = 0;  /* write (any) to clear the counter to reload.  */
+  SYST->RVR = 0;
 }
 
 static uint32_t
 chx_systick_get (void)
 {
-  return *SYST_CVR;
+  return SYST->CVR;
 }
 
 static uint32_t usec_to_ticks (uint32_t usec)
