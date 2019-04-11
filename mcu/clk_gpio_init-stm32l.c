@@ -30,7 +30,7 @@
 
 #define STM32_FLASHBITS		0x00000704
 
-static void __attribute__((used))
+void
 clock_init (void)
 {
   /* MSI: 4MHz (keep the default value) */
@@ -65,12 +65,12 @@ static struct GPIO *const GPIO_USB = (struct GPIO *)GPIO_USB_BASE;
 static struct GPIO *const GPIO_OTHER = (struct GPIO *)GPIO_OTHER_BASE;
 #endif
 
-static void __attribute__((used))
+void
 gpio_init (void)
 {
   /* Enable GPIO clock. */
-  RCC->AHB2ENR |= RCC_IOP;
-  RCC->AHB2RSTR = RCC_IOP;
+  RCC->AHB2ENR |= RCC_PHR_GPIO;
+  RCC->AHB2RSTR = RCC_PHR_GPIO;
   RCC->AHB2RSTR = 0;
 
   /* Delay (more than two clocks) is needed.  */

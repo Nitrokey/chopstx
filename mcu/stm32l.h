@@ -11,44 +11,44 @@ struct RCC {
   volatile uint32_t PLLCFGR;
 
   volatile uint32_t PLLSAI1CFGR;
-  volatile uint32_t RESERVED;
+  volatile uint32_t RESERVED0;
   volatile uint32_t CIER;
   volatile uint32_t CIFR;
 
   volatile uint32_t CICR;
-  volatile uint32_t RESERVED;
+  volatile uint32_t RESERVED1;
   volatile uint32_t AHB1RSTR;
   volatile uint32_t AHB2RSTR;
 
   volatile uint32_t AHB3RSTR;
-  volatile uint32_t RESERVED;
+  volatile uint32_t RESERVED2;
   volatile uint32_t APB1RSTR1;
   volatile uint32_t APB1RSTR2;
 
   volatile uint32_t APB2RSTR;
-  volatile uint32_t RESERVED;
-  volatile uint32_t AHB1ENRR;
-  volatile uint32_t AHB2ENRR;
+  volatile uint32_t RESERVED3;
+  volatile uint32_t AHB1ENR;
+  volatile uint32_t AHB2ENR;
 
-  volatile uint32_t AHB3ENRR;
-  volatile uint32_t RESERVED;
-  volatile uint32_t APB1ENRR1;
-  volatile uint32_t APB1ENRR2;
+  volatile uint32_t AHB3ENR;
+  volatile uint32_t RESERVED4;
+  volatile uint32_t APB1ENR1;
+  volatile uint32_t APB1ENR2;
 
-  volatile uint32_t APB2ENRR;
-  volatile uint32_t RESERVED;
+  volatile uint32_t APB2ENR;
+  volatile uint32_t RESERVED5;
   volatile uint32_t AHB1SMENR;
   volatile uint32_t AHB2SMENR;
 
   volatile uint32_t AHB3SMENR;
-  volatile uint32_t RESERVED;
+  volatile uint32_t RESERVED6;
   volatile uint32_t APB1SMENR1;
   volatile uint32_t APB1SMENR2;
 
   volatile uint32_t APB2SMENR;
-  volatile uint32_t RESERVED;
+  volatile uint32_t RESERVED7;
   volatile uint32_t CCIPR;
-  volatile uint32_t RESERVED;
+  volatile uint32_t RESERVED8;
 
   volatile uint32_t BDCR;
   volatile uint32_t CSR;
@@ -65,6 +65,9 @@ static struct RCC *const RCC = (struct RCC *)RCC_BASE;
 #define RCC_PHR_GPIOD       0x00000008
 #define RCC_PHR_GPIOE       0x00000010
 #define RCC_PHR_GPIOH       0x00000080
+
+#define RCC_PHR_USB         (1 << 26)
+#define RCC_PHR_CRS         (1 << 24)
 
 
 struct PWR
