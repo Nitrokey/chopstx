@@ -28,9 +28,33 @@
 
 #include <mcu/stm32l.h>
 
+#define STM32_FLASHBITS		0x00000704
+
 static void __attribute__((used))
 clock_init (void)
 {
+  /* MSI: 4MHz (keep the default value) */
+
+  /* PLL input: MSI at 4MHz, VCO: 160 MHz, output 80MHz */
+  RCC->PLLCFGR = ((1 << 24) | (40 << 8)) | 0x01;
+
+  /* Enable PLL */
+  RCC->CR |= (1 << 24);
+  while (!(RCC->CR & (1 << 25)))
+    ;
+
+  /* Flash setup: four wait states at 80MHz */
+  FLASH->ACR = STM32_FLASHBITS;
+  while ((FLASH->ACR & 0x07) != (STM32_FLASHBITS & 0x07))
+    ;
+
+  /* Configure bus clocks: AHB: 80MHz, APB1: 40MHz, APB2: 80MHz */
+  RCC->CFGR = (0x04 << 8);
+
+  /* Switch SYSCLOCK using PLL */
+  RCC->CFGR |= 0x03;
+  while ((RCC->CFGR & 0x0C) != 0x0C)
+    ;
 }
 
 static struct GPIO *const GPIO_LED = (struct GPIO *)GPIO_LED_BASE;
@@ -45,7 +69,24 @@ static void __attribute__((used))
 gpio_init (void)
 {
   /* Enable GPIO clock. */
+  RCC->AHB2ENR |= RCC_IOP;
+  RCC->AHB2RSTR = RCC_IOP;
+  RCC->AHB2RSTR = 0;
+
+  /* Delay (more than two clocks) is needed.  */
+  while (RCC->AHB2RSTR != 0)
+    ;
 
   /* LED is mandatory.  We configure it always.  */
-  GPIO_LED->ODR = VAL_GPIO_LED_ODR;
+  GPIO_LED->OSPEEDR = VAL_GPIO_LED_OSPEEDR;
+  GPIO_LED->OTYPER  = VAL_GPIO_LED_OTYPER;
+  GPIO_LED->MODER   = VAL_GPIO_LED_MODER;
+  GPIO_LED->PUPDR   = VAL_GPIO_LED_PUPDR;
+
+#ifdef GPIO_OTHER_BASE
+  GPIO_OTHER->OSPEEDR = VAL_GPIO_OTHER_OSPEEDR;
+  GPIO_OTHER->OTYPER  = VAL_GPIO_OTHER_OTYPER;
+  GPIO_OTHER->MODER   = VAL_GPIO_OTHER_MODER;
+  GPIO_OTHER->PUPDR   = VAL_GPIO_OTHER_PUPDR;
+#endif
 }

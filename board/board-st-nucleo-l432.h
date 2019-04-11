@@ -2,7 +2,7 @@
 #define BOARD_ID    0x3a8d5116
 
 /*
- * Please add USB cable to ST Nucleo L432.
+ * When using USB, please add USB cable to ST Nucleo L432.
  *
  * At CN4, connect USB cable, only when ST Link is not connected
  *  Vbus RED   -->  4
@@ -15,47 +15,45 @@
 
 #define MCU_STM32L4 1
 
-#define RCC_HSICLK                    48000000
-
 #define GPIO_LED_BASE   GPIOB_BASE
 #define GPIO_LED_SET_TO_EMIT            3
 #undef  GPIO_USB_BASE		/* No external DISCONNECT/RENUM circuit.  */
-#define GPIO_OTHER_BASE GPIOB_BASE
+#define GPIO_OTHER_BASE GPIOA_BASE
 
 /*
  * Port A setup.
- * PA0  - Input with pull-up                       USART2-CTS
- * PA1  - Alternate function push pull output 2MHz USART2-RTS
- * PA2  - Alternate function push pull output 2MHz USART2-TX
- * PA3  - Input with pull-up                       USART2-RX
- * PA4  - Alternate function push pull output 2MHz USART2-CK
- * PA5  - Push pull output 2MHz (LED 1:ON 0:OFF)
- * PA11 - Push Pull output 10MHz 0 default (until USB enabled) (USBDM) 
- * PA12 - Push Pull output 10MHz 0 default (until USB enabled) (USBDP)
+ *
+ * MODER: 10 11 - 11 01 - 01 11 - 10 10    11 11 - 11 11 - 11 10 - 11 11
+ *
+ * PA2  - USART2-TX: AF7
+ * PA8  - USART1-CK: AF7
+ * PA9  - USART1-TX: AF7 Open-drain pull-up
+ * PA11 - Push Pull output medium-speed 0 (until USB enabled) (USBDM: AF10)
+ * PA12 - Push Pull output medium-speed 0 (until USB enabled) (USBDP: AF10)
+ * PA15 - USART2-RX: AF3
  * ------------------------ Default
- * PAx  - input with pull-up
+ * PAx  - analog input
  */
-#define VAL_GPIO_LED_ODR            0xFFFFE7FF
+#define VAL_GPIO_LED_MODER   0xBD7AFFEF
+#define VAL_GPIO_LED_OTYPER  0x00000200
+#define VAL_GPIO_LED_OSPEEDR 0xFB7FFFFF
+#define VAL_GPIO_LED_PUPDR   0x00040000
+
+#define VAL_GPIO_LED_AFRL    0x00000700
+#define VAL_GPIO_LED_AFRH    0x30000077
 
 /*
  * Port B setup.
- * PB0  - input with pull-up: AN8 for NeuG
- * PB1  - input with pull-up: AN9 for NeuG
- * ---
- * ---
- * PB4  - Input with pull-up: Card insertion detect: 0 when detected
- * ---
- * PB6  - Output push pull 2MHz: Vcc for card: default 0
- * ---
- * PB8  - Output push pull 2MHz: Vpp for card: default 0
- * PB9  - Output push pull 2MHz: RST for card: default 0
- * PB10 - Alternate function open-drain output 50MHz USART3-TX
- * PB11 - Input with pull-up                         USART3-RX
- * PB12 - Alternate function push pull output  50MHz USART3-CK
- * PB13 - Input with pull-up                         USART3-CTS
- * PB14 - Alternate function push pull output  50MHz USART3-RTS
- * ---
+ *
+ * MODER: 11 11 - 11 11 - 11 11 - 11 11    11 11 - 11 11 - 01 11 - 11 11
+ *
+ * PB3  - ON (LED 1:ON 0:OFF)
  * ------------------------ Default
- * PBx  - input with pull-up.
+ * PAx  - analog input
  */
-#define VAL_GPIO_OTHER_ODR          0xFFFFFCBF
+#define VAL_GPIO_OTHER_MODER   0xFFFFFF7F
+#define VAL_GPIO_OTHER_OTYPER  0x00000000
+#define VAL_GPIO_OTHER_OSPEEDR 0x00000000
+#define VAL_GPIO_OTHER_PUPDR   0x00000000
+
+#define RCC_PHR_GPIO   (RCC_PHR_GPIOA | RCC_PHR_GPIOB)

@@ -59,6 +59,14 @@ struct RCC {
 #define RCC_BASE		(AHB1PERIPH_BASE + 0x1000)
 static struct RCC *const RCC = (struct RCC *)RCC_BASE;
 
+#define RCC_PHR_GPIOA       0x00000001
+#define RCC_PHR_GPIOB       0x00000002
+#define RCC_PHR_GPIOC       0x00000004
+#define RCC_PHR_GPIOD       0x00000008
+#define RCC_PHR_GPIOE       0x00000010
+#define RCC_PHR_GPIOH       0x00000080
+
+
 struct PWR
 {
   volatile uint32_t CR1;
