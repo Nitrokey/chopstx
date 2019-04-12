@@ -103,6 +103,10 @@ ss_notify (uint8_t dev_no, uint16_t state_bits)
 int
 main (int argc, const char *argv[])
 {
+  chopstx_poll_cond_t poll_desc;
+  uint32_t timeout;
+  struct chx_poll_head *ph[1];
+
   (void)argc;
   (void)argv;
 
@@ -125,11 +129,27 @@ main (int argc, const char *argv[])
   usart_init (PRIO_USART, STACK_ADDR_USART, STACK_SIZE_USART, ss_notify);
   usart_config (2, B115200 | CS8 | STOP1B);
 
+  usart_read_prepare_poll (2, &poll_desc);
+  ph[0] = (struct chx_poll_head *)&poll_desc;
+
+  timeout = 200*1000*6;
   while (1)
     {
-      u ^= 1;
-      wait_for (200*1000*6);
-      usart_write (2, "Hello\r\n", 7);
+      chopstx_poll (&timeout, 1, ph);
+      if (timeout == 0)
+	{
+	  usart_write (2, "Hello\r\n", 7);
+	  u ^= 1;
+	  timeout = 200*1000*6;
+	}
+      else
+	{
+	  char buf[256];
+	  int r;
+	  r = usart_read (2, buf, 256);
+	  if (r)
+	    usart_write (2, buf, r);
+	}
     }
 
   return 0;
