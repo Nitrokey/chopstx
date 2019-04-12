@@ -250,7 +250,7 @@ usart_init (uint16_t prio, uintptr_t stack_addr, size_t stack_size,
 
 struct brr_setting {
   uint8_t baud_spec;
-  uint16_t brr_value;
+  uint32_t brr_value;
 };
 #define NUM_BAUD (int)(sizeof (brr_table) / sizeof (struct brr_setting))
 
