@@ -69,12 +69,12 @@ void
 gpio_init (void)
 {
   /* Enable GPIO clock. */
-  RCC->AHB2ENR |= RCC_PHR_GPIO;
+  RCC->AHB2ENR |= RCC_AHB2_GPIO;
   /* Delay (more than two clocks) is needed.  */
-  while ((RCC->AHB2ENR & RCC_PHR_GPIO) == 0)
+  while ((RCC->AHB2ENR & RCC_AHB2_GPIO) == 0)
     ;
 
-  RCC->AHB2RSTR = RCC_PHR_GPIO;
+  RCC->AHB2RSTR = RCC_AHB2_GPIO;
   RCC->AHB2RSTR = 0;
 
   /* Delay (more than two clocks) is needed.  */

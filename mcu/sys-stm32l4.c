@@ -47,8 +47,8 @@ static void wait (int count)
 void
 usb_lld_sys_shutdown (void)
 {
-  RCC->APB1ENR1 &= ~(RCC_PHR_USB | RCC_PHR_CRS);
-  RCC->APB1RSTR1 |= (RCC_PHR_USB | RCC_PHR_CRS);
+  RCC->APB1ENR1 &= ~(RCC_APB1_1_USB | RCC_APB1_1_CRS);
+  RCC->APB1RSTR1 |= (RCC_APB1_1_USB | RCC_APB1_1_CRS);
 }
 
 void
@@ -56,7 +56,8 @@ usb_lld_sys_init (void)
 {
   /* XXX: should configure CRS (clock recovery system) and HSI48 clock */
 
-  if ((RCC->APB1ENR1 & RCC_PHR_USB) && (RCC->APB1RSTR1 & RCC_PHR_USB) == 0)
+  if ((RCC->APB1ENR1 & RCC_APB1_1_USB)
+      && (RCC->APB1RSTR1 & RCC_APB1_1_USB) == 0)
     /* Make sure the device is disconnected, even after core reset.  */
     {
       usb_lld_sys_shutdown ();
@@ -64,8 +65,8 @@ usb_lld_sys_init (void)
       wait (5*MHZ);
     }
 
-  RCC->APB1ENR1 |= (RCC_PHR_USB | RCC_PHR_CRS);
-  RCC->APB1RSTR1 = (RCC_PHR_USB | RCC_PHR_CRS);
+  RCC->APB1ENR1 |= (RCC_APB1_1_USB | RCC_APB1_1_CRS);
+  RCC->APB1RSTR1 = (RCC_APB1_1_USB | RCC_APB1_1_CRS);
   RCC->APB1RSTR1 = 0;
 }
 
