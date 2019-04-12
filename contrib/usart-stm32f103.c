@@ -116,8 +116,8 @@ struct usart {
   struct USART *USART;
   struct usart_stat *stat;
   struct chx_intr *intr;
-  struct rb *rb_h2a;
   struct rb *rb_a2h;
+  struct rb *rb_h2a;
   uint8_t *buf_a2h;
   uint8_t *buf_h2a;
   chopstx_poll_cond_t *app_write_event;

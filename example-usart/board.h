@@ -1,0 +1,1 @@
+../board/board-st-nucleo-l432.h
