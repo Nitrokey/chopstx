@@ -32,6 +32,7 @@
 #include <mcu/stm32.h>
 #include <contrib/usart.h>
 
+/* Hardware registers */
 struct USART {
   volatile uint32_t SR;
   volatile uint32_t DR;
@@ -44,8 +45,8 @@ struct USART {
 
 #define USART2_BASE           (APB1PERIPH_BASE + 0x4400)
 #define USART3_BASE           (APB1PERIPH_BASE + 0x4800)
-static struct USART *const USART2 = (struct USART *)USART2_BASE;
-static struct USART *const USART3 = (struct USART *)USART3_BASE;
+#define USART2 ((struct USART *)USART2_BASE)
+#define USART3 ((struct USART *)USART3_BASE)
 
 #define USART_SR_CTS	(1 << 9)
 #define USART_SR_LBD	(1 << 8)
@@ -79,24 +80,71 @@ static struct USART *const USART3 = (struct USART *)USART3_BASE;
 #define USART_CR3_SCEN		(1 <<  5)
 #define USART_CR3_NACK		(1 <<  4)
 
-static struct USART *
-get_usart_dev (uint8_t dev_no)
-{
-  if (dev_no == 2)
-    return USART2;
-  else if (dev_no == 3)
-    return USART3;
 
-  return NULL;
-}
+static struct usart_stat usart2_stat;
+static struct usart_stat usart3_stat;
 
-/* We assume 36MHz f_PCLK */
-struct brr_setting {
-  uint8_t baud_spec;
-  uint16_t brr_value;
+static struct chx_intr usart2_intr;
+static struct chx_intr usart3_intr;
+
+#define BUF_A2H_SIZE 256
+#define BUF_H2A_SIZE 512
+static uint8_t buf_usart2_rb_a2h[BUF_A2H_SIZE];
+static uint8_t buf_usart2_rb_h2a[BUF_H2A_SIZE];
+static uint8_t buf_usart3_rb_a2h[BUF_A2H_SIZE];
+static uint8_t buf_usart3_rb_h2a[BUF_H2A_SIZE];
+
+static struct rb usart2_rb_a2h;
+static struct rb usart2_rb_h2a;
+static struct rb usart3_rb_a2h;
+static struct rb usart3_rb_h2a;
+
+static chopstx_poll_cond_t usart2_app_write_event;
+static chopstx_poll_cond_t usart3_app_write_event;
+
+/* Global variables so that it can be easier to debug.  */
+static int usart2_tx_ready;
+static int usart3_tx_ready;
+
+#define INTR_REQ_USART2 38
+#define INTR_REQ_USART3 39
+
+#define USART_DEVNO_START 2
+#define USART_DEVNO_END 3
+
+struct usart {
+  struct USART *USART;
+  struct usart_stat *stat;
+  struct chx_intr *intr;
+  struct rb *rb_h2a;
+  struct rb *rb_a2h;
+  uint8_t *buf_a2h;
+  uint8_t *buf_h2a;
+  chopstx_poll_cond_t *app_write_event;
+  int *tx_ready;
+  uint8_t irq_num;
 };
-#define NUM_BAUD (int)(sizeof (brr_table) / sizeof (struct brr_setting))
 
+
+static const struct usart usart_array[] =
+  {
+   { USART2, &usart2_stat, &usart2_intr, &usart2_rb_a2h, &usart2_rb_h2a,
+     buf_usart2_rb_a2h, buf_usart2_rb_h2a, &usart2_app_write_event,
+     &usart2_tx_ready, INTR_REQ_USART2 },
+   { USART3, &usart3_stat, &usart3_intr, &usart3_rb_a2h, &usart3_rb_h2a,
+     buf_usart3_rb_a2h, buf_usart3_rb_h2a, &usart3_app_write_event,
+     &usart3_tx_ready, INTR_REQ_USART3 },
+  };
+#define NUM_USART ((int)(sizeof (usart_array) / sizeof (struct usart)))
+
+static int handle_intr (struct USART *USARTx, struct rb *rb2a, struct usart_stat *stat);
+static int handle_tx (struct USART *USARTx, struct rb *rb2h, struct usart_stat *stat);
+static void usart_config_recv_enable (struct USART *USARTx, int on);
+
+
+#include "usart-common.c"
+
+/* We assume 36MHz f_PCLK */
 static const struct brr_setting brr_table[] = {
   { B600,    (3750 << 4)},
   { B1200,   (1875 << 4)},
@@ -111,10 +159,6 @@ static const struct brr_setting brr_table[] = {
   { BSCARD,  ( 234 << 4)|6},
 };
 
-static void *usart_main (void *arg);
-
-static struct usart_stat usart2_stat;
-static struct usart_stat usart3_stat;
 
 void
 usart_config_brr (uint8_t dev_no, uint16_t brr_value)
@@ -226,257 +270,26 @@ usart_config (uint8_t dev_no, uint32_t config_bits)
   return 0;
 }
 
-static int (*ss_notify_callback) (uint8_t dev_no, uint16_t notify_bits);
-
-#define INTR_REQ_USART2 38
-#define INTR_REQ_USART3 39
-
-static struct chx_intr usart2_intr;
-static struct chx_intr usart3_intr;
 
 void
 usart_init0 (int (*cb) (uint8_t dev_no, uint16_t notify_bits))
 {
-  ss_notify_callback = cb;
-  usart2_stat.dev_no = 2;
-  usart3_stat.dev_no = 3;
+  int i;
 
-  chopstx_claim_irq (&usart2_intr, INTR_REQ_USART2);
-  chopstx_claim_irq (&usart3_intr, INTR_REQ_USART3);
+  ss_notify_callback = cb;
+
+  for (i = 0; i < NUM_USART; i++)
+    {
+      usart_array[i].stat->dev_no = i + USART_DEVNO_START;
+      chopstx_claim_irq (usart_array[i].intr, usart_array[i].irq_num);
+    }
 
   /* Enable USART2 and USART3 clocks, and strobe reset.  */
   RCC->APB1ENR |= ((1 << 18) | (1 << 17));
   RCC->APB1RSTR = ((1 << 18) | (1 << 17));
   RCC->APB1RSTR = 0;
 }
-
-void
-usart_init (uint16_t prio, uintptr_t stack_addr, size_t stack_size,
-	    int (*cb) (uint8_t dev_no, uint16_t notify_bits))
-{
-  usart_init0 (cb);
-  chopstx_create (prio, stack_addr, stack_size, usart_main, NULL);
-}
 
-/*
- * Ring buffer
- */
-#define MAX_RB_BUF 1024
-
-struct rb {
-  uint8_t *buf;
-  chopstx_mutex_t m;
-  chopstx_cond_t data_available;
-  chopstx_cond_t space_available;
-  uint32_t head  :10;
-  uint32_t tail  :10;
-  uint32_t size  :10;
-  uint32_t full  : 1;
-  uint32_t empty : 1;
-};
-/* full && empty -> data is consumed fully */
-
-/*
- * Note: size = 1024 can still work, regardless of the limit of 10-bit.
- */
-static void
-rb_init (struct rb *rb, uint8_t *p, uint16_t size)
-{
-  rb->buf = p;
-  rb->size = size;
-  chopstx_mutex_init (&rb->m);
-  chopstx_cond_init (&rb->data_available);
-  chopstx_cond_init (&rb->space_available);
-  rb->head = rb->tail = 0;
-  rb->full = 0;
-  rb->empty = 1;
-}
-
-static void
-rb_add (struct rb *rb, uint8_t v)
-{
-  rb->buf[rb->tail++] = v;
-  if (rb->tail == rb->size)
-    rb->tail = 0;
-  if (rb->tail == rb->head)
-    rb->full = 1;
-  else
-    rb->full = 0;
-  rb->empty = 0;
-}
-
-static uint8_t
-rb_del (struct rb *rb)
-{
-  uint32_t v = rb->buf[rb->head++];
-
-  if (rb->head == rb->size)
-    rb->head = 0;
-  if (rb->head == rb->tail)
-    rb->empty = 1;
-  rb->full = 0;
-
-  return v;
-}
-
-/*
- * Application: consumer
- * Hardware:    generator
- */
-static int
-rb_ll_put (struct rb *rb, uint8_t v)
-{
-  int r;
-
-  chopstx_mutex_lock (&rb->m);
-  if (rb->full && !rb->empty)
-    r = -1;
-  else
-    {
-      r = 0;
-      rb_add (rb, v);
-      chopstx_cond_signal (&rb->data_available);
-    }
-  chopstx_mutex_unlock (&rb->m);
-  return r;
-}
-
-/*
- * Application: generator
- * Hardware:    consumer
- */
-static int
-rb_ll_get (struct rb *rb)
-{
-  int r;
-
-  chopstx_mutex_lock (&rb->m);
-  if (rb->empty)
-    {
-      if (!rb->full)
-	rb->full = 1;
-      r = -1;
-    }
-  else
-    r = rb_del (rb);
-  chopstx_cond_signal (&rb->space_available);
-  chopstx_mutex_unlock (&rb->m);
-  return r;
-}
-
-static void
-rb_ll_flush (struct rb *rb)
-{
-  chopstx_mutex_lock (&rb->m);
-  while (!rb->empty)
-    rb_del (rb);
-  chopstx_cond_signal (&rb->space_available);
-  chopstx_mutex_unlock (&rb->m);
-}
-
-/*
- * Application: consumer
- * Hardware:    generator
- */
-static int
-rb_read (struct rb *rb, uint8_t *buf, uint16_t buflen)
-{
-  int i = 0;
-
-  chopstx_mutex_lock (&rb->m);
-  while (rb->empty)
-    chopstx_cond_wait (&rb->data_available, &rb->m);
-
-  while (i < buflen)
-    {
-      buf[i++] = rb_del (rb);
-      if (rb->empty)
-	break;
-    }
-  chopstx_cond_signal (&rb->space_available);
-  chopstx_mutex_unlock (&rb->m);
-
-  return i;
-}
-
-/*
- * Application: generator
- * Hardware:    consumer
- */
-static void
-rb_write (struct rb *rb, uint8_t *buf, uint16_t buflen)
-{
-  int i = 0;
-
-  chopstx_mutex_lock (&rb->m);
-
-  do
-    {
-      while (rb->full && !rb->empty)
-	chopstx_cond_wait (&rb->space_available, &rb->m);
-
-      while (i < buflen)
-	{
-	  rb_add (rb, buf[i++]);
-	  if (rb->full)
-	    {
-	      chopstx_cond_signal (&rb->data_available);
-	      break;
-	    }
-	}
-    }
-  while (i < buflen);
-
-  if (i)
-    chopstx_cond_signal (&rb->data_available);
-  chopstx_mutex_unlock (&rb->m);
-}
-
-static int
-rb_empty_check (void *arg)
-{
-  struct rb *rb = arg;
-  return rb->empty == 0;
-}
-
-/* Can be used two ways:
- *
- *   When the ring buffer is rb_a2h:
- *     Hardware-side polling if data is available from application.
- *
- *   When the ring buffer is rb_h2a:
- *     Application-side polling if data is available from hardware.
- */
-static void
-rb_get_prepare_poll (struct rb *rb, chopstx_poll_cond_t *poll_desc)
-{
-  poll_desc->type  = CHOPSTX_POLL_COND;
-  poll_desc->ready = 0;
-  poll_desc->cond  = &rb->data_available;
-  poll_desc->mutex = &rb->m;
-  poll_desc->check = rb_empty_check;
-  poll_desc->arg   = rb;
-}
-
-static uint8_t buf_usart2_rb_a2h[256];
-static uint8_t buf_usart2_rb_h2a[512];
-static uint8_t buf_usart3_rb_a2h[256];
-static uint8_t buf_usart3_rb_h2a[512];
-
-static struct rb usart2_rb_a2h;
-static struct rb usart2_rb_h2a;
-static struct rb usart3_rb_a2h;
-static struct rb usart3_rb_h2a;
-
-static chopstx_poll_cond_t usart2_app_write_event;
-static chopstx_poll_cond_t usart3_app_write_event;
-
-static struct chx_poll_head *usart_poll[4];
-
-/* Global variables so that it can be easier to debug.  */
-static int usart2_tx_ready;
-static int usart3_tx_ready;
-
 #define UART_STATE_BITMAP_RX_CARRIER (1 << 0)
 #define UART_STATE_BITMAP_TX_CARRIER (1 << 1)
 #define UART_STATE_BITMAP_BREAK      (1 << 2)
@@ -600,179 +413,6 @@ handle_tx (struct USART *USARTx, struct rb *rb2h, struct usart_stat *stat)
   return tx_ready;
 }
 
-static void *
-usart_main (void *arg)
-{
-  (void)arg;
-
-  usart2_tx_ready = 1;
-  usart3_tx_ready = 1;
-
-  rb_init (&usart2_rb_a2h, buf_usart2_rb_a2h, sizeof buf_usart2_rb_a2h);
-  rb_init (&usart2_rb_h2a, buf_usart2_rb_h2a, sizeof buf_usart2_rb_h2a);
-  rb_init (&usart3_rb_a2h, buf_usart3_rb_a2h, sizeof buf_usart3_rb_a2h);
-  rb_init (&usart3_rb_h2a, buf_usart3_rb_h2a, sizeof buf_usart3_rb_h2a);
-
-  rb_get_prepare_poll (&usart2_rb_a2h, &usart2_app_write_event);
-  rb_get_prepare_poll (&usart3_rb_a2h, &usart3_app_write_event);
-
-  while (1)
-    {
-      int n = 0;
-      int usart2_tx_done = 0;
-      int usart3_tx_done = 0;
-
-      usart_poll[n++] = (struct chx_poll_head *)&usart2_intr;
-      usart_poll[n++] = (struct chx_poll_head *)&usart3_intr;
-      if (usart2_tx_ready)
-	usart_poll[n++] = (struct chx_poll_head *)&usart2_app_write_event;
-      else
-	usart2_app_write_event.ready = 0;
-      if (usart3_tx_ready)
-	usart_poll[n++] = (struct chx_poll_head *)&usart3_app_write_event;
-      else
-	usart3_app_write_event.ready = 0;
-
-      chopstx_poll (NULL, n, usart_poll);
-
-      if (usart2_intr.ready)
-	{
-	  usart2_tx_done = handle_intr (USART2, &usart2_rb_h2a, &usart2_stat);
-	  usart2_tx_ready |= usart2_tx_done;
-	  chopstx_intr_done (&usart2_intr);
-	}
-
-      if (usart3_intr.ready)
-	{
-	  usart3_tx_done = handle_intr (USART3, &usart3_rb_h2a, &usart3_stat);
-	  usart3_tx_ready |= usart3_tx_done;
-	  chopstx_intr_done (&usart3_intr);
-	}
-
-      if (usart2_tx_done || (usart2_tx_ready && usart2_app_write_event.ready))
-	usart2_tx_ready = handle_tx (USART2, &usart2_rb_a2h, &usart2_stat);
-
-      if (usart3_tx_done || (usart3_tx_ready && usart3_app_write_event.ready))
-	usart3_tx_ready = handle_tx (USART3, &usart3_rb_a2h, &usart3_stat);
-    }
-
-  return NULL;
-}
-
-int
-usart_read (uint8_t dev_no, char *buf, uint16_t buflen)
-{
-  struct rb *rb;
-
-  if (dev_no == 2)
-    rb = &usart2_rb_h2a;
-  else if (dev_no == 3)
-    rb = &usart3_rb_h2a;
-  else
-    return -1;
-
-  if (buf == NULL && buflen == 0)
-    {
-      rb_ll_flush (rb);
-      return 0;
-    }
-  else
-    return rb_read (rb, (uint8_t *)buf, buflen);
-}
-
-void
-usart_read_prepare_poll (uint8_t dev_no, chopstx_poll_cond_t *poll_desc)
-{
-  struct rb *rb;
-
-  if (dev_no == 2)
-    rb = &usart2_rb_h2a;
-  else if (dev_no == 3)
-    rb = &usart3_rb_h2a;
-  else
-    return;
-
-  rb_get_prepare_poll (rb, poll_desc);
-}
-
-int
-usart_read_ext (uint8_t dev_no, char *buf, uint16_t buflen, uint32_t *timeout_p)
-{
-  struct rb *rb;
-  chopstx_poll_cond_t poll_desc;
-  struct chx_poll_head *ph[] = { (struct chx_poll_head *)&poll_desc };
-
-  int r;
-
-  if (dev_no == 2)
-    rb = &usart2_rb_h2a;
-  else if (dev_no == 3)
-    rb = &usart3_rb_h2a;
-  else
-    return -1;
-
-  rb_get_prepare_poll (rb, &poll_desc);
-  r = chopstx_poll (timeout_p, 1, ph);
-  if (r == 0)
-    return 0;
-  else
-    return rb_read (rb, (uint8_t *)buf, buflen);
-}
-
-static void
-usart_wait_write_completion (struct rb *rb)
-{
-  chopstx_mutex_lock (&rb->m);
-  while (!(rb->empty && rb->full))
-    chopstx_cond_wait (&rb->space_available, &rb->m);
-  chopstx_mutex_unlock (&rb->m);
-}
-
-int
-usart_write (uint8_t dev_no, char *buf, uint16_t buflen)
-{
-  struct rb *rb;
-
-  if (dev_no == 2)
-    rb = &usart2_rb_a2h;
-  else if (dev_no == 3)
-    rb = &usart3_rb_a2h;
-  else
-    return -1;
-
-  if (buf == NULL && buflen == 0)
-    rb_ll_flush (rb);
-  else
-    {
-      struct USART *USARTx = get_usart_dev (dev_no);
-      int smartcard_mode = ((USARTx->CR3 & USART_CR3_SCEN) != 0);
-
-      if (smartcard_mode)
-	usart_config_recv_enable (USARTx, 0);
-
-      rb_write (rb, (uint8_t *)buf, buflen);
-
-      if (smartcard_mode)
-	{
-	  usart_wait_write_completion (rb);
-	  usart_config_recv_enable (USARTx, 1);
-	}
-    }
-
-  return 0;
-}
-
-const struct usart_stat *
-usart_stat (uint8_t dev_no)
-{
-  if (dev_no == 2)
-    return &usart2_stat;
-  else if (dev_no == 3)
-    return &usart3_stat;
-  else
-    return NULL;
-}
-
 int
 usart_send_break (uint8_t dev_no)
 {
@@ -799,13 +439,12 @@ usart_block_sendrecv (uint8_t dev_no, const char *s_buf, uint16_t s_buflen,
   uint32_t data;
   struct USART *USARTx = get_usart_dev (dev_no);
   int smartcard_mode = ((USARTx->CR3 & USART_CR3_SCEN) != 0);
-  struct chx_intr *usartx_intr;
+  struct chx_intr *usartx_intr = get_usart_intr (dev_no);
   struct chx_poll_head *ph[1];
 
-  if (dev_no == 2)
-    usartx_intr = &usart2_intr;
-  else
-    usartx_intr = &usart3_intr;
+  if (usartx_intr == NULL)
+    return -1;
+
   ph[0] = (struct chx_poll_head *)usartx_intr;
 
   p = (uint8_t *)s_buf;

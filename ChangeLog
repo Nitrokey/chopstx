@@ -1,5 +1,7 @@
 2019-04-12  NIIBE Yutaka  <gniibe@fsij.org>
 
+	* contrib/usart-common.c: Factor out from usart-stm32f103.c.
+
 	* entry.c [__ARM_ARCH_7EM__] (entry): Fix for Cortex-M4.
 
 2019-04-11  NIIBE Yutaka  <gniibe@fsij.org>
