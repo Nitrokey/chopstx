@@ -73,7 +73,7 @@ main (int argc, const char *argv[])
 #endif
 
 extern uint8_t __main_stack_end__;
-#if defined(__ARM_ARCH_7M__)
+#if defined(__ARM_ARCH_7M__) || defined(__ARM_ARCH_7EM__)
 extern void svc (void);
 #endif
 extern void preempt (void);
@@ -169,7 +169,7 @@ entry (void)
 		"bl	chx_systick_init\n\t"
 		"bl	gpio_init\n\t"
 		/* Enable interrupts.  */
-#if defined(__ARM_ARCH_7M__)
+#if defined(__ARM_ARCH_7M__) || defined(__ARM_ARCH_7EM__)
 		"mov	r0, #0\n\t"
 		"msr	BASEPRI, r0\n\t"
 #endif
@@ -199,7 +199,7 @@ handler vector_table[] __attribute__ ((section(".startup.vectors"))) = {
   none, none, none,		/* reserved */
 #if defined(__ARM_ARCH_6M__)
   none,				/* SVCall */
-#elif defined(__ARM_ARCH_7M__)
+#elif defined(__ARM_ARCH_7M__) || defined(__ARM_ARCH_7EM__)
   svc,				/* SVCall */
 #endif  
   none,				/* Debug */

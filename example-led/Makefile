@@ -26,9 +26,9 @@ OBJCOPY   = $(CROSS)objcopy
 
 ### MCU   = cortex-m3
 ### MCU   = cortex-m0
-MCU   = cortex-m3
+MCU   = cortex-m4
 CWARN = -Wall -Wextra -Wstrict-prototypes
-DEFS  = -DUSE_SYS3 -DFREE_STANDING -DMHZ=48
+DEFS  = -DUSE_SYS3 -DFREE_STANDING -DMHZ=80
 ### DEFS  = -DFREE_STANDING -DUSE_SYS3 -DBUSY_LOOP -DCHX_FLAGS_MAIN=CHOPSTX_SCHED_RR
 OPT   = -O3 -Os -g
 LIBS  =
