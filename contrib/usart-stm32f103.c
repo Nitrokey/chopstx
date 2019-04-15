@@ -492,21 +492,22 @@ usart_block_sendrecv (uint8_t dev_no, const char *s_buf, uint16_t s_buflen,
 	      r = USARTx->SR;
 	    while (((r & USART_SR_TC) == 0));
 	  usart_config_recv_enable (USARTx, 1);
-	}
-      if (*timeout_block_p == 0)
-	{
-	  /* Ignoring the echo back, and busy wait the first character.  */
-	  do
-	    r = USARTx->SR;
-	  while (((r & USART_SR_TC) == 0));
-	  while (((r & USART_SR_RXNE) == 0))
-	    r = USARTx->SR;
-	  data = USARTx->DR;
-	  asm volatile ("" : : "r" (data) : "memory");
-	  do
-	    r = USARTx->SR;
-	  while (((r & USART_SR_RXNE) == 0));
-	  goto skip_wait;
+
+	  if (*timeout_block_p == 0)
+	    {
+	      /* Ignoring the echo back.  */
+	      do
+		r = USARTx->SR;
+	      while (((r & USART_SR_TC) == 0));
+
+	      if ((r & USART_SR_RXNE))
+		{
+		  data = USARTx->DR;
+		  asm volatile ("" : : "r" (data) : "memory");
+		}
+
+	      *timeout_block_p = timeout_char;
+	    }
 	}
 
       chopstx_intr_done (usartx_intr);
@@ -517,7 +518,6 @@ usart_block_sendrecv (uint8_t dev_no, const char *s_buf, uint16_t s_buflen,
   if (r == 0)
     return 0;
 
- skip_wait:
   p = (uint8_t *)r_buf;
   len = 0;
 
