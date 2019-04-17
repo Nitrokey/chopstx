@@ -1,3 +1,7 @@
+2019-04-17  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* mcu/usb-st-common.c: Factor out from usb-stm32f103.c.
+
 2019-04-12  NIIBE Yutaka  <gniibe@fsij.org>
 
 	* contrib/usart-common.c: Factor out from usart-stm32f103.c.
