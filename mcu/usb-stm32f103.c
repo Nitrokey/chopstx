@@ -33,19 +33,25 @@
 #include "usb_lld.h"
 #include "usb_lld_driver.h"
 
-#define REG_BASE  (0x40005C00UL) /* USB_IP Peripheral Registers base address */
-#define PMA_ADDR  (0x40006000UL) /* USB_IP Packet Memory Area base address   */
+#define REG_BASE  (0x40005C00UL) /* USB Peripheral Registers base address */
+#define PMA_ADDR  (0x40006000UL) /* USB Packet Memory Area base address   */
 
-/* Control register */
-#define CNTR    ((volatile uint16_t *)(REG_BASE + 0x40))
-/* Interrupt status register */
-#define ISTR    ((volatile uint16_t *)(REG_BASE + 0x44))
-/* Frame number register */
-#define FNR     ((volatile uint16_t *)(REG_BASE + 0x48))
-/* Device address register */
-#define DADDR   ((volatile uint16_t *)(REG_BASE + 0x4C))
-/* Buffer Table address register */
-#define BTABLE  ((volatile uint16_t *)(REG_BASE + 0x50))
+struct USB {
+  volatile uint32_t EPR[8];
+  volatile uint32_t reserved[8];
+  volatile uint16_t CNTR;	/* Control register */
+  volatile uint16_t reserved0;
+  volatile uint16_t ISTR;	/* Interrupt status register */
+  volatile uint16_t reserved1;
+  volatile uint16_t FNR;	/* Frame number register */
+  volatile uint16_t reserved2;
+  volatile uint16_t DADDR;	/* Device address register */
+  volatile uint16_t reserved3;
+  volatile uint16_t BTABLE;	/* Buffer Table address register */
+  volatile uint16_t reserved4;
+};
+
+struct USB *const USB = (struct USB *)REG_BASE;
 
 #define ISTR_CTR    (0x8000) /* Correct TRansfer (read-only bit) */
 #define ISTR_OVR    (0x4000) /* OVeR/underrun (clear-only bit) */
@@ -59,11 +65,6 @@
 #define ISTR_DIR    (0x0010)  /* DIRection of transaction (read-only bit)  */
 #define ISTR_EP_ID  (0x000F)  /* EndPoint IDentifier (read-only bit)  */
 
-#define CLR_OVR    (~ISTR_OVR)   /* clear OVeR/underrun bit*/
-#define CLR_ERR    (~ISTR_ERR)   /* clear ERRor bit */
-#define CLR_WKUP   (~ISTR_WKUP)  /* clear WaKe UP bit     */
-#define CLR_SUSP   (~ISTR_SUSP)  /* clear SUSPend bit     */
-#define CLR_RESET  (~ISTR_RESET) /* clear RESET bit      */
 #define CLR_SOF    (~ISTR_SOF)   /* clear Start Of Frame bit   */
 #define CLR_ESOF   (~ISTR_ESOF)  /* clear Expected Start Of Frame bit */
 
@@ -85,15 +86,15 @@
 #define DADDR_EF (0x80)
 #define DADDR_ADD (0x7F)
 
-#define EP_CTR_RX      (0x8000) /* EndPoint Correct TRansfer RX */
-#define EP_DTOG_RX     (0x4000) /* EndPoint Data TOGGLE RX */
-#define EPRX_STAT      (0x3000) /* EndPoint RX STATus bit field */
-#define EP_SETUP       (0x0800) /* EndPoint SETUP */
+#define EP_CTR_RX      (0x8000) /* EndPoint Correct TRansfer RX (clear-only) */
+#define EP_DTOG_RX     (0x4000) /* EndPoint Data TOGGLE RX (toggle) */
+#define EPRX_STAT      (0x3000) /* EndPoint RX STATus bit field (toggle) */
+#define EP_SETUP       (0x0800) /* EndPoint SETUP (read-only) */
 #define EP_T_FIELD     (0x0600) /* EndPoint TYPE */
 #define EP_KIND        (0x0100) /* EndPoint KIND */
-#define EP_CTR_TX      (0x0080) /* EndPoint Correct TRansfer TX */
-#define EP_DTOG_TX     (0x0040) /* EndPoint Data TOGGLE TX */
-#define EPTX_STAT      (0x0030) /* EndPoint TX STATus bit field */
+#define EP_CTR_TX      (0x0080) /* EndPoint Correct TRansfer TX (clear-only) */
+#define EP_DTOG_TX     (0x0040) /* EndPoint Data TOGGLE TX (toggle) */
+#define EPTX_STAT      (0x0030) /* EndPoint TX STATus bit field (toggle) */
 #define EPADDR_FIELD   (0x000F) /* EndPoint ADDRess FIELD */
 
 #define EPREG_MASK     (EP_CTR_RX|EP_SETUP|EP_T_FIELD|EP_KIND|EP_CTR_TX|EPADDR_FIELD)
@@ -116,53 +117,17 @@
 
 static int usb_handle_transfer (struct usb_dev *dev, uint16_t istr_value);
 
-static void st103_set_btable (void)
-{
-  *BTABLE = 0;
-}
 
-static uint16_t st103_get_istr (void)
-{
-  return *ISTR;
-}
-
-static void st103_set_istr (uint16_t istr)
-{
-  *ISTR = istr;
-}
-
-static void st103_set_cntr (uint16_t cntr)
-{
-  *CNTR = cntr;
-}
-
-static void st103_set_daddr (uint16_t daddr)
-{
-  *DADDR  = daddr | DADDR_EF;
-}
-
-static void st103_set_epreg (uint8_t ep_num, uint16_t value)
-{
-  uint16_t *reg_p = (uint16_t *)(REG_BASE + ep_num*4);
-
-  *reg_p = value;
-}
-
-static uint16_t st103_get_epreg (uint8_t ep_num)
-{
-  uint16_t *reg_p = (uint16_t *)(REG_BASE + ep_num*4);
-
-  return *reg_p;
-}
-
-static void st103_set_tx_addr (uint8_t ep_num, uint16_t addr)
+static void
+epbuf_set_tx_addr (uint8_t ep_num, uint16_t addr)
 {
   uint16_t *reg_p = (uint16_t *)(PMA_ADDR + (ep_num*8+0)*2);
 
   *reg_p = addr;
 }
 
-static uint16_t st103_get_tx_addr (uint8_t ep_num)
+static uint16_t
+epbuf_get_tx_addr (uint8_t ep_num)
 {
   uint16_t *reg_p = (uint16_t *)(PMA_ADDR + (ep_num*8+0)*2);
 
@@ -170,14 +135,16 @@ static uint16_t st103_get_tx_addr (uint8_t ep_num)
 }
 
 
-static void st103_set_tx_count (uint8_t ep_num, uint16_t size)
+static void
+epbuf_set_tx_count (uint8_t ep_num, uint16_t size)
 {
   uint16_t *reg_p = (uint16_t *)(PMA_ADDR + (ep_num*8+2)*2);
 
   *reg_p = size;
 }
 
-static uint16_t st103_get_tx_count (uint8_t ep_num)
+static uint16_t
+epbuf_get_tx_count (uint8_t ep_num)
 {
   uint16_t *reg_p = (uint16_t *)(PMA_ADDR + (ep_num*8+2)*2);
 
@@ -185,14 +152,16 @@ static uint16_t st103_get_tx_count (uint8_t ep_num)
 }
 
 
-static void st103_set_rx_addr (uint8_t ep_num, uint16_t addr)
+static void
+epbuf_set_rx_addr (uint8_t ep_num, uint16_t addr)
 {
   uint16_t *reg_p = (uint16_t *)(PMA_ADDR + (ep_num*8+4)*2);
 
   *reg_p = addr;
 }
 
-static uint16_t st103_get_rx_addr (uint8_t ep_num)
+static uint16_t
+epbuf_get_rx_addr (uint8_t ep_num)
 {
   uint16_t *reg_p = (uint16_t *)(PMA_ADDR + (ep_num*8+4)*2);
 
@@ -200,7 +169,8 @@ static uint16_t st103_get_rx_addr (uint8_t ep_num)
 }
 
 
-static void st103_set_rx_buf_size (uint8_t ep_num, uint16_t size)
+static void
+epbuf_set_rx_buf_size (uint8_t ep_num, uint16_t size)
 {				/* Assume size is even */
   uint16_t *reg_p = (uint16_t *)(PMA_ADDR + (ep_num*8+6)*2);
   uint16_t value;
@@ -213,7 +183,8 @@ static void st103_set_rx_buf_size (uint8_t ep_num, uint16_t size)
   *reg_p = value;
 }
 
-static uint16_t st103_get_rx_count (uint8_t ep_num)
+static uint16_t
+epbuf_get_rx_count (uint8_t ep_num)
 {
   uint16_t *reg_p = (uint16_t *)(PMA_ADDR + (ep_num*8+6)*2);
 
@@ -221,24 +192,28 @@ static uint16_t st103_get_rx_count (uint8_t ep_num)
 }
 
 
-static void st103_ep_clear_ctr_rx (uint8_t ep_num)
+/* Clear CTR_RX bit by writing the 0-bit, keeping rw bits and toggle bits.  */
+static void
+ep_clear_ctr_rx (uint8_t ep_num)
 {
-  uint16_t value = st103_get_epreg (ep_num) & ~EP_CTR_RX & EPREG_MASK;
+  uint16_t value = USB->EPR[ep_num] & ~EP_CTR_RX & EPREG_MASK;
 
-  st103_set_epreg (ep_num, value);
+  USB->EPR[ep_num] = value;
 }
 
-static void st103_ep_clear_ctr_tx (uint8_t ep_num)
+/* Clear CTR_TX bit by writing the 0-bit, keeping rw bits and toggle bits.  */
+static void
+ep_clear_ctr_tx (uint8_t ep_num)
 {
-  uint16_t value = st103_get_epreg (ep_num) & ~EP_CTR_TX & EPREG_MASK;
+  uint16_t value = USB->EPR[ep_num] & ~EP_CTR_TX & EPREG_MASK;
 
-  st103_set_epreg (ep_num, value);
+    USB->EPR[ep_num] = value;
 }
 
-static void st103_ep_set_rxtx_status (uint8_t ep_num, uint16_t st_rx,
-				      uint16_t st_tx)
+static void
+ep_set_rxtx_status (uint8_t ep_num, uint16_t st_rx, uint16_t st_tx)
 {
-  uint16_t value = st103_get_epreg (ep_num);
+  uint16_t value = USB->EPR[ep_num];
 
   value &= (EPREG_MASK|EPRX_STAT|EPTX_STAT);
   value ^= (EPRX_DTOG1 & st_rx);
@@ -246,66 +221,72 @@ static void st103_ep_set_rxtx_status (uint8_t ep_num, uint16_t st_rx,
   value ^= (EPTX_DTOG1 & st_tx);
   value ^= (EPTX_DTOG2 & st_tx);
   value |= EP_CTR_RX | EP_CTR_TX;
-  st103_set_epreg (ep_num, value);
+  USB->EPR[ep_num] = value;
 }
 
-static void st103_ep_set_rx_status (uint8_t ep_num, uint16_t st_rx)
+static void
+ep_set_rx_status (uint8_t ep_num, uint16_t st_rx)
 {
-  uint16_t value = st103_get_epreg (ep_num);
+  uint16_t value = USB->EPR[ep_num];
 
   value &= (EPREG_MASK|EPRX_STAT);
   value ^= (EPRX_DTOG1 & st_rx);
   value ^= (EPRX_DTOG2 & st_rx);
   value |= EP_CTR_RX | EP_CTR_TX;
-  st103_set_epreg (ep_num, value);
+  USB->EPR[ep_num] = value;
 }
 
-static uint16_t st103_ep_get_rx_status (uint8_t ep_num)
+static uint16_t
+ep_get_rx_status (uint8_t ep_num)
 {
-  uint16_t value = st103_get_epreg (ep_num);
+  uint16_t value = USB->EPR[ep_num];
 
   return value & EPRX_STAT;
 }
 
-static void st103_ep_set_tx_status (uint8_t ep_num, uint16_t st_tx)
+static void
+ep_set_tx_status (uint8_t ep_num, uint16_t st_tx)
 {
-  uint16_t value = st103_get_epreg (ep_num);
+  uint16_t value = USB->EPR[ep_num];
 
   value &= (EPREG_MASK|EPTX_STAT);
   value ^= (EPTX_DTOG1 & st_tx);
   value ^= (EPTX_DTOG2 & st_tx);
   value |= EP_CTR_RX | EP_CTR_TX;
-  st103_set_epreg (ep_num, value);
+  USB->EPR[ep_num] = value;
 }
 
-static uint16_t st103_ep_get_tx_status (uint8_t ep_num)
+static uint16_t
+ep_get_tx_status (uint8_t ep_num)
 {
-  uint16_t value = st103_get_epreg (ep_num);
+  uint16_t value = USB->EPR[ep_num];
 
   return value & EPTX_STAT;
 }
 
-static void st103_ep_clear_dtog_rx (uint8_t ep_num)
+static void
+ep_clear_dtog_rx (uint8_t ep_num)
 {
-  uint16_t value = st103_get_epreg (ep_num);
+  uint16_t value = USB->EPR[ep_num];
 
   if ((value & EP_DTOG_RX))
     {
       value &= EPREG_MASK;
       value |= EP_CTR_RX | EP_CTR_TX | EP_DTOG_RX;
-      st103_set_epreg (ep_num, value);
+        USB->EPR[ep_num] = value;
     }
 }
 
-static void st103_ep_clear_dtog_tx (uint8_t ep_num)
+static void
+ep_clear_dtog_tx (uint8_t ep_num)
 {
-  uint16_t value = st103_get_epreg (ep_num);
+  uint16_t value = USB->EPR[ep_num];
 
   if ((value & EP_DTOG_TX))
     {
       value &= EPREG_MASK;
       value |= EP_CTR_RX | EP_CTR_TX | EP_DTOG_TX;
-      st103_set_epreg (ep_num, value);
+      USB->EPR[ep_num] = value;
     }
 }
 
@@ -313,15 +294,15 @@ void
 usb_lld_ctrl_error (struct usb_dev *dev)
 {
   dev->state = STALLED;
-  st103_ep_set_rxtx_status (ENDP0, EP_RX_STALL, EP_TX_STALL);
+  ep_set_rxtx_status (ENDP0, EP_RX_STALL, EP_TX_STALL);
 }
 
 int
 usb_lld_ctrl_ack (struct usb_dev *dev)
 {
   dev->state = WAIT_STATUS_IN;
-  st103_set_tx_count (ENDP0, 0);
-  st103_ep_set_rxtx_status (ENDP0, EP_RX_NAK, EP_TX_VALID);
+  epbuf_set_tx_count (ENDP0, 0);
+  ep_set_rxtx_status (ENDP0, EP_RX_NAK, EP_TX_VALID);
   return USB_EVENT_OK;
 }
 
@@ -334,16 +315,15 @@ void usb_lld_init (struct usb_dev *dev, uint8_t feature)
   dev->state = WAIT_SETUP;
 
   /* Reset USB */
-  st103_set_cntr (CNTR_FRES);
-  st103_set_cntr (0);
+  USB->CNTR = CNTR_FRES;
+  USB->CNTR = 0;
+
+  USB->BTABLE = 0;
 
   /* Clear Interrupt Status Register, and enable interrupt for USB */
-  st103_set_istr (0);
-
-  st103_set_btable ();
-
-  st103_set_cntr (CNTR_CTRM | CNTR_OVRM | CNTR_ERRM
-		  | CNTR_WKUPM | CNTR_SUSPM | CNTR_RESETM);
+  USB->ISTR = 0;
+  USB->CNTR = (CNTR_CTRM | CNTR_OVRM | CNTR_ERRM
+	       | CNTR_WKUPM | CNTR_SUSPM | CNTR_RESETM);
 
 #if 0
 /*
@@ -362,13 +342,13 @@ void usb_lld_init (struct usb_dev *dev, uint8_t feature)
 
 void usb_lld_prepare_shutdown (void)
 {
-  st103_set_istr (0);
-  st103_set_cntr (0);
+  USB->ISTR = 0;
+  USB->CNTR = 0;
 }
 
 void usb_lld_shutdown (void)
 {
-  st103_set_cntr (CNTR_PDWN);
+  USB->CNTR = CNTR_PDWN;
   usb_lld_sys_shutdown ();
 }
 
@@ -378,33 +358,33 @@ void usb_lld_shutdown (void)
 int
 usb_lld_event_handler (struct usb_dev *dev)
 {
-  uint16_t istr_value = st103_get_istr ();
+  uint16_t istr_value = USB->ISTR;
 
   if ((istr_value & ISTR_RESET))
     {
-      st103_set_istr (CLR_RESET);
+      USB->ISTR = ~ISTR_RESET; /* clear RESET bit */
       return USB_MAKE_EV (USB_EVENT_DEVICE_RESET);
     }
   else if ((istr_value & ISTR_WKUP))
     {
-      *CNTR &= ~CNTR_FSUSP;
-      st103_set_istr (CLR_WKUP);
+      USB->CNTR &= ~CNTR_FSUSP;
+      USB->ISTR = ~ISTR_WKUP; /* clear WaKe UP bit */
       return USB_MAKE_EV (USB_EVENT_DEVICE_WAKEUP);
     }
   else if ((istr_value & ISTR_SUSP))
     {
-      *CNTR |= CNTR_FSUSP;
-      st103_set_istr (CLR_SUSP);
-      *CNTR |= CNTR_LPMODE;
+      USB->CNTR |= CNTR_FSUSP;
+      USB->ISTR = ~ISTR_SUSP;  /* clear SUSPend bit */
+      USB->CNTR |= CNTR_LPMODE;
       return USB_MAKE_EV (USB_EVENT_DEVICE_SUSPEND);
     }
   else
     {
       if ((istr_value & ISTR_OVR))
-	st103_set_istr (CLR_OVR);
+	USB->ISTR = ~ISTR_OVR; /* clear OVeR/underrun bit */
 
       if ((istr_value & ISTR_ERR))
-	st103_set_istr (CLR_ERR);
+	USB->ISTR = ~ISTR_ERR; /* clear ERRor bit */
 
       if ((istr_value & ISTR_CTR))
 	return usb_handle_transfer (dev, istr_value);
@@ -417,12 +397,12 @@ static void handle_datastage_out (struct usb_dev *dev)
 {
   if (dev->ctrl_data.addr && dev->ctrl_data.len)
     {
-      uint32_t len = st103_get_rx_count (ENDP0);
+      uint16_t len = epbuf_get_rx_count (ENDP0);
 
       if (len > dev->ctrl_data.len)
 	len = dev->ctrl_data.len;
 
-      usb_lld_from_pmabuf (dev->ctrl_data.addr, st103_get_rx_addr (ENDP0), len);
+      usb_lld_from_pmabuf (dev->ctrl_data.addr, epbuf_get_rx_addr (ENDP0), len);
       dev->ctrl_data.len -= len;
       dev->ctrl_data.addr += len;
     }
@@ -430,13 +410,13 @@ static void handle_datastage_out (struct usb_dev *dev)
   if (dev->ctrl_data.len == 0)
     {
       dev->state = WAIT_STATUS_IN;
-      st103_set_tx_count (ENDP0, 0);
-      st103_ep_set_tx_status (ENDP0, EP_TX_VALID);
+      epbuf_set_tx_count (ENDP0, 0);
+      ep_set_tx_status (ENDP0, EP_TX_VALID);
     }
   else
     {
       dev->state = OUT_DATA;
-      st103_ep_set_rx_status (ENDP0, EP_RX_VALID);
+      ep_set_rx_status (ENDP0, EP_RX_VALID);
     }
 }
 
@@ -452,14 +432,14 @@ static void handle_datastage_in (struct usb_dev *dev)
 	  data_p->require_zlp = 0;
 
 	  /* No more data to send.  Send empty packet */
-	  st103_set_tx_count (ENDP0, 0);
-	  st103_ep_set_tx_status (ENDP0, EP_TX_VALID);
+	  epbuf_set_tx_count (ENDP0, 0);
+	  ep_set_tx_status (ENDP0, EP_TX_VALID);
 	}
       else
 	{
 	  /* No more data to send, proceed to receive OUT acknowledge.  */
 	  dev->state = WAIT_STATUS_OUT;
-	  st103_ep_set_rx_status (ENDP0, EP_RX_VALID);
+	  ep_set_rx_status (ENDP0, EP_RX_VALID);
 	}
 
       return;
@@ -470,11 +450,11 @@ static void handle_datastage_in (struct usb_dev *dev)
   if (len > data_p->len)
     len = data_p->len;
 
-  usb_lld_to_pmabuf (data_p->addr, st103_get_tx_addr (ENDP0), len);
+  usb_lld_to_pmabuf (data_p->addr, epbuf_get_tx_addr (ENDP0), len);
   data_p->len -= len;
   data_p->addr += len;
-  st103_set_tx_count (ENDP0, len);
-  st103_ep_set_tx_status (ENDP0, EP_TX_VALID);
+  epbuf_set_tx_count (ENDP0, len);
+  ep_set_tx_status (ENDP0, EP_TX_VALID);
 }
 
 typedef int (*HANDLER) (struct usb_dev *dev);
@@ -534,7 +514,7 @@ static int std_get_status (struct usb_dev *dev)
 
       if ((arg->index & 0x80))
 	{
-	  status = st103_ep_get_tx_status (endpoint);
+	  status = ep_get_tx_status (endpoint);
 	  if (status == 0)		/* Disabled */
 	    return -1;
 	  else if (status == EP_TX_STALL)
@@ -542,7 +522,7 @@ static int std_get_status (struct usb_dev *dev)
 	}
       else
 	{
-	  status = st103_ep_get_rx_status (endpoint);
+	  status = ep_get_rx_status (endpoint);
 	  if (status == 0)		/* Disabled */
 	    return -1;
 	  else if (status == EP_RX_STALL)
@@ -587,17 +567,17 @@ static int std_clear_feature (struct usb_dev *dev)
 	return -1;
 
       if ((arg->index & 0x80))
-	status = st103_ep_get_tx_status (endpoint);
+	status = ep_get_tx_status (endpoint);
       else
-	status = st103_ep_get_rx_status (endpoint);
+	status = ep_get_rx_status (endpoint);
 
       if (status == 0)		/* It's disabled endpoint.  */
 	return -1;
 
       if (arg->index & 0x80)	/* IN endpoint */
-	st103_ep_clear_dtog_tx (endpoint);
+	ep_clear_dtog_tx (endpoint);
       else			/* OUT endpoint */
-	st103_ep_clear_dtog_rx (endpoint);
+	ep_clear_dtog_rx (endpoint);
 
       return USB_EVENT_CLEAR_FEATURE_ENDPOINT;
     }
@@ -637,17 +617,17 @@ static int std_set_feature (struct usb_dev *dev)
 	return -1;
 
       if ((arg->index & 0x80))
-	status = st103_ep_get_tx_status (endpoint);
+	status = ep_get_tx_status (endpoint);
       else
-	status = st103_ep_get_rx_status (endpoint);
+	status = ep_get_rx_status (endpoint);
 
       if (status == 0)		/* It's disabled endpoint.  */
 	return -1;
 
       if (arg->index & 0x80)	/* IN endpoint */
-	st103_ep_set_tx_status (endpoint, EP_TX_STALL);
+	ep_set_tx_status (endpoint, EP_TX_STALL);
       else			/* OUT endpoint */
-	st103_ep_set_rx_status (endpoint, EP_RX_STALL);
+	ep_set_rx_status (endpoint, EP_RX_STALL);
 
       return USB_EVENT_SET_FEATURE_ENDPOINT;
     }
@@ -754,7 +734,7 @@ static int handle_setup0 (struct usb_dev *dev)
   uint8_t req_no;
   HANDLER handler;
 
-  pw = (uint16_t *)(PMA_ADDR + (uint8_t *)(st103_get_rx_addr (ENDP0) * 2));
+  pw = (uint16_t *)(PMA_ADDR + (uint8_t *)(epbuf_get_rx_addr (ENDP0) * 2));
   w = *pw++;
 
   dev->dev_req.type = (w & 0xff);
@@ -814,7 +794,7 @@ static int handle_in0 (struct usb_dev *dev)
 	  ((dev->dev_req.type & (REQUEST_TYPE | RECIPIENT))
 	   == (STANDARD_REQUEST | DEVICE_RECIPIENT)))
 	{
-	  st103_set_daddr (dev->dev_req.value);
+	  USB->DADDR = (DADDR_EF | dev->dev_req.value);
 	  r = USB_EVENT_DEVICE_ADDRESSED;
 	}
       else
@@ -823,7 +803,7 @@ static int handle_in0 (struct usb_dev *dev)
   else
     {
       dev->state = STALLED;
-      st103_ep_set_rxtx_status (ENDP0, EP_RX_STALL, EP_TX_STALL);
+      ep_set_rxtx_status (ENDP0, EP_RX_STALL, EP_TX_STALL);
     }
 
   return r;
@@ -849,7 +829,7 @@ static void handle_out0 (struct usb_dev *dev)
        * STALL the endpoint, until we receive the next SETUP token.
        */
       dev->state = STALLED;
-      st103_ep_set_rxtx_status (ENDP0, EP_RX_STALL, EP_TX_STALL);
+      ep_set_rxtx_status (ENDP0, EP_RX_STALL, EP_TX_STALL);
     }
 }
 
@@ -860,19 +840,19 @@ usb_handle_transfer (struct usb_dev *dev, uint16_t istr_value)
   uint16_t ep_value = 0;
   uint8_t ep_num = (istr_value & ISTR_EP_ID);
 
-  ep_value = st103_get_epreg (ep_num);
+  ep_value = USB->EPR[ep_num];
 
   if (ep_num == 0)
     {
       if ((ep_value & EP_CTR_TX))
 	{
-	  st103_ep_clear_ctr_tx (ep_num);
+	  ep_clear_ctr_tx (ep_num);
 	  return USB_MAKE_EV (handle_in0 (dev));
 	}
 
       if ((ep_value & EP_CTR_RX))
 	{
-	  st103_ep_clear_ctr_rx (ep_num);
+	  ep_clear_ctr_rx (ep_num);
 
 	  if ((ep_value & EP_SETUP))
 	    return USB_MAKE_EV (handle_setup0 (dev));
@@ -889,15 +869,15 @@ usb_handle_transfer (struct usb_dev *dev, uint16_t istr_value)
 
       if ((ep_value & EP_CTR_RX))
 	{
-	  len = st103_get_rx_count (ep_num);
-	  st103_ep_clear_ctr_rx (ep_num);
+	  len = epbuf_get_rx_count (ep_num);
+	  ep_clear_ctr_rx (ep_num);
 	  return USB_MAKE_TXRX (ep_num, 0, len);
 	}
 
       if ((ep_value & EP_CTR_TX))
 	{
-	  len = st103_get_tx_count (ep_num);
-	  st103_ep_clear_ctr_tx (ep_num);
+	  len = epbuf_get_tx_count (ep_num);
+	  ep_clear_ctr_tx (ep_num);
 	  return  USB_MAKE_TXRX (ep_num, 1, len);
 	}
     }
@@ -909,54 +889,54 @@ void usb_lld_reset (struct usb_dev *dev, uint8_t feature)
 {
   usb_lld_set_configuration (dev, 0);
   dev->feature = feature;
-  st103_set_daddr (0);
+  USB->DADDR = DADDR_EF; /* Initially, device responds to address 0 */
 }
 
 void usb_lld_txcpy (const void *src,
 		    int ep_num, int offset, size_t len)
 {
-  usb_lld_to_pmabuf (src, st103_get_tx_addr (ep_num) + offset, len);
+  usb_lld_to_pmabuf (src, epbuf_get_tx_addr (ep_num) + offset, len);
 }
 
 void usb_lld_write (uint8_t ep_num, const void *buf, size_t len)
 {
-  usb_lld_to_pmabuf (buf, st103_get_tx_addr (ep_num), len);
-  st103_set_tx_count (ep_num, len);
-  st103_ep_set_tx_status (ep_num, EP_TX_VALID);
+  usb_lld_to_pmabuf (buf, epbuf_get_tx_addr (ep_num), len);
+  epbuf_set_tx_count (ep_num, len);
+  ep_set_tx_status (ep_num, EP_TX_VALID);
 }
 
 void usb_lld_rxcpy (uint8_t *dst,
 		    int ep_num, int offset, size_t len)
 {
-  usb_lld_from_pmabuf (dst, st103_get_rx_addr (ep_num) + offset, len);
+  usb_lld_from_pmabuf (dst, epbuf_get_rx_addr (ep_num) + offset, len);
 }
 
 void usb_lld_tx_enable (int ep_num, size_t len)
 {
-  st103_set_tx_count (ep_num, len);
-  st103_ep_set_tx_status (ep_num, EP_TX_VALID);
+  epbuf_set_tx_count (ep_num, len);
+  ep_set_tx_status (ep_num, EP_TX_VALID);
 }
 
 void usb_lld_stall_tx (int ep_num)
 {
-  st103_ep_set_tx_status (ep_num, EP_TX_STALL);
+  ep_set_tx_status (ep_num, EP_TX_STALL);
 }
 
 void usb_lld_stall_rx (int ep_num)
 {
-  st103_ep_set_rx_status (ep_num, EP_RX_STALL);
+  ep_set_rx_status (ep_num, EP_RX_STALL);
 }
 
 void usb_lld_rx_enable (int ep_num)
 {
-  st103_ep_set_rx_status (ep_num, EP_RX_VALID);
+  ep_set_rx_status (ep_num, EP_RX_VALID);
 }
 
 void usb_lld_setup_endpoint (int ep_num, int ep_type, int ep_kind,
 			     int ep_rx_addr, int ep_tx_addr,
 			     int ep_rx_buf_size)
 {
-  uint16_t epreg_value = st103_get_epreg (ep_num);
+  uint16_t epreg_value = USB->EPR[ep_num];
   uint16_t ep_rxtx_status = 0;	/* Both disabled */
 
   /* Clear: Write 1 if 1: EP_DTOG_RX, EP_DTOG_TX */
@@ -976,14 +956,14 @@ void usb_lld_setup_endpoint (int ep_num, int ep_type, int ep_kind,
   if (ep_rx_addr)
     {
       ep_rxtx_status |= EP_RX_NAK;
-      st103_set_rx_addr (ep_num, ep_rx_addr);
-      st103_set_rx_buf_size (ep_num, ep_rx_buf_size);
+      epbuf_set_rx_addr (ep_num, ep_rx_addr);
+      epbuf_set_rx_buf_size (ep_num, ep_rx_buf_size);
     }
 
   if (ep_tx_addr)
     {
       ep_rxtx_status |= EP_TX_NAK;
-      st103_set_tx_addr (ep_num, ep_tx_addr);
+      epbuf_set_tx_addr (ep_num, ep_tx_addr);
     }
 
   epreg_value ^= (EPRX_DTOG1 & ep_rxtx_status);
@@ -991,7 +971,7 @@ void usb_lld_setup_endpoint (int ep_num, int ep_type, int ep_kind,
   epreg_value ^= (EPTX_DTOG1 & ep_rxtx_status);
   epreg_value ^= (EPTX_DTOG2 & ep_rxtx_status);
 
-  st103_set_epreg (ep_num, epreg_value);
+  USB->EPR[ep_num] = epreg_value;
 }
 
 void usb_lld_set_configuration (struct usb_dev *dev, uint8_t config)
@@ -1010,7 +990,7 @@ int usb_lld_ctrl_recv (struct usb_dev *dev, void *p, size_t len)
   data_p->addr = p;
   data_p->len = len;
   dev->state = OUT_DATA;
-  st103_ep_set_rx_status (ENDP0, EP_RX_VALID);
+  ep_set_rx_status (ENDP0, EP_RX_VALID);
   return USB_EVENT_OK;
 }
 
@@ -1124,12 +1104,12 @@ usb_lld_ctrl_send (struct usb_dev *dev, const void *buf, size_t buflen)
 
   if (len)
     {
-      usb_lld_to_pmabuf (data_p->addr, st103_get_tx_addr (ENDP0), len);
+      usb_lld_to_pmabuf (data_p->addr, epbuf_get_tx_addr (ENDP0), len);
       data_p->len -= len;
       data_p->addr += len;
     }
 
-  st103_set_tx_count (ENDP0, len);
-  st103_ep_set_rxtx_status (ENDP0, EP_RX_NAK, EP_TX_VALID);
+  epbuf_set_tx_count (ENDP0, len);
+  ep_set_rxtx_status (ENDP0, EP_RX_NAK, EP_TX_VALID);
   return USB_EVENT_OK;
 }
