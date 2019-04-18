@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <chopstx.h>
 #include <string.h>
+#include "board.h"
 #include "usb_lld.h"
 #include "tty.h"
 

@@ -54,7 +54,9 @@ main (int argc, const char *argv[])
  * Avoid medium density specific code and prepare for high density
  * device, too.
  */
+#if !defined(MCU_STM32L4)
 #define STM32F10X_HD
+#endif
 #else
 #if defined (MCU_KINETIS_L)
 #include "mcu/clk_gpio_init-mkl27z.c"
