@@ -11,7 +11,7 @@
 This manual is for Chopstx (version @value{VERSION}).
 
 @noindent
-Copyright @copyright{} 2013, 2015, 2016, 2017, 2018 Flying Stone Technology @*
+Copyright @copyright{} 2013, 2015, 2016, 2017, 2018, 2019 Flying Stone Technology @*
 
 @quotation
 Permission is granted to copy, distribute and/or modify this document
@@ -64,6 +64,7 @@ section entitled ``Copying''.
 * Note (Use of sleep mode)::     Use it carefully.
 * Compile-time macro::           Macro to be defined.
 * API::                          API.
+* Memorandom::                   Memorandom for the implementation.
 
 Appendix
 
@@ -88,8 +89,9 @@ Indexes
 @chapter Introduction
 
 Chopstx is an RT thread library for ARM Cortex-M0, Cortex-M0plus,
-Cortex-M3 and GNU/Linux emulation.  Specifically, it is used for
-STM32F030, MKL27Z, STM32F103, GD32F103 and as a command on GNU/Linux.
+Cortex-M3, Cortex-M4 with no FPU or DSP, and GNU/Linux emulation.
+Specifically, it is used for STM32F030, MKL27Z, STM32F103, GD32F103
+and as a command on GNU/Linux.
 
 While most RTOSes come with many features, drivers, and stacks,
 Chopstx just offers an RT thread library.
@@ -107,7 +109,7 @@ minimize use of threads.
 
 Chopstx doesn't use the feature of (prioritized) nested vector
 interrupt mechanism at all.  All interrupts are equally handled by a
-single entry of chx_handle_intr which just wakes up corresponding
+single entry of chx_handle_intr which just wakes up a corresponding
 thread.  This is the feature of Chopstx.
 
 Nested vector interrupt machanism would be useful for interrupt-driven
@@ -177,6 +179,73 @@ Running CPU clock in MHz.  Used for chopstx_usec_wait.
 @chapter API
 
 @include chopstx-api.texi
+
+@node Memorandom for the implementation
+@chapter Memorandom for the implementation
+
+@menu
+* Honourable poverty::          Wabi and Sabi.
+* Better interrupt handling::   Better interrupt handling.
+
+@node Honourable poverty
+@section Honourable poverty
+Chopstx is an effort against many features.  It encourages doing
+harder decision earlier.
+
+Along with Moore's law, MCU implementations and their software are
+getting more complex.  It's been getting more flexibile, versatile,
+and powerful.
+
+Here is a question: the bigger is the better?
+
+Historically, it used to be ``Yes, and it's even cheaper!''.  And, for
+a while, this trend continues.
+
+However, in my opinion, it has been arrived to the point where
+complexity matters.  Now, it's more difficult to manage the
+complexity.
+
+With full of resources, it became possible deferring difficult
+hardware or lower-level decisions to upper level, by supporting both
+ways, when we have a choice.  It used to be considered a good
+practice.
+
+But, eventually, as a system, it may result many knobs, full of
+options, which might difficult to manage.
+
+In this situation, against existing practice, Chopstx is a challenge
+to handle all food by only two wooden sticks.  It's not fork and exec
+nor forks and knives.
+
+In Japan, it is common among families, to have each private chopsticks
+in home.  It's like these chopsticks are father's, these chopsticks
+are mother's... son's and daughter's.
+
+I hope Chopstx is the one for you.
+
+
+@node Better interrupt handling
+@section Better interrupt handling
+
+In Chopstx, all interrupt handling is done by a single routine named
+chx_handle_intr.  It uses liner list search to find a thread which
+handles the interrupt.  In the fixed vector_table, we see many of
+chx_handle_intr entries.
+
+Obviously, this is suboptimal.  It kills the hardware effort to
+decrease interrupt latency.
+
+I is certainly possible to support configurable vector table and/or
+better dispatch.
+
+The reason why I keep this badness is that I believe that when
+interrupt latency matters (to the level of supporting larger vector
+table, despite only few cycles elimination), something is going wrong.
+You should have better solution or work around, instead of eliminating
+few cycles in an interrupt handler.
+
+When I have an opportunity to design MCU, I don't support larger
+interrupt vector table.
 
 
 @c ********************************************
