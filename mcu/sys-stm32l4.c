@@ -65,7 +65,9 @@ static struct CRS *const CRS = ((struct CRS *)(APB1PERIPH_BASE + 0x6000));
 void
 usb_lld_sys_init (void)
 {
- if ((RCC->APB1ENR1 & RCC_APB1_1_USB)
+  PWR->CR2 |= (1 << 10); 	/* USB supply valid */
+
+  if ((RCC->APB1ENR1 & RCC_APB1_1_USB)
       && (RCC->APB1RSTR1 & RCC_APB1_1_USB) == 0)
     /* Make sure the device is disconnected, even after core reset.  */
     {

@@ -61,6 +61,11 @@ clock_init (void)
 		 (0x00 <<  2) |  /* PCLK for USART2 */
 		 (0x00 <<  0) ); /* PCLK for USART1 */
 
+  /* Enable PWR clock */
+  RCC->APB1ENR1 |= (1 << 28);
+  RCC->APB1RSTR1 = (1 << 28);
+  RCC->APB1RSTR1 = 0;
+
   /* Enable HSI48 clock */
   RCC->CRRCR |= 1;
   while ((RCC->CRRCR & 0x02) == 0)
