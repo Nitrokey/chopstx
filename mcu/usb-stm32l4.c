@@ -1,5 +1,5 @@
 /*
- * usb-stm32l.c - USB driver for STM32L
+ * usb-stm32l4.c - USB driver for STM32L4
  *
  * Copyright (C) 2019  Flying Stone Technology
  * Author: NIIBE Yutaka <gniibe@fsij.org>
@@ -29,7 +29,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#include "sys-stm32l.h"
+#include "sys-stm32l4.h"
 #include "usb_lld.h"
 #include "usb_lld_driver.h"
 
@@ -119,7 +119,7 @@ handle_setup0 (struct usb_dev *dev)
   uint8_t req_no;
   HANDLER handler;
 
-  pw = (uint16_t *)(PMA_ADDR + (uint8_t *)(epbuf_get_rx_addr (ENDP0)));
+  pw = (uint16_t *)(PMA_ADDR + epbuf_get_rx_addr (ENDP0));
   w = *pw++;
 
   dev->dev_req.type = (w & 0xff);
@@ -174,22 +174,20 @@ usb_lld_to_pmabuf (const void *src, uint16_t addr, size_t n)
 
   if ((addr & 1))
     {
-      p = (uint16_t *)(PMA_ADDR + (addr - 1) * 2);
+      p = (uint16_t *)(PMA_ADDR + (addr - 1));
       w = *p;
       w = (w & 0xff) | (*s++) << 8;
-      *p = w;
-      p += 2;
+      *p++ = w;
       n--;
     }
   else
-    p = (uint16_t *)(PMA_ADDR + addr * 2);
+    p = (uint16_t *)(PMA_ADDR + addr);
 
   while (n >= 2)
     {
       w = *s++;
       w |= (*s++) << 8;
-      *p = w;
-      p += 2;
+      *p++ = w;
       n -= 2;
     }
 

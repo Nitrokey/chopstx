@@ -119,7 +119,7 @@ handle_setup0 (struct usb_dev *dev)
   uint8_t req_no;
   HANDLER handler;
 
-  pw = (uint16_t *)(PMA_ADDR + (uint8_t *)(epbuf_get_rx_addr (ENDP0) * 2));
+  pw = (uint16_t *)(PMA_ADDR + (epbuf_get_rx_addr (ENDP0) * 2));
   w = *pw++;
 
   dev->dev_req.type = (w & 0xff);

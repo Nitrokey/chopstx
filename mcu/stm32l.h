@@ -109,17 +109,10 @@ struct GPIO {
 };
 
 #define GPIOA_BASE	(AHB2PERIPH_BASE)
-#define GPIOA		((struct GPIO *) GPIOA_BASE)
+static struct GPIO *const GPIOA	= (struct GPIO *)GPIOA_BASE;
 #define GPIOB_BASE	(AHB2PERIPH_BASE + 0x0400)
-#define GPIOB		((struct GPIO *) GPIOB_BASE)
-#define GPIOC_BASE	(AHB2PERIPH_BASE + 0x0800)
-#define GPIOC		((struct GPIO *) GPIOC_BASE)
-#define GPIOD_BASE	(AHB2PERIPH_BASE + 0x0C00)
-#define GPIOD		((struct GPIO *) GPIOD_BASE)
-#define GPIOE_BASE	(AHB2PERIPH_BASE + 0x1000)
-#define GPIOE		((struct GPIO *) GPIOE_BASE)
-#define GPIOH_BASE	(AHB2PERIPH_BASE + 0x1C00)
-#define GPIOH		((struct GPIO *) GPIOH_BASE)
+static struct GPIO *const GPIOB	= (struct GPIO *)GPIOB_BASE;
+
 
 struct FLASH {
   volatile uint32_t ACR;
@@ -139,3 +132,13 @@ struct FLASH {
 
 #define FLASH_R_BASE	(AHB1PERIPH_BASE + 0x2000)
 static struct FLASH *const FLASH = (struct FLASH *)FLASH_R_BASE;
+
+struct USB_STM32L4 {
+  volatile uint16_t LPMCSR;
+  volatile uint16_t reserved0;
+  volatile uint16_t BCDR;
+  volatile uint16_t reserved1;
+};
+
+#define USB_STM32L4_BASE  (0x40006854UL)
+static struct USB_STM32L4 *const USB_STM32L4 = (struct USB_STM32L4 *)USB_STM32L4_BASE;

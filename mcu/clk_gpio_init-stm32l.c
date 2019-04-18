@@ -55,6 +55,16 @@ clock_init (void)
   RCC->CFGR |= 0x03;
   while ((RCC->CFGR & 0x0C) != 0x0C)
     ;
+
+  /* Peripheral clock selection */
+  RCC->CCIPR = ( (0x00 << 26) |	 /* HSI48 for USB   */
+		 (0x00 <<  2) |  /* PCLK for USART2 */
+		 (0x00 <<  0) ); /* PCLK for USART1 */
+
+  /* Enable HSI48 clock */
+  RCC->CRRCR |= 1;
+  while ((RCC->CRRCR & 0x02) == 0)
+    ;
 }
 
 static struct GPIO *const GPIO_LED = (struct GPIO *)GPIO_LED_BASE;

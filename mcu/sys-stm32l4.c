@@ -47,16 +47,25 @@ static void wait (int count)
 void
 usb_lld_sys_shutdown (void)
 {
+  USB_STM32L4->BCDR &= 0x7fff;	/* DP disable */
   RCC->APB1ENR1 &= ~(RCC_APB1_1_USB | RCC_APB1_1_CRS);
   RCC->APB1RSTR1 |= (RCC_APB1_1_USB | RCC_APB1_1_CRS);
 }
 
+struct CRS
+{
+  volatile uint32_t CR;
+  volatile uint32_t CFGR;
+  volatile uint32_t ISR;
+  volatile uint32_t ICR;
+};
+static struct CRS *const CRS = ((struct CRS *)(APB1PERIPH_BASE + 0x6000));
+
+
 void
 usb_lld_sys_init (void)
 {
-  /* XXX: should configure CRS (clock recovery system) and HSI48 clock */
-
-  if ((RCC->APB1ENR1 & RCC_APB1_1_USB)
+ if ((RCC->APB1ENR1 & RCC_APB1_1_USB)
       && (RCC->APB1RSTR1 & RCC_APB1_1_USB) == 0)
     /* Make sure the device is disconnected, even after core reset.  */
     {
@@ -65,10 +74,46 @@ usb_lld_sys_init (void)
       wait (5*MHZ);
     }
 
+  /* Enable USB clock and CRC clock */
   RCC->APB1ENR1 |= (RCC_APB1_1_USB | RCC_APB1_1_CRS);
   RCC->APB1RSTR1 = (RCC_APB1_1_USB | RCC_APB1_1_CRS);
   RCC->APB1RSTR1 = 0;
+
+  USB_STM32L4->BCDR |= 0x8000;	/* DP enable */
+
+  /* Configure CRS (clock recovery system) for HSI48 clock */
+  CRS->CFGR = ( (0x00 << 31) |	/* Polarity rising       */
+		(0x02 << 28) |	/* USB SOF for Sync      */
+		(0x00 << 24) | 	/* divider = 1           */
+		(0x22 << 16) |  /* Frequency error limit */
+		0xBB7F );	/* Reload value          */
+
+  CRS->CR |= ( (1 << 6) |  	/* Automatic trimming enable */
+	       (1 << 5) );	/* Frequency error counter enable */
 }
+
+void
+nvic_system_reset (void)
+{
+  SCB->AIRCR = (0x05FA0000 | (SCB->AIRCR & 0x70) | SCB_AIRCR_SYSRESETREQ);
+  asm volatile ("dsb");
+  for (;;);
+}
+
+const uint8_t sys_version[8] __attribute__((section(".sys.version"))) = {
+  3*2+2,	     /* bLength */
+  0x03,		     /* bDescriptorType = USB_STRING_DESCRIPTOR_TYPE */
+  /* sys version: "3.0" */
+  '3', 0, '.', 0, '0', 0,
+};
+
+#if defined(USE_SYS3) || defined(USE_SYS_BOARD_ID)
+const uint32_t __attribute__((section(".sys.board_id")))
+sys_board_id = BOARD_ID;
+
+const uint8_t __attribute__((section(".sys.board_name")))
+sys_board_name[] = BOARD_NAME;
+#endif
 
 /* Not yet implemented, API should be reconsidered */
 
@@ -133,26 +178,3 @@ flash_erase_all_and_exec (void (*entry)(void))
 {
   (void)entry;
 }
-
-void
-nvic_system_reset (void)
-{
-  SCB->AIRCR = (0x05FA0000 | (SCB->AIRCR & 0x70) | SCB_AIRCR_SYSRESETREQ);
-  asm volatile ("dsb");
-  for (;;);
-}
-
-const uint8_t sys_version[8] __attribute__((section(".sys.version"))) = {
-  3*2+2,	     /* bLength */
-  0x03,		     /* bDescriptorType = USB_STRING_DESCRIPTOR_TYPE */
-  /* sys version: "3.0" */
-  '3', 0, '.', 0, '0', 0,
-};
-
-#if defined(USE_SYS3) || defined(USE_SYS_BOARD_ID)
-const uint32_t __attribute__((section(".sys.board_id")))
-sys_board_id = BOARD_ID;
-
-const uint8_t __attribute__((section(".sys.board_name")))
-sys_board_name[] = BOARD_NAME;
-#endif

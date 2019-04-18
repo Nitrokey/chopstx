@@ -41,7 +41,7 @@ struct USB {
   volatile uint16_t reserved4;
 };
 
-struct USB *const USB = (struct USB *)REG_BASE;
+static struct USB *const USB = (struct USB *)REG_BASE;
 
 #define ISTR_CTR    (0x8000) /* Correct TRansfer (read-only bit) */
 #define ISTR_OVR    (0x4000) /* OVeR/underrun (clear-only bit) */

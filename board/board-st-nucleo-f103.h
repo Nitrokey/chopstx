@@ -11,8 +11,10 @@
  *
  * At CN10, connect USB cable
  *  Vbus RED   --> 10 NC   ----------> CN7 (6 E5V)
- *  D+   GREEN --> 12 PA11 ---[1K5]--> CN6 (4 3V3)
- *  D-   WHITE --> 14 PA12
+ *  D+   GREEN --> 12 PA12 ---[1K5]--> CN6 (4 3V3)
+ *  D-   WHITE --> 14 PA11
+ *                 16 PB12 (USART3-CK) ---> smartcard CK
+ *                 18
  *  GND  BLACK --> 20 GND
  */
 

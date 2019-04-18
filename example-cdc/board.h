@@ -1,1 +1,1 @@
-../board/board-fst-01.h
+../board/board-st-nucleo-l432.h

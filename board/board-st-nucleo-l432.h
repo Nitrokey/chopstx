@@ -8,8 +8,8 @@
  *  Vbus RED   -->  4
  *
  * At CN3, connect USB cable
- *  D-   GREEN --> 13 PA11
- *  D+   WHITE -->  5 PA12
+ *  D-   WHITE --> 13 PA11
+ *  D+   GREEN -->  5 PA12
  *  GND  BLACK -->  4 GND
  */
 
@@ -23,25 +23,25 @@
 /*
  * Port A setup.
  *
- * MODER: 10 10 - 10 01 - 01 11 - 10 10    11 11 - 11 11 - 11 10 - 11 11
+ * MODER: 10 10 - 10 10 - 10 11 - 10 10    11 11 - 11 11 - 11 10 - 11 11
  *
- * PA2  - USART2-TX: AF7
- * PA8  - USART1-CK: AF7
- * PA9  - USART1-TX: AF7 Open-drain pull-up
- * PA11 - Push Pull output medium-speed 0 (until USB enabled) (USBDM: AF10)
- * PA12 - Push Pull output medium-speed 0 (until USB enabled) (USBDP: AF10)
- * PA13 - SWDIO
- * PA14 - SWDCLK
- * PA15 - USART2-RX: AF3
+ * PA2  - USART2-TX: AF7 output push-pull
+ * PA8  - USART1-CK: AF7 output push-pull
+ * PA9  - USART1-TX: AF7 output(input) Open-drain pull-up
+ * PA11 - USBDM:     AF10 input/output
+ * PA12 - USBDP:     AF10 input/output
+ * PA13 - SWDIO:     AF0
+ * PA14 - SWDCLK:    AF0
+ * PA15 - USART2-RX: AF3 input
  * ------------------------ Default
  * PAx  - analog input
  */
-#define VAL_GPIO_OTHER_MODER   0xA97AFFEF
+#define VAL_GPIO_OTHER_MODER   0xAABAFFEF
 #define VAL_GPIO_OTHER_OTYPER  0x00000200
-#define VAL_GPIO_OTHER_OSPEEDR 0xFB7FFFFF
+#define VAL_GPIO_OTHER_OSPEEDR 0xFFFFFFFF
 #define VAL_GPIO_OTHER_PUPDR   0x00040000
 #define VAL_GPIO_OTHER_AFRL    0x00000700
-#define VAL_GPIO_OTHER_AFRH    0x30000077
+#define VAL_GPIO_OTHER_AFRH    0x300AA077
 
 /*
  * Port B setup.
