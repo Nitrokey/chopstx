@@ -23,14 +23,14 @@
 #include "board.h"
 
 #define ADDR_VECTORS (0x00000900)
-#define ADDR_SCR_VTOR 0xe000ed08
+#define ADDR_SCB_VTOR 0xe000ed08
 
 static void __attribute__ ((naked,section(".fixed_function.reset")))
 reset (void)
 {
-  uint32_t r3 = ADDR_SCR_VTOR;
+  uint32_t r3 = ADDR_SCB_VTOR;
 
-  asm volatile ("str	%2, [%0]\n\t"	  /* Set SCR->VTOR     */
+  asm volatile ("str	%2, [%0]\n\t"	  /* Set SCB->VTOR     */
 		"ldr	%0, [%2]\n\t"     /* Stack address     */
 		"msr	MSP, %0\n\t"	  /* Exception handler stack. */
 		"ldr	%0, [%2, #4]\n\t" /* The entry address */

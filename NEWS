@@ -1,6 +1,74 @@
 NEWS - Noteworthy changes
 
 
+* Major changes in Chopstx 1.14
+
+  Released 2019-03-02
+
+** Enhancement of driver: USART for STM32
+Now, it supports smartcard communication.
+
+
+* Major changes in Chopstx 1.13
+
+  Released 2018-12-19
+
+** API fix (redefinition): chopstx_poll
+In old implementations, when chopstx_poll returns by non-timeout
+event, *USEC_P is not updated.  Now, it is updated.
+
+
+* Major changes in Chopstx 1.12
+
+  Released 2018-11-12
+
+** Enhance API of eventflag
+New function eventflag_set_mask is added, so that we can only handle
+specified events.  See Gnuk 1.2.12 for an example (while USB Tx is
+busy, the USB thread only accepts EV_TX_FINISHED event, leaving
+other events).
+
+** Acknowledge button support for FST-01 and FST-01G
+While FST-01 and FST-01G don't have any button in the original design,
+it may be PA2 when user put a hall sensor or a switch.
+
+
+* Major changes in Chopstx 1.11
+
+  Released 2018-10-02
+
+** Support calling chopstx_poll with intr->ready==1
+In version <= 1.10, it assumed that all events should be handled after
+chopstx_poll, before calling chopstx_poll again.  With having
+chopstx_intr_done, it's OK now that chopstx_poll can be called again
+not examining/handling all poll descriptors, but only parts of them.
+
+** Acknowledge button change
+In 1.10, the action was able to be "memorized" by the edge detector.
+Now, the edge detector is disabled by ackbtn_disable, and it is
+enabled by ackbtn_enable.  So, the status is cleared correctly.
+
+** New board support: FST-01SZ
+It's still under development.  Programming-wise, it will be kept same.
+
+
+* Major changes in Chopstx 1.10
+
+  Released 2018-09-29
+
+** Function chopstx_intr_wait is not deprecated, now
+Once, it was said that it's deprecated, but it's active again
+to match the new function of chopstx_intr_done.
+
+** API change: chopstx_poll, chopstx_intr_wait, chopstx_intr_done
+To avoid spurious interrupt, we introduce new function
+chopstx_intr_done, which should be called after interrupt handling.
+
+** New driver: Acknowledge button for FST-01SZ
+The use case is waiting user's acknowledge.  We use EXTI interrupt
+feature of STM32.
+
+
 * Major changes in Chopstx 1.9
 
   Released 2018-05-09
@@ -42,7 +110,7 @@ Timer expiration had a bug.  When it is waken up, the wake up doesn't
 handle as a timer expiration when there are multiple threads on same
 timing of expire.  It confuses as if it were forced wakeup.
 
-** New driver: USART for STM32.
+** New driver: USART for STM32
 USART driver for STM32 is added.
 
 
@@ -377,11 +445,11 @@ Vectored Interrupt Controller (NVIC), in the ARM v7-M Architecture
 Reference Manual.  The subsection, B3.4.1, Theory of operation,
 explains how it works.
 
-
 ** gpio_init change
 Now, gpi_init support AFIO mapping and another GPIO (GPIO_OTHER)
 settings.
 
-Local Variables:
-mode: outline
-End:
+
+# Local Variables:
+# mode: outline
+# End:

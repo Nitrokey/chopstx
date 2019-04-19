@@ -1,7 +1,7 @@
 /*
  * chopstx.h - Threads and only threads.
  *
- * Copyright (C) 2013, 2016, 2017 Flying Stone Technology
+ * Copyright (C) 2013, 2016, 2017, 2018  Flying Stone Technology
  * Author: NIIBE Yutaka <gniibe@fsij.org>
  *
  * This file is a part of Chopstx, a thread library for embedded.
@@ -155,7 +155,8 @@ typedef struct chx_intr chopstx_intr_t;
 
 void chopstx_claim_irq (chopstx_intr_t *intr, uint8_t irq_num);
 
-void chopstx_intr_wait (chopstx_intr_t *intr); /* DEPRECATED */
+void chopstx_intr_wait (chopstx_intr_t *intr);
+void chopstx_intr_done (chopstx_intr_t *intr);
 
 
 int chopstx_poll (uint32_t *usec_p, int n,

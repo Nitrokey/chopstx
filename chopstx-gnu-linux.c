@@ -2,7 +2,7 @@
  * chopstx-gnu-linux.c - Threads and only threads: Arch specific code
  *                       for GNU/Linux emulation
  *
- * Copyright (C) 2017 Flying Stone Technology
+ * Copyright (C) 2017, 2018 Flying Stone Technology
  * Author: NIIBE Yutaka <gniibe@fsij.org>
  *
  * This file is a part of Chopstx, a thread library for embedded.
@@ -31,6 +31,13 @@
 #include <ucontext.h>
 #include <signal.h>
 #include <sys/time.h>
+
+/* Data Memory Barrier.  */
+static void
+chx_dmb (void)
+{
+}
+
 
 static sigset_t ss_cur;
 

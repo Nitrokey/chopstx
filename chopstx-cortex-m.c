@@ -2,7 +2,7 @@
  * chopstx-cortex-m.c - Threads and only threads: Arch specific code
  *                      for Cortex-M0/M3
  *
- * Copyright (C) 2013, 2014, 2015, 2016, 2017
+ * Copyright (C) 2013, 2014, 2015, 2016, 2017, 2018
  *               Flying Stone Technology
  * Author: NIIBE Yutaka <gniibe@fsij.org>
  *
@@ -27,6 +27,13 @@
  * receipents of GNU GPL by a written offer.
  *
  */
+
+/* Data Memory Barrier.  */
+static void
+chx_dmb (void)
+{
+  asm volatile ("dmb"  : : : "memory");
+}
 
 /* Saved registers on the stack.  */
 struct chx_stack_regs {
@@ -286,8 +293,8 @@ chx_request_preemption (uint16_t prio)
  * 	AAPCS: ARM Architecture Procedure Call Standard
  *
  * Returns:
- *          1 on wakeup by others.
- *          0 on normal wakeup (timer expiration, lock aquirement).
+ *       >= 1 on wakeup by others, value means ticks remained for sleep.
+ *          0 on normal wakeup (timer expiration, lock acquirement).
  *         -1 on cancellation.
  */
 static uintptr_t __attribute__ ((naked, noinline))

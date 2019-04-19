@@ -44,7 +44,7 @@
 #define VAL_GPIO_OTHER_CRH 0x88888888      /* PB15...PB8 */
 
 
-/* For pin-cir settings of Gnuk */
+#if defined(PINPAD_CIR_SUPPORT)
 #define TIMx                  TIM3
 #define INTR_REQ_TIM          TIM3_IRQ
 #define AFIO_EXTICR_INDEX     1
@@ -58,3 +58,4 @@
 #define RCC_APBnRSTR_TIMxRST  RCC_APB1RSTR_TIM3RST
 #define AFIO_MAPR_SOMETHING   AFIO_MAPR_TIM3_REMAP_PARTIALREMAP
                               /* Remap (PB4, PB5) -> (TIM3_CH1, TIM3_CH2) */
+#endif

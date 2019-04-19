@@ -1,7 +1,7 @@
 /*
  * chopstx.c - Threads and only threads.
  *
- * Copyright (C) 2013, 2014, 2015, 2016, 2017
+ * Copyright (C) 2013, 2014, 2015, 2016, 2017, 2018, 2019
  *               Flying Stone Technology
  * Author: NIIBE Yutaka <gniibe@fsij.org>
  *
@@ -107,7 +107,7 @@ static struct chx_queue q_intr;
 static void chx_request_preemption (uint16_t prio);
 static int chx_wakeup (struct chx_pq *p);
 static struct chx_thread * chx_timer_insert (struct chx_thread *tp, uint32_t usec);
-static void chx_timer_dequeue (struct chx_thread *tp);
+static uint32_t chx_timer_dequeue (struct chx_thread *tp);
 
 
 
@@ -349,29 +349,35 @@ chx_timer_insert (struct chx_thread *tp, uint32_t usec)
 }
 
 
-static void
+static uint32_t
 chx_timer_dequeue (struct chx_thread *tp)
 {
   struct chx_thread *tp_prev;
+  uint32_t ticks_remained;
 
   chx_spin_lock (&q_timer.lock);
+  ticks_remained = chx_systick_get ();
   tp_prev = (struct chx_thread *)tp->prev;
   if (tp_prev == (struct chx_thread *)&q_timer.q)
     {
       if (tp->next == (struct chx_pq *)&q_timer.q)
-	chx_set_timer (tp_prev, 0); /* Cancel timer*/
+	chx_systick_reload (0);                      /* Cancel timer.  */
       else
-	{			/* Update timer.  */
-	  uint32_t next_ticks = chx_systick_get () + tp->v;
-
-	  chx_set_timer (tp_prev, next_ticks);
-	}
+	chx_systick_reload (ticks_remained + tp->v); /* Update timer.  */
     }
   else
-    tp_prev->v += tp->v;
+    {
+      struct chx_pq *p;
+
+      for (p = q_timer.q.next; p != (struct chx_pq *)tp; p = p->next)
+	ticks_remained += p->v;
+
+      tp_prev->v += tp->v;
+    }
   ll_dequeue ((struct chx_pq *)tp);
   tp->v = 0;
   chx_spin_unlock (&q_timer.lock);
+  return ticks_remained;
 }
 
 
@@ -502,9 +508,11 @@ chx_wakeup (struct chx_pq *pq)
       tp = px->master;
       if (tp->state == THREAD_WAIT_POLL)
 	{
-	  tp->v = (uintptr_t)1;
 	  if (tp->parent == &q_timer.q)
-	    chx_timer_dequeue (tp);
+	    tp->v = (uintptr_t)chx_timer_dequeue (tp);
+	  else
+	    tp->v = (uintptr_t)1;
+
 	  chx_ready_enqueue (tp);
 	  if (!running || tp->prio > running->prio)
 	    yield = 1;
@@ -559,19 +567,21 @@ chx_exit (void *retval)
 
 /*
  * Lower layer mutex unlocking.  Called with schedule lock held.
+ * Return PRIO of the thread which is waken up.
  */
 static chopstx_prio_t
 chx_mutex_unlock (chopstx_mutex_t *mutex)
 {
   struct chx_thread *tp;
-  chopstx_prio_t prio = 0;
 
   mutex->owner = NULL;
   running->mutex_list = mutex->list;
   mutex->list = NULL;
 
   tp = (struct chx_thread *)ll_pop (&mutex->q);
-  if (tp)
+  if (!tp)
+    return 0;
+  else
     {
       uint16_t newprio = running->prio_orig;
       chopstx_mutex_t *m;
@@ -587,11 +597,8 @@ chx_mutex_unlock (chopstx_mutex_t *mutex)
       /* Then, assign it.  */
       running->prio = newprio;
 
-      if (prio < tp->prio)
-	prio = tp->prio;
+      return tp->prio;
     }
-
-  return prio;
 }
 
 #define CHOPSTX_PRIO_MASK ((1 << CHOPSTX_PRIO_BITS) - 1)
@@ -679,6 +686,11 @@ chx_snooze (uint32_t state, uint32_t *usec_p)
   r = chx_sched (CHX_SLEEP);
   if (r == 0)
     *usec_p -= usec0;
+  else if (r > 0)
+    {
+      *usec_p -= (usec0 - r / MHZ);
+      r = 1;
+    }
 
   return r;
 }
@@ -803,9 +815,10 @@ chopstx_mutex_lock (chopstx_mutex_t *mutex)
 	  if (tp0->state == THREAD_WAIT_TIME
 	      || tp0->state == THREAD_WAIT_POLL)
 	    {
-	      tp0->v = (uintptr_t)1;
 	      if (tp0->parent == &q_timer.q)
-		chx_timer_dequeue (tp0);
+		tp0->v = (uintptr_t)chx_timer_dequeue (tp0);
+	      else
+		tp0->v = (uintptr_t)1;
 
 	      chx_ready_enqueue (tp0);
 	      tp0 = NULL;
@@ -969,6 +982,7 @@ chx_cond_hook (struct chx_px *px, struct chx_poll_head *pd)
     { /* Condition doesn't met.
        * Register the proxy to wait for the condition.
        */
+      pc->ready = 0;
       chx_cpu_sched_lock ();
       chx_spin_lock (&pc->cond->lock);
       ll_prio_enqueue ((struct chx_pq *)px, &pc->cond->q);
@@ -998,6 +1012,7 @@ chopstx_claim_irq (chopstx_intr_t *intr, uint8_t irq_num)
   chx_cpu_sched_lock ();
   chx_spin_lock (&q_intr.lock);
   chx_disable_intr (irq_num);
+  chx_clr_intr (irq_num);
   chx_set_intr_prio (irq_num);
   chx_spin_unlock (&q_intr.lock);
   chx_cpu_sched_unlock ();
@@ -1012,10 +1027,19 @@ chx_intr_hook (struct chx_px *px, struct chx_poll_head *pd)
   chopstx_testcancel ();
   chx_cpu_sched_lock ();
   px->v = intr->irq_num;
-  chx_spin_lock (&q_intr.lock);
-  ll_prio_enqueue ((struct chx_pq *)px, &q_intr.q);
-  chx_enable_intr (intr->irq_num);
-  chx_spin_unlock (&q_intr.lock);
+  if (intr->ready)
+    {
+      chx_spin_lock (&px->lock);
+      (*px->counter_p)++;
+      chx_spin_unlock (&px->lock);
+    }
+  else
+    {
+      chx_spin_lock (&q_intr.lock);
+      ll_prio_enqueue ((struct chx_pq *)px, &q_intr.q);
+      chx_enable_intr (intr->irq_num);
+      chx_spin_unlock (&q_intr.lock);
+    }
   chx_cpu_sched_unlock ();
 }
 
@@ -1031,6 +1055,26 @@ void
 chopstx_intr_wait (chopstx_intr_t *intr)
 {
   chopstx_poll (NULL, 1, (struct chx_poll_head **)&intr);
+}
+
+
+/**
+ * chopstx_intr_done - Finish an IRQ handling
+ * @intr: Pointer to INTR structure
+ *
+ * Finish for the interrupt @intr occurred.
+ *
+ */
+void
+chopstx_intr_done (chopstx_intr_t *intr)
+{
+  chx_dmb ();
+
+  if (intr->ready)
+    {
+      chx_clr_intr (intr->irq_num);
+      intr->ready = 0;
+    }
 }
 
 
@@ -1198,6 +1242,7 @@ chx_join_hook (struct chx_px *px, struct chx_poll_head *pd)
     { /* Not yet exited.
        * Register the proxy to wait for TP's exit.
        */
+      pj->ready = 0;
       px->v = (uintptr_t)tp;
       chx_spin_lock (&q_join.lock);
       ll_prio_enqueue ((struct chx_pq *)px, &q_join.q);
@@ -1315,7 +1360,8 @@ chx_proxy_init (struct chx_px *px, uint32_t *cp)
 
 /**
  * chopstx_poll - wait for condition variable, thread's exit, or IRQ
- * @usec_p: Pointer to usec for timeout.  Forever if NULL.
+ * @usec_p: Pointer to usec for timeout.  Forever if NULL.  It is
+ * updated on return
  * @n: Number of poll descriptors
  * @pd_array: Pointer to an array of poll descriptor pointer which
  * should be one of:
@@ -1332,6 +1378,7 @@ chopstx_poll (uint32_t *usec_p, int n, struct chx_poll_head *const pd_array[])
   struct chx_poll_head *pd;
   int r = 0;
 
+  chx_dmb ();
   chopstx_testcancel ();
 
   for (i = 0; i < n; i++)
@@ -1340,7 +1387,6 @@ chopstx_poll (uint32_t *usec_p, int n, struct chx_poll_head *const pd_array[])
   for (i = 0; i < n; i++)
     {
       pd = pd_array[i];
-      pd->ready = 0;
       px[i].ready_p = &pd->ready;
       if (pd->type == CHOPSTX_POLL_COND)
 	chx_cond_hook (&px[i], pd);
@@ -1384,6 +1430,7 @@ chopstx_poll (uint32_t *usec_p, int n, struct chx_poll_head *const pd_array[])
       while (r == 0);
     }
 
+  chx_dmb ();
   for (i = 0; i < n; i++)
     {
       pd = pd_array[i];
@@ -1404,9 +1451,7 @@ chopstx_poll (uint32_t *usec_p, int n, struct chx_poll_head *const pd_array[])
 	{
 	  struct chx_intr *intr = (struct chx_intr *)pd;
 
-	  if (intr->ready)
-	    chx_clr_intr (intr->irq_num);
-	  else
+	  if (intr->ready == 0)
 	    {
 	      chx_spin_lock (&q_intr.lock);
 	      ll_dequeue ((struct chx_pq *)&px[i]);

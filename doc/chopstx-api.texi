@@ -107,6 +107,14 @@ Claim interrupt @var{intr} with @var{irq_num}
 Wait for the interrupt @var{intr} to be occured.
 @end deftypefun
 
+@subheading chopstx_intr_done
+@anchor{chopstx_intr_done}
+@deftypefun {void} {chopstx_intr_done} (chopstx_intr_t * @var{intr})
+@var{intr}: Pointer to INTR structure
+
+Finish for the interrupt @var{intr} occurred.
+@end deftypefun
+
 @subheading chopstx_cleanup_push
 @anchor{chopstx_cleanup_push}
 @deftypefun {void} {chopstx_cleanup_push} (struct chx_cleanup * @var{clp})

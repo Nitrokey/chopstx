@@ -10,6 +10,7 @@ CHIP=stm32f103
 
 USE_SYS = yes
 USE_USB = yes
+ENABLE_OUTPUT_HEX=yes
 
 ###################################
 CROSS = arm-none-eabi-
@@ -19,7 +20,7 @@ OBJCOPY   = $(CROSS)objcopy
 
 MCU   = cortex-m3
 CWARN = -Wall -Wextra -Wstrict-prototypes
-DEFS  = -DUSE_SYS3 -DFREE_STANDING
+DEFS  = -DUSE_SYS3 -DFREE_STANDING -DMHZ=72
 OPT   = -O3 -Os -g
 LIBS  =
 

@@ -1,7 +1,7 @@
 /*
  * usart-stm32.c - USART driver for STM32F103 (USART2 and USART3)
  *
- * Copyright (C) 2017  g10 Code GmbH
+ * Copyright (C) 2017, 2019  g10 Code GmbH
  * Author: NIIBE Yutaka <gniibe@fsij.org>
  *
  * This file is a part of Chopstx, a thread library for embedded.
@@ -104,12 +104,25 @@ static const struct brr_setting brr_table[] = {
   { B230400, (   9 << 4)|12},
   { B460800, (   4 << 4)|14},
   { B921600, (   2 << 4)|7},
+  { BSCARD,  ( 232 << 4)|8},
 };
 
 static void *usart_main (void *arg);
 
 static struct usart_stat usart2_stat;
 static struct usart_stat usart3_stat;
+
+void
+usart_config_clken (uint8_t dev_no, int on)
+{
+  struct USART *USARTx = get_usart_dev (dev_no);
+
+  if (on)
+    USARTx->CR2 |= (1 << 11);
+  else
+    USARTx->CR2 &= ~(1 << 11);
+}
+
 
 int
 usart_config (uint8_t dev_no, uint32_t config_bits)
@@ -136,9 +149,9 @@ usart_config (uint8_t dev_no, uint32_t config_bits)
     return -1;
 
   if ((config_bits & PARENB) == 0)
-    cr1_config &= ~USART_CR1_PCE;
+    cr1_config &= ~(USART_CR1_PCE | USART_CR1_PEIE);
   else
-    cr1_config |=  USART_CR1_PCE;
+    cr1_config |=  (USART_CR1_PCE | USART_CR1_PEIE);
 
   if ((config_bits & PARODD) == 0)
     cr1_config &= ~USART_CR1_PS;
@@ -169,6 +182,21 @@ usart_config (uint8_t dev_no, uint32_t config_bits)
     USARTx->CR3 = 0;
 
   USARTx->CR1 = cr1_config;
+
+  /* SCEN (smartcard enable) should be set _after_ CR1.  */
+  if ((config_bits & MASK_MODE))
+    {
+      if ((config_bits & MASK_MODE) == MODE_SMARTCARD)
+	{
+	  USARTx->GTPR = (16 << 8) | 5;
+	  USARTx->CR3 |= ((1 << 5) | (1 << 4));
+	}
+      else if ((config_bits & MASK_MODE) == MODE_IRDA)
+	USARTx->CR3 |= (1 << 1);
+      else if ((config_bits & MASK_MODE) == MODE_IRDA_LP)
+	USARTx->CR3 |= (1 << 2) | (1 << 1);
+    }
+
   return 0;
 }
 
@@ -187,8 +215,6 @@ usart_init (uint16_t prio, uintptr_t stack_addr, size_t stack_size,
   RCC->APB1RSTR = ((1 << 18) | (1 << 17));
   RCC->APB1RSTR = 0;
 
-  usart_config (2, B115200 | CS8 | STOP1B);
-  usart_config (3, B115200 | CS8 | STOP1B);
   chopstx_create (prio, stack_addr, stack_size, usart_main, NULL);
 }
 
@@ -541,10 +567,16 @@ usart_main (void *arg)
       chopstx_poll (NULL, n, usart_poll);
 
       if (usart2_intr.ready)
-	usart2_tx_ready = handle_intr (USART2, &usart2_rb_h2a, &usart2_stat);
+	{
+	  usart2_tx_ready = handle_intr (USART2, &usart2_rb_h2a, &usart2_stat);
+	  chopstx_intr_done (&usart2_intr);
+	}
 
       if (usart3_intr.ready)
-	usart3_tx_ready = handle_intr (USART3, &usart3_rb_h2a, &usart3_stat);
+	{
+	  usart3_tx_ready = handle_intr (USART3, &usart3_rb_h2a, &usart3_stat);
+	  chopstx_intr_done (&usart3_intr);
+	}
 
       if (usart2_tx_ready && usart2_app_write_event.ready)
 	usart2_tx_ready = handle_tx_ready (USART2,

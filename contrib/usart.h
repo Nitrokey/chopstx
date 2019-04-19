@@ -11,6 +11,7 @@
 #define B230400     26
 #define B460800     27
 #define B921600     28
+#define BSCARD      63
 #define MASK_BAUD 0x3f
 
 /* POSIX supports 5, 6.  USB suppots 16 */
@@ -43,6 +44,13 @@ PAR_BITS  3
 /* USB: SERIAL_STATE
    DSR DCD RI */
 
+/* non-POSIX, non-USB-CDC configs */
+#define MODE_SMARTCARD (1 << 30)
+#define MODE_IRDA      (2UL << 30)
+#define MODE_IRDA_LP   (3UL << 30)
+#define MASK_MODE      (0x3UL << 30)
+/* 0: standard, 1: smartcard, 2: IrDA, 3: IrDA-LP */
+
 struct usart_stat {
   uint8_t dev_no;
 
@@ -64,3 +72,4 @@ int usart_read (uint8_t dev_no, char *buf, uint16_t buflen);
 int usart_write (uint8_t dev_no, char *buf, uint16_t buflen);
 const struct usart_stat *usart_stat (uint8_t dev_no);
 int usart_send_break (uint8_t dev_no);
+void usart_config_clken (uint8_t dev_no, int on);

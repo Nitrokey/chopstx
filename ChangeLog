@@ -1,3 +1,140 @@
+2019-03-02  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* VERSION: 1.14.
+	* doc/chopstx.texi (VERSION): 1.14.
+
+2019-03-01  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* contrib/usart-stm32f103.c (usart_config): Fix SCEN setting
+	procedure.
+
+2019-03-01  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* contrib/usart-stm32f103.c (usart_config): Support parity error
+	interrupt setting.
+	(usart_init): Don't call usart_config here.
+	* example-usb-serial/sample.c: It's application calling
+	usart_config.
+
+2019-02-28  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* contrib/usart.h (BSCARD): New.
+	* contrib/usart-stm32f103.c (BSCARD): Baudrate for smartcard.
+	(usart_config_clken): New.
+	(usart_config): Fix for MODE_SMARTCARD.
+
+	* board/board-st-nucleo-f103.h: Define pins for smartcard
+	interface.
+
+2019-02-21  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* contrib/usart.h (MODE_SMARTCARD, MODE_IRDA, MODE_IRDA_LP)
+	(MASK_MODE): New.
+
+	* contrib/usart-stm32f103.c (usart_config): Add support for
+	those modes.
+
+2018-12-19  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* VERSION: 1.13.
+	* doc/chopstx.texi (VERSION): 1.13.
+
+2018-12-08  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* chopstx.c (chx_timer_dequeue): Fix calculation of return value.
+
+2018-12-07  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* chopstx.c (chx_timer_dequeue): Return ticks remained.
+	(chx_wakeup, chopstx_mutex_lock): Use return value of
+	chx_timer_dequeue.
+	(chx_snooze): Update *USEC_P, accordingly.
+
+2018-11-12  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* VERSION: 1.12.
+	* doc/chopstx.texi (VERSION): 1.12.
+
+	* contrib/ackbtn-stm32f103.c (ackbtn_init): Support FST-01 and
+	FST-01G, using PA2.
+	(ackbtn_disable): Fix to correctly clear pending interrupt.
+
+2018-11-09  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* eventflag.c (eventflag_set_mask): New.
+
+2018-10-02  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* VERSION: 1.11.
+	* doc/chopstx.texi (VERSION): 1.11.
+
+2018-10-01  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* contrib/ackbtn-stm32f103.c (PINCFG_EDGE): New.
+	(ackbtn_init): Use PINCFG_EDGE bit.
+	(ackbtn_enable): Configure the edge detector here.
+	(ackbtn_disable): Disable the edge detector.
+
+	* chopstx.c (chopstx_poll): Don't clear ->ready here.
+	(chx_cond_hook): Set ->ready = 0 when condition does
+	not meet.
+	(chopstx_claim_irq): Make sure clearing the interrupt.
+	(chx_intr_hook): Add the case when ->ready == 1.
+	(chopstx_intr_done): Set ->ready = 0.
+	(chx_join_hook): Set ->ready = 0 when it is still alive.
+
+2018-09-29  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* VERSION: 1.10.
+	* doc/chopstx.texi (VERSION): 1.10.
+
+2018-09-27  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* contrib/ackbtn-stm32f103.c: New.
+	* rules.mk [USE_ACKBTN] (CSRC): Add ack-button support.
+
+2018-09-26  NIIBE Yutaka  <gniibe@fsij.org>
+
+	Fix for chopstx_intr_done.  No spurious interrupts.
+	* contrib/adc-mkl27z.c (adc_wait_completion): Fix.
+	* contrib/adc-stm32f103.c (adc_wait_completion): Likewise.
+	* contrib/usart-stm32f103.c (usart_main): Likewise.
+	* example-cdc-gnu-linux/usb-cdc.c (tty_main): Likewise.
+	* example-cdc/usb-cdc.c (tty_main): Likewise.
+	* example-fraucheky/main.c (usb_main): Likewise.
+	* example-fs-bb48/touch.c (touch_get): Likewise.
+	* example-fs-bb48/usb-cdc.c (tty_main): Likewise.
+	* example-primer2/primer2-ts.c (adc3_conversion): Likewise.
+	* example-usb-serial/usb-cdc.c (cdc_main): Likewise.
+
+2018-09-26  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* chopstx.h (chopstx_intr_done): New function.
+	* chopstx.c (chopstx_intr_done): New function.
+	(chopstx_poll): Don't call chx_clr_intr.
+	Ensure data memory barrier for interrupt handling.
+
+	* chopstx-cortex-m.c (chx_dmb): New static function.
+	* chopstx-gnu-linux.c (chx_dmb): Ditto.
+
+2018-09-21  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* mcu/stm32.h (struct GPIO, struct FLASH): Moved from...
+	* mcu/clk_gpio_init-stm32.c: ... here.
+	(AFIO_MAPR_SWJ_CFG_JTAGDISABLE): Move to ...
+	* mcu/stm32f103.h: ... here.
+	* mcu/sys-stm32f103.c: Don't include "mcu/cortex-m.h".
+
+	* board/board-fst-01sz.h: New.
+	* mcu/sys-stm32f103.h (BOARD_ID_FST_01SZ): New.
+	* contrib/adc-stm32f103.c (get_adc_config): Add BOARD_ID_FST_01SZ.
+
+2018-08-20  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* mcu/usb-stm32f103.c (usb_lld_ctrl_send): Fix for ZLP.
+	* mcu/usb-usbip.c (usb_lld_ctrl_send): Likewise.
+	* mcu/usb-mkl27z.c (usb_lld_ctrl_send): Likewise.
+
 2018-05-09  NIIBE Yutaka  <gniibe@fsij.org>
 
 	* VERSION: 1.9.
