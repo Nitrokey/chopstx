@@ -266,45 +266,48 @@ usart_main (void *arg)
   (void)arg;
 
   for (i = 0; i < NUM_USART; i++)
-    {
-      *usart_array[i].tx_ready = 1;
-      rb_init (usart_array[i].rb_a2h, usart_array[i].buf_a2h, BUF_A2H_SIZE);
-      rb_init (usart_array[i].rb_h2a, usart_array[i].buf_h2a, BUF_H2A_SIZE);
-      rb_get_prepare_poll (usart_array[i].rb_a2h, usart_array[i].app_write_event);
-    }
+    if (usart_array[i].tx_ready)
+      {
+	*usart_array[i].tx_ready = 1;
+	rb_init (usart_array[i].rb_a2h, usart_array[i].buf_a2h, BUF_A2H_SIZE);
+	rb_init (usart_array[i].rb_h2a, usart_array[i].buf_h2a, BUF_H2A_SIZE);
+	rb_get_prepare_poll (usart_array[i].rb_a2h, usart_array[i].app_write_event);
+      }
 
   while (1)
     {
       int n = 0;
 
       for (i = 0; i < NUM_USART; i++)
-	{
-	  usart_poll[n++] = (struct chx_poll_head *)usart_array[i].intr;
-	  if (*usart_array[i].tx_ready)
-	    usart_poll[n++] = (struct chx_poll_head *)usart_array[i].app_write_event;
-	  else
-	    usart_array[i].app_write_event->ready = 0;
-	}
+	if (usart_array[i].tx_ready)
+	  {
+	    usart_poll[n++] = (struct chx_poll_head *)usart_array[i].intr;
+	    if (*usart_array[i].tx_ready)
+	      usart_poll[n++] = (struct chx_poll_head *)usart_array[i].app_write_event;
+	    else
+	      usart_array[i].app_write_event->ready = 0;
+	  }
 
       chopstx_poll (NULL, n, usart_poll);
 
       for (i = 0; i < NUM_USART; i++)
-	{
-	  int tx_done = 0;
+	if (usart_array[i].tx_ready)
+	  {
+	    int tx_done = 0;
 
-	  if (usart_array[i].intr->ready)
-	    {
-	      tx_done = handle_intr (usart_array[i].USART,
-				     usart_array[i].rb_h2a, usart_array[i].stat);
-	      *usart_array[i].tx_ready |= tx_done;
-	      chopstx_intr_done (usart_array[i].intr);
-	    }
+	    if (usart_array[i].intr->ready)
+	      {
+		tx_done = handle_intr (usart_array[i].USART,
+				       usart_array[i].rb_h2a, usart_array[i].stat);
+		*usart_array[i].tx_ready |= tx_done;
+		chopstx_intr_done (usart_array[i].intr);
+	      }
 
-	  if (tx_done || (*usart_array[i].tx_ready
-			  && usart_array[i].app_write_event->ready))
-	    *usart_array[i].tx_ready = handle_tx (usart_array[i].USART,
-						  usart_array[i].rb_a2h, usart_array[i].stat);
-	}
+	    if (tx_done || (*usart_array[i].tx_ready
+			    && usart_array[i].app_write_event->ready))
+	      *usart_array[i].tx_ready = handle_tx (usart_array[i].USART,
+						    usart_array[i].rb_a2h, usart_array[i].stat);
+	  }
     }
 
   return NULL;

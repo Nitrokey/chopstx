@@ -114,26 +114,26 @@ static int usart3_tx_ready;
 
 struct usart {
   struct USART *USART;
-  struct usart_stat *stat;
   struct chx_intr *intr;
+  uint8_t irq_num;
+  struct usart_stat *stat;
   struct rb *rb_a2h;
   struct rb *rb_h2a;
   uint8_t *buf_a2h;
   uint8_t *buf_h2a;
   chopstx_poll_cond_t *app_write_event;
   int *tx_ready;
-  uint8_t irq_num;
 };
 
 
 static const struct usart usart_array[] =
   {
-   { USART2, &usart2_stat, &usart2_intr, &usart2_rb_a2h, &usart2_rb_h2a,
-     buf_usart2_rb_a2h, buf_usart2_rb_h2a, &usart2_app_write_event,
-     &usart2_tx_ready, INTR_REQ_USART2 },
-   { USART3, &usart3_stat, &usart3_intr, &usart3_rb_a2h, &usart3_rb_h2a,
-     buf_usart3_rb_a2h, buf_usart3_rb_h2a, &usart3_app_write_event,
-     &usart3_tx_ready, INTR_REQ_USART3 },
+   { USART2, &usart2_intr, INTR_REQ_USART3,
+     &usart2_stat, &usart2_rb_a2h, &usart2_rb_h2a, buf_usart2_rb_a2h,
+     buf_usart2_rb_h2a, &usart2_app_write_event, &usart2_tx_ready },
+   { USART3, &usart3_intr, INTR_REQ_USART3,
+     &usart3_stat, &usart3_rb_a2h, &usart3_rb_h2a, buf_usart3_rb_a2h,
+     buf_usart3_rb_h2a, &usart3_app_write_event, &usart3_tx_ready },
   };
 #define NUM_USART ((int)(sizeof (usart_array) / sizeof (struct usart)))
 
@@ -280,7 +280,8 @@ usart_init0 (int (*cb) (uint8_t dev_no, uint16_t notify_bits))
 
   for (i = 0; i < NUM_USART; i++)
     {
-      usart_array[i].stat->dev_no = i + USART_DEVNO_START;
+      if (usart_array[i].stat)
+	usart_array[i].stat->dev_no = i + USART_DEVNO_START;
       chopstx_claim_irq (usart_array[i].intr, usart_array[i].irq_num);
     }
 
