@@ -158,3 +158,40 @@ static struct SYSCFG *const SYSCFG = (struct SYSCFG *)SYSCFG_BASE;
 
 #define EXTI0_IRQ    6
 #define SYSCFG_EXTICR1_EXTI0_PA 0
+
+struct EXTI {
+  union {
+    volatile uint32_t IMR1;
+    volatile uint32_t IMR;
+  };
+  union {
+    volatile uint32_t EMR1;
+    volatile uint32_t EMR;
+  };
+  union {
+    volatile uint32_t RTSR1;
+    volatile uint32_t RTSR;
+  };
+  union {
+    volatile uint32_t FTSR1;
+    volatile uint32_t FTSR;
+  };
+  union {
+    volatile uint32_t SWIER1;
+    volatile uint32_t SWIER;
+  };
+  union {
+    volatile uint32_t PR1;
+    volatile uint32_t PR;
+  };
+  volatile uint32_t reserved;
+  volatile uint32_t IMR2;
+  volatile uint32_t EMR2;
+  volatile uint32_t RTSR2;
+  volatile uint32_t FTSR2;
+  volatile uint32_t SWIER2;
+  volatile uint32_t PR2;
+};
+
+#define EXTI_BASE (APB2PERIPH_BASE+0x0400)
+static struct EXTI *const EXTI = (struct EXTI *)EXTI_BASE;
