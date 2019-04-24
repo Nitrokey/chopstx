@@ -35,7 +35,7 @@
  * MODER: 00 10 - 10 10 - 10 11 - 10 10    11 11 - 11 01 - 01 10 - 01 00
  *
  * PA0  - Input with pull-up: Card insertion detect: 0 when detected
- * PA1  - Output push-pull default 0 : Card RST
+ * PA1  - Output push-pull default 0: Card RST
  * PA2  - USART2-TX (AF7): output push-pull
  * PA3  - Output push-pull default 0: Card Vcc
  * PA4  - Output push-pull default 0: Card Vpp

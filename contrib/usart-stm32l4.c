@@ -130,7 +130,7 @@ static const struct brr_setting brr_table[] = {
   { B230400,   174 },
   { B460800,    87 },
   { B921600,    43 },
-  { BSCARD,   4167 },
+  { BSCARD,   3719 },
 };
 
 void
@@ -150,7 +150,12 @@ static void
 usart_config_recv_enable (struct USART *USARTx, int on)
 {
   if (on)
-    USARTx->CR1 |= USART_CR1_RE;
+    {
+      USARTx->CR1 |= USART_CR1_RE;
+      /* Wait for REACK bit.  */
+      while ((USARTx->ISR & (1 << 22)) == 0)
+	;
+    }
   else
     USARTx->CR1 &= ~USART_CR1_RE;
 }
@@ -173,8 +178,7 @@ usart_config (uint8_t dev_no, uint32_t config_bits)
   struct USART *USARTx = get_usart_dev (dev_no);
   uint8_t baud_spec = (config_bits & MASK_BAUD);
   int i;
-  uint32_t cr1_config = (USART_CR1_UE | USART_CR1_RXNEIE
-			 | USART_CR1_TE | USART_CR1_RE);
+  uint32_t cr1_config = (USART_CR1_UE | USART_CR1_RXNEIE | USART_CR1_TE);
 				/* TXEIE/TCIE will be enabled when
 				   putting char */
 				/* No CTSIE, PEIE, IDLEIE, LBDIE */
@@ -235,8 +239,14 @@ usart_config (uint8_t dev_no, uint32_t config_bits)
       else if ((config_bits & MASK_MODE) == MODE_IRDA_LP)
 	USARTx->CR3 |= (1 << 2) | (1 << 1);
     }
+  else
+    cr1_config |= USART_CR1_RE;
 
   USARTx->CR1 = cr1_config;
+
+  /* Wait for TEACK bit.  */
+  while ((USARTx->ISR & (1 << 21)) == 0)
+    ;
 
   return 0;
 }
@@ -304,22 +314,25 @@ handle_intr (struct USART *USARTx, struct rb *rb2a, struct usart_stat *stat)
     {
       uint32_t data = USARTx->RDR;
 
-      /* RDR register should be accessed even if data is not used.
-       * Its read-access has side effect of clearing error flags.
-       */
+      /* RDR register should be accessed even if data is not used.  */
       asm volatile ("" : : "r" (data) : "memory");
 
       if ((r & USART_ISR_NE))
-	stat->err_rx_noise++;
+	{
+	  USARTx->ICR |= (1 << 2);
+	  stat->err_rx_noise++;
+	}
       else if ((r & USART_ISR_FE))
 	{
 	  /* NOTE: Noway to distinguish framing error and break  */
 
+	  USARTx->ICR |= (1 << 1);
 	  stat->rx_break++;
 	  notify_bits |= UART_STATE_BITMAP_BREAK;
 	}
       else if ((r & USART_ISR_PE))
 	{
+	  USARTx->ICR |= (1 << 0);
 	  stat->err_rx_parity++;
 	  notify_bits |= UART_STATE_BITMAP_PARITY;
 	}
@@ -327,6 +340,7 @@ handle_intr (struct USART *USARTx, struct rb *rb2a, struct usart_stat *stat)
 	{
 	  if ((r & USART_ISR_ORE))
 	    {
+	      USARTx->ICR |= (1 << 3);
 	      stat->err_rx_overrun++;
 	      notify_bits |= UART_STATE_BITMAP_OVERRUN;
 	    }
@@ -340,8 +354,7 @@ handle_intr (struct USART *USARTx, struct rb *rb2a, struct usart_stat *stat)
     }
   else if ((r & USART_ISR_ORE))
     {				/* Clear ORE */
-      uint32_t data = USARTx->RDR;
-      asm volatile ("" : : "r" (data) : "memory");
+      USARTx->ICR |= (1 << 3);
       stat->err_rx_overrun++;
       notify_bits |= UART_STATE_BITMAP_OVERRUN;
     }
@@ -442,10 +455,16 @@ usart_block_sendrecv (uint8_t dev_no, const char *s_buf, uint16_t s_buflen,
 	  r = USARTx->ISR;
 
 	  /* Here, ignore recv error(s).  */
-	  if ((r & USART_ISR_RXNE) || (r & USART_ISR_ORE))
+	  if ((r & USART_ISR_RXNE))
 	    {
 	      data = USARTx->RDR;
 	      asm volatile ("" : : "r" (data) : "memory");
+
+	      USARTx->ICR |= ((1 << 2) | (1 << 1) | (1 << 0));
+	    }
+	  else if ((r & USART_ISR_ORE))
+	    {
+	      USARTx->ICR |= (1 << 3);
 	    }
 
 	  if ((r & USART_ISR_TXE))
@@ -466,13 +485,14 @@ usart_block_sendrecv (uint8_t dev_no, const char *s_buf, uint16_t s_buflen,
       USARTx->CR1 &= ~USART_CR1_TXEIE;
       if (smartcard_mode)
 	{
-	  if ((*timeout_block_p))
+	  if (timeout_block_p && (*timeout_block_p))
 	    do
 	      r = USARTx->ISR;
 	    while (((r & USART_ISR_TC) == 0));
+
 	  usart_config_recv_enable (USARTx, 1);
 
-	  if (*timeout_block_p == 0)
+	  if (timeout_block_p && *timeout_block_p == 0)
 	    {
 	      /* Ignoring the echo back.  */
 	      do
@@ -492,6 +512,9 @@ usart_block_sendrecv (uint8_t dev_no, const char *s_buf, uint16_t s_buflen,
       chopstx_intr_done (usartx_intr);
     }
 
+  if (r_buf == NULL)
+    return 0;
+
   /* Receiving part */
   r = chopstx_poll (timeout_block_p, 1, ph);
   if (r == 0)
@@ -510,8 +533,11 @@ usart_block_sendrecv (uint8_t dev_no, const char *s_buf, uint16_t s_buflen,
       if ((r & USART_ISR_RXNE))
 	{
 	  if ((r & USART_ISR_NE) || (r & USART_ISR_FE) || (r & USART_ISR_PE))
-	    /* ignore error, for now.  XXX: ss_notify */
-	    ;
+	    {
+	      /* ignore error, for now.  XXX: ss_notify */
+	      /* Clear the error flag(s) */
+	      USARTx->ICR |= ((1 << 2) | (1 << 1) | (1 << 0));
+	    }
 	  else
 	    {
 	      *p++ = (data & 0xff);
@@ -526,8 +552,9 @@ usart_block_sendrecv (uint8_t dev_no, const char *s_buf, uint16_t s_buflen,
 	}
       else if ((r & USART_ISR_ORE))
 	{
-	  data = USARTx->RDR;
-	  asm volatile ("" : : "r" (data) : "memory");
+	  /* ignore error, for now.  XXX: ss_notify */
+	  /* Clear the error flag */
+	  USARTx->ICR |= (1 << 3);
 	}
 
       chopstx_intr_done (usartx_intr);

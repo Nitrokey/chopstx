@@ -48,8 +48,8 @@ clock_init (void)
   while ((FLASH->ACR & 0x07) != (STM32_FLASHBITS & 0x07))
     ;
 
-  /* Configure bus clocks: AHB: 80MHz, APB1: 40MHz, APB2: 80MHz */
-  RCC->CFGR = (0x04 << 8);
+  /* Configure bus clocks: AHB: 80MHz, APB1: 40MHz, APB2: 40MHz */
+  RCC->CFGR = ((0x04 << 11) | (0x04 << 8));
 
   /* Switch SYSCLOCK using PLL */
   RCC->CFGR |= 0x03;

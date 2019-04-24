@@ -488,13 +488,14 @@ usart_block_sendrecv (uint8_t dev_no, const char *s_buf, uint16_t s_buflen,
       USARTx->CR1 &= ~USART_CR1_TXEIE;
       if (smartcard_mode)
 	{
-	  if ((*timeout_block_p))
+	  if (timeout_block_p && (*timeout_block_p))
 	    do
 	      r = USARTx->SR;
 	    while (((r & USART_SR_TC) == 0));
+
 	  usart_config_recv_enable (USARTx, 1);
 
-	  if (*timeout_block_p == 0)
+	  if (timeout_block_p && *timeout_block_p == 0)
 	    {
 	      /* Ignoring the echo back.  */
 	      do
@@ -513,6 +514,9 @@ usart_block_sendrecv (uint8_t dev_no, const char *s_buf, uint16_t s_buflen,
 
       chopstx_intr_done (usartx_intr);
     }
+
+  if (r_buf == NULL)
+    return 0;
 
   /* Receiving part */
   r = chopstx_poll (timeout_block_p, 1, ph);
