@@ -1,6 +1,21 @@
 NEWS - Noteworthy changes
 
 
+* Major changes in Chopstx 2.0
+
+  Released 2019-0X-XX
+
+** Cortex-M4 support
+Cortex-M4 support has been added.  Not supporting use of FPU or DSP,
+yet.  Note that it's not intend to be used by Gnuk.
+
+** STM32L432 support
+USART and USB drivers are added.
+
+** New board support: ST Nucleo-32 L432
+ST Nucleo-32 L432 is a small board with ST-Link/V2-1.
+
+
 * Major changes in Chopstx 1.14
 
   Released 2019-03-02

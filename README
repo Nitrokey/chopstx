@@ -1,6 +1,6 @@
 Chopstx - Threads and only Threads
-							Version 1.14
-							  2018-03-02
+							 Version 2.0
+							  2018-0X-XX
 							Niibe Yutaka
 					     Flying Stone Technology
 
@@ -8,8 +8,8 @@ What's Chopstx?
 ===============
 
 Chopstx is an RT thread library for STM32F103 and GD32F103 (ARM
-Cortex-M3), STM32F030 (ARM Cortex-M0), MKL27Z (ARM Cortex-M0plus), and
-emulation on GNU/Linux.
+Cortex-M3), STM32F030 (ARM Cortex-M0), MKL27Z (ARM Cortex-M0plus),
+STM32L432 (ARM Cortex-M4), and emulation on GNU/Linux.
 
 While most RTOSes come with many features, drivers, and protocol
 stacks, Chopstx just offers a simple RT thread library.
@@ -19,7 +19,7 @@ enables coherent code for ease of maintenance.
 
 While threads are important, we don't need more threads than
 necessary.  Chopstx provides a feature of poll, so that we can
-minimize use of threads.
+handle multiple events by a single thread.
 
 
 Note that this library is _not_ related to the hand game:

@@ -101,7 +101,7 @@ enables coherent code for ease of maintenance.
 
 While threads are important, we don't need more threads than
 necessary.  Chopstx provides a feature of poll, so that we can
-minimize use of threads.
+handle multiple events by a single thread.
 
 
 @node Threads and only Threads
