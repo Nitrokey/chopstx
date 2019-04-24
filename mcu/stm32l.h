@@ -142,3 +142,19 @@ struct USB_STM32L4 {
 
 #define USB_STM32L4_BASE  (0x40006854UL)
 static struct USB_STM32L4 *const USB_STM32L4 = (struct USB_STM32L4 *)USB_STM32L4_BASE;
+
+struct SYSCFG {
+  volatile uint32_t MEMRMP;
+  volatile uint32_t CFGR1;
+  volatile uint32_t EXTICR[4];
+  volatile uint32_t SCSR;
+  volatile uint32_t CFGR2;
+  volatile uint32_t SWPR;
+  volatile uint32_t SKR;
+};
+
+#define SYSCFG_BASE  (APB2PERIPH_BASE+0UL)
+static struct SYSCFG *const SYSCFG = (struct SYSCFG *)SYSCFG_BASE;
+
+#define EXTI0_IRQ    6
+#define SYSCFG_EXTICR1_EXTI0_PA 0
