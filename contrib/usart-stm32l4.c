@@ -130,19 +130,34 @@ static const struct brr_setting brr_table[] = {
   { B230400,   174 },
   { B460800,    87 },
   { B921600,    43 },
-  { BSCARD,   3719 },
+  { BSCARD1,  3720 },
+  { BSCARD2,  1860 },
+  { BSCARD4,   930 },
+  { BSCARD8,   465 },
+  { BSCARD12,  310 },
+  { BSCARD16,  233 },
+  { BSCARD20,  186 },
 };
 
-void
-usart_config_brr (uint8_t dev_no, uint16_t brr_value)
+int
+usart_config_baud (uint8_t dev_no, uint8_t baud_spec)
 {
   struct USART *USARTx = get_usart_dev (dev_no);
   uint32_t save_bits;
+  int i;
+
+  for (i = 0; i < NUM_BAUD; i++)
+    if (brr_table[i].baud_spec == baud_spec)
+      break;
+
+  if (i >= NUM_BAUD)
+    return -1;
 
   save_bits = USARTx->CR1 & (USART_CR1_TE | USART_CR1_RE);
   USARTx->CR1 &= ~(USART_CR1_TE | USART_CR1_RE | USART_CR1_UE);
-  USARTx->BRR = brr_value;
+  USARTx->BRR = brr_table[i].brr_value;
   USARTx->CR1 |= (save_bits | USART_CR1_UE);
+  return 0;
 }
 
 /* XXX: not sure if needed */

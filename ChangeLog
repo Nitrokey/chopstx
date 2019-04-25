@@ -5,6 +5,7 @@
 
 	* contrib/usart-stm32f103.c (usart_config_baud): Rename
 	from usart_config_brr, changing API.
+	* contrib/usart-stm32l4.c (usart_config_baud): Likewise.
 
 2019-04-24  NIIBE Yutaka  <gniibe@fsij.org>
 
