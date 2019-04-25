@@ -1,3 +1,11 @@
+2019-04-25  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* contrib/usart.h (BSCARD1, BSCARD2...): New.
+	(BSCARD): Remove.
+
+	* contrib/usart-stm32f103.c (usart_config_baud): Rename
+	from usart_config_brr, changing API.
+
 2019-04-24  NIIBE Yutaka  <gniibe@fsij.org>
 
 	* mcu/sys-stm32l4.c: New.

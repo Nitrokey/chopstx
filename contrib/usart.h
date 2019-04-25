@@ -11,7 +11,13 @@
 #define B230400     26
 #define B460800     27
 #define B921600     28
-#define BSCARD      63
+#define BSCARD1     57
+#define BSCARD2     58
+#define BSCARD4     59
+#define BSCARD8     60
+#define BSCARD12    61
+#define BSCARD16    62
+#define BSCARD20    63
 #define MASK_BAUD 0x3f
 
 /* POSIX supports 5, 6.  USB suppots 16 */
@@ -73,7 +79,7 @@ int usart_write (uint8_t dev_no, char *buf, uint16_t buflen);
 const struct usart_stat *usart_stat (uint8_t dev_no);
 int usart_send_break (uint8_t dev_no);
 void usart_config_clken (uint8_t dev_no, int on);
-void usart_config_brr (uint8_t dev_no, uint16_t brr_value);
+int usart_config_baud (uint8_t dev_no, uint8_t baud_spec);
 
 void usart_read_prepare_poll (uint8_t dev_no, chopstx_poll_cond_t *poll_desc);
 int usart_read_ext (uint8_t dev_no, char *buf, uint16_t buflen, uint32_t *timeout_p);
