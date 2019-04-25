@@ -533,6 +533,10 @@ usart_block_sendrecv (uint8_t dev_no, const char *s_buf, uint16_t s_buflen,
   if (r_buf == NULL)
     return 0;
 
+  if (!p)
+    if (smartcard_mode)
+      usart_config_recv_enable (USARTx, 1);
+
   /* Receiving part */
   r = chopstx_poll (timeout_block_p, 1, ph);
   if (r == 0)
