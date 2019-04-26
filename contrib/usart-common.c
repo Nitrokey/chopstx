@@ -248,12 +248,6 @@ usart_init (uint16_t prio, uintptr_t stack_addr, size_t stack_size,
   chopstx_create (prio, stack_addr, stack_size, usart_main, NULL);
 }
 
-struct brr_setting {
-  uint8_t baud_spec;
-  uint32_t brr_value;
-};
-#define NUM_BAUD (int)(sizeof (brr_table) / sizeof (struct brr_setting))
-
 static int (*ss_notify_callback) (uint8_t dev_no, uint16_t notify_bits);
 
 static struct chx_poll_head *usart_poll[NUM_USART*2];
@@ -397,4 +391,38 @@ usart_write (uint8_t dev_no, char *buf, uint16_t buflen)
     }
 
   return 0;
+}
+
+
+int
+usart_config_baud (uint8_t dev_no, uint8_t baud_spec)
+{
+  struct USART *USARTx = get_usart_dev (dev_no);
+  uint32_t save_bits;
+  int i;
+
+  for (i = 0; i < NUM_BAUD; i++)
+    if (brr_table[i].baud_spec == baud_spec)
+      break;
+
+  if (i >= NUM_BAUD)
+    return -1;
+
+  save_bits = USARTx->CR1 & (USART_CR1_TE | USART_CR1_RE);
+  USARTx->CR1 &= ~(USART_CR1_TE | USART_CR1_RE | USART_CR1_UE);
+  USARTx->BRR = brr_table[i].brr_value;
+  USARTx->CR1 |= (save_bits | USART_CR1_UE);
+  return 0;
+}
+
+
+void
+usart_config_clken (uint8_t dev_no, int on)
+{
+  struct USART *USARTx = get_usart_dev (dev_no);
+
+  if (on)
+    USARTx->CR2 |= (1 << 11);
+  else
+    USARTx->CR2 &= ~(1 << 11);
 }

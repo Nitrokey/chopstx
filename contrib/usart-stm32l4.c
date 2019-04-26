@@ -115,10 +115,13 @@ static int handle_intr (struct USART *USARTx, struct rb *rb2a, struct usart_stat
 static int handle_tx (struct USART *USARTx, struct rb *rb2h, struct usart_stat *stat);
 static void usart_config_recv_enable (struct USART *USARTx, int on);
 
-#include "usart-common.c"
-
-/* We assume 40MHz f_CK */
+struct brr_setting {
+  uint8_t baud_spec;
+  uint32_t brr_value;
+};
+#define NUM_BAUD (int)(sizeof (brr_table) / sizeof (struct brr_setting))
 
+/* We assume 40MHz f_CK */
 static const struct brr_setting brr_table[] = {
   { B600,    66667 },
   { B1200,   33333 },
@@ -139,28 +142,8 @@ static const struct brr_setting brr_table[] = {
   { BSCARD20,  186 },
 };
 
-int
-usart_config_baud (uint8_t dev_no, uint8_t baud_spec)
-{
-  struct USART *USARTx = get_usart_dev (dev_no);
-  uint32_t save_bits;
-  int i;
-
-  for (i = 0; i < NUM_BAUD; i++)
-    if (brr_table[i].baud_spec == baud_spec)
-      break;
-
-  if (i >= NUM_BAUD)
-    return -1;
-
-  save_bits = USARTx->CR1 & (USART_CR1_TE | USART_CR1_RE);
-  USARTx->CR1 &= ~(USART_CR1_TE | USART_CR1_RE | USART_CR1_UE);
-  USARTx->BRR = brr_table[i].brr_value;
-  USARTx->CR1 |= (save_bits | USART_CR1_UE);
-  return 0;
-}
-
-/* XXX: not sure if needed */
+#include "usart-common.c"
+
 static void
 usart_config_recv_enable (struct USART *USARTx, int on)
 {
@@ -174,18 +157,6 @@ usart_config_recv_enable (struct USART *USARTx, int on)
   else
     USARTx->CR1 &= ~USART_CR1_RE;
 }
-
-void
-usart_config_clken (uint8_t dev_no, int on)
-{
-  struct USART *USARTx = get_usart_dev (dev_no);
-
-  if (on)
-    USARTx->CR2 |= (1 << 11);
-  else
-    USARTx->CR2 &= ~(1 << 11);
-}
-
 
 int
 usart_config (uint8_t dev_no, uint32_t config_bits)

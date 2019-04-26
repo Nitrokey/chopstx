@@ -141,9 +141,12 @@ static int handle_intr (struct USART *USARTx, struct rb *rb2a, struct usart_stat
 static int handle_tx (struct USART *USARTx, struct rb *rb2h, struct usart_stat *stat);
 static void usart_config_recv_enable (struct USART *USARTx, int on);
 
+struct brr_setting {
+  uint8_t baud_spec;
+  uint32_t brr_value;
+};
+#define NUM_BAUD (int)(sizeof (brr_table) / sizeof (struct brr_setting))
 
-#include "usart-common.c"
-
 /* We assume 36MHz f_PCLK */
 static const struct brr_setting brr_table[] = {
   { B600,    (3750 << 4)},
@@ -165,28 +168,8 @@ static const struct brr_setting brr_table[] = {
   { BSCARD20, (  11 << 4)|10},	/* 193548 */
 };
 
-
-int
-usart_config_baud (uint8_t dev_no, uint8_t baud_spec)
-{
-  struct USART *USARTx = get_usart_dev (dev_no);
-  uint32_t save_bits;
-  int i;
-
-  for (i = 0; i < NUM_BAUD; i++)
-    if (brr_table[i].baud_spec == baud_spec)
-      break;
-
-  if (i >= NUM_BAUD)
-    return -1;
-
-  save_bits = USARTx->CR1 & (USART_CR1_TE | USART_CR1_RE);
-  USARTx->CR1 &= ~(USART_CR1_TE | USART_CR1_RE);
-  USARTx->BRR = brr_table[i].brr_value;
-  USARTx->CR1 |= save_bits;
-  return 0;
-}
-
+#include "usart-common.c"
+
 static void
 usart_config_recv_enable (struct USART *USARTx, int on)
 {
@@ -196,17 +179,6 @@ usart_config_recv_enable (struct USART *USARTx, int on)
     USARTx->CR1 &= ~USART_CR1_RE;
 }
 
-void
-usart_config_clken (uint8_t dev_no, int on)
-{
-  struct USART *USARTx = get_usart_dev (dev_no);
-
-  if (on)
-    USARTx->CR2 |= (1 << 11);
-  else
-    USARTx->CR2 &= ~(1 << 11);
-}
-
 
 int
 usart_config (uint8_t dev_no, uint32_t config_bits)
@@ -214,8 +186,7 @@ usart_config (uint8_t dev_no, uint32_t config_bits)
   struct USART *USARTx = get_usart_dev (dev_no);
   uint8_t baud_spec = (config_bits & MASK_BAUD);
   int i;
-  uint32_t cr1_config = (USART_CR1_UE | USART_CR1_RXNEIE
-			 | USART_CR1_TE | USART_CR1_RE);
+  uint32_t cr1_config = (USART_CR1_UE | USART_CR1_RXNEIE | USART_CR1_TE);
 				/* TXEIE/TCIE will be enabled when
 				   putting char */
 				/* No CTSIE, PEIE, IDLEIE, LBDIE */
@@ -265,6 +236,9 @@ usart_config (uint8_t dev_no, uint32_t config_bits)
     USARTx->CR3 = USART_CR3_CTSE | USART_CR3_RTSE;
   else
     USARTx->CR3 = 0;
+
+  if (!(config_bits & MASK_MODE))
+    cr1_config |= USART_CR1_RE;
 
   USARTx->CR1 = cr1_config;
 
