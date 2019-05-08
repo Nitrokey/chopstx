@@ -29,7 +29,11 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#ifdef USE_SYS
 #include "sys-stm32l4.h"
+#endif
+
+#include <mcu/stm32l.h>
 #include "usb_lld.h"
 #include "usb_lld_driver.h"
 
