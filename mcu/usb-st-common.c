@@ -225,7 +225,7 @@ usb_lld_ctrl_ack (struct usb_dev *dev)
 void
 usb_lld_init (struct usb_dev *dev, uint8_t feature)
 {
-  usb_lld_sys_init ();
+  usb_lld_init_chip_specific ();
 
   dev->configuration = 0;
   dev->feature = feature;
@@ -241,20 +241,6 @@ usb_lld_init (struct usb_dev *dev, uint8_t feature)
   USB->ISTR = 0;
   USB->CNTR = (CNTR_CTRM | CNTR_OVRM | CNTR_ERRM
 	       | CNTR_WKUPM | CNTR_SUSPM | CNTR_RESETM);
-
-#if 0
-/*
- * Since stop mode makes PLL, HSI & HES oscillators stop, USB clock is
- * not supplied in stop mode.  Thus, USB wakeup can't occur.
- *
- * So, only sleep mode can be supported with USB, which doesn't
- * require use of EXTI.
- */
-#include "mcu/stm32f103.h"
-  /* Setting of EXTI wakeup event to break stop mode.       */
-  EXTI->EMR  |= (1 << 18);	/* Event mask cleared       */
-  EXTI->RTSR |= (1 << 18);	/* Rising trigger selection */
-#endif
 }
 
 void
@@ -268,7 +254,7 @@ void
 usb_lld_shutdown (void)
 {
   USB->CNTR = CNTR_PDWN;
-  usb_lld_sys_shutdown ();
+  usb_lld_shutdown_chip_specific ();
 }
 
 #define USB_MAKE_EV(event) (event<<24)

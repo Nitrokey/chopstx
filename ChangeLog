@@ -1,3 +1,22 @@
+2019-05-08  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* mcu/sys-stm32f103.c (usb_lld_sys_shutdown, usb_lld_sys_init):
+	Only cable config.
+
+	* mcu/sys-stm32l4.c (usb_lld_sys_shutdown, usb_lld_sys_init):
+	Likewise.
+
+	* mcu/usb-st-common.c (usb_lld_init): Call chip specific routine.
+	(usb_lld_shutdown): Likewise.
+
+	* mcu/usb-stm32l4.c (usb_lld_init_chip_specific)
+	(usb_lld_shutdown_chip_specific): New.
+
+	* mcu/usb-stm32f103.c (usb_lld_init_chip_specific)
+	(usb_lld_shutdown_chip_specific): New.
+
+	* rules.mk (DEFS): Add -DUSE_SYS when USE_SYS.
+
 2019-04-25  NIIBE Yutaka  <gniibe@fsij.org>
 
 	* contrib/usart.h (BSCARD1, BSCARD2...): New.

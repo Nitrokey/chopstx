@@ -64,39 +64,16 @@ set_led (int on)
 #endif
 }
 
-static void wait (int count)
-{
-  int i;
-
-  for (i = 0; i < count; i++)
-    asm volatile ("" : : "r" (i) : "memory");
-}
-
-
 static void
 usb_lld_sys_shutdown (void)
 {
-  RCC->APB1ENR &= ~RCC_APB1ENR_USBEN;
-  RCC->APB1RSTR = RCC_APB1RSTR_USBRST;
   usb_cable_config (0);
 }
 
 static void
 usb_lld_sys_init (void)
 {
-  if ((RCC->APB1ENR & RCC_APB1ENR_USBEN)
-      && (RCC->APB1RSTR & RCC_APB1RSTR_USBRST) == 0)
-    /* Make sure the device is disconnected, even after core reset.  */
-    {
-      usb_lld_sys_shutdown ();
-      /* Disconnect requires SE0 (>= 2.5uS).  */
-      wait (5*MHZ);
-    }
-
   usb_cable_config (1);
-  RCC->APB1ENR |= RCC_APB1ENR_USBEN;
-  RCC->APB1RSTR = RCC_APB1RSTR_USBRST;
-  RCC->APB1RSTR = 0;
 }
 
 #define FLASH_KEY1               0x45670123UL

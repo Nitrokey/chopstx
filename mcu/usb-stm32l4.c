@@ -109,6 +109,73 @@ epbuf_get_rx_count (uint8_t ep_num)
   return *reg_p & 0x03ff;
 }
 
+
+static void
+usb_lld_shutdown_chip_specific (void)
+{
+  USB_STM32L4->BCDR &= 0x7fff;	/* DP disable */
+  RCC->APB1ENR1 &= ~(RCC_APB1_1_USB | RCC_APB1_1_CRS);
+  RCC->APB1RSTR1 |= (RCC_APB1_1_USB | RCC_APB1_1_CRS);
+#ifdef USE_SYS
+  usb_lld_sys_shutdown ();
+#endif
+}
+
+static void
+wait (int count)
+{
+  int i;
+
+  for (i = 0; i < count; i++)
+    asm volatile ("" : : "r" (i) : "memory");
+}
+
+struct CRS
+{
+  volatile uint32_t CR;
+  volatile uint32_t CFGR;
+  volatile uint32_t ISR;
+  volatile uint32_t ICR;
+};
+static struct CRS *const CRS = ((struct CRS *)(APB1PERIPH_BASE + 0x6000));
+
+
+static void
+usb_lld_init_chip_specific (void)
+{
+  PWR->CR2 |= (1 << 10); 	/* USB supply valid */
+
+  if ((RCC->APB1ENR1 & RCC_APB1_1_USB)
+      && (RCC->APB1RSTR1 & RCC_APB1_1_USB) == 0)
+    /* Make sure the device is disconnected, even after core reset.  */
+    {
+      usb_lld_shutdown_chip_specific ();
+      /* Disconnect requires SE0 (>= 2.5uS).  */
+      wait (5*MHZ);
+    }
+
+#ifdef USE_SYS
+  usb_lld_sys_init ();
+#endif
+
+  /* Enable USB clock and CRC clock */
+  RCC->APB1ENR1 |= (RCC_APB1_1_USB | RCC_APB1_1_CRS);
+  RCC->APB1RSTR1 = (RCC_APB1_1_USB | RCC_APB1_1_CRS);
+  RCC->APB1RSTR1 = 0;
+
+  USB_STM32L4->BCDR |= 0x8000;	/* DP enable */
+
+  /* Configure CRS (clock recovery system) for HSI48 clock */
+  CRS->CFGR = ( (0x00 << 31) |	/* Polarity rising       */
+		(0x02 << 28) |	/* USB SOF for Sync      */
+		(0x00 << 24) | 	/* divider = 1           */
+		(0x22 << 16) |  /* Frequency error limit */
+		0xBB7F );	/* Reload value          */
+
+  CRS->CR |= ( (1 << 6) |  	/* Automatic trimming enable */
+	       (1 << 5) );	/* Frequency error counter enable */
+}
+
 #include "usb-st-common.c"
 
 static int

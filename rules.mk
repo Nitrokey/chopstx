@@ -13,6 +13,7 @@ CSRC += $(CHOPSTX)/mcu/chx-gnu-linux.c
 endif
 
 ifneq ($(USE_SYS),)
+DEFS += -DUSE_SYS
 CSRC += $(CHOPSTX)/mcu/sys-$(CHIP).c
 endif
 ifneq ($(USE_USB),)

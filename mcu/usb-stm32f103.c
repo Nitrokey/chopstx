@@ -29,7 +29,11 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#ifdef USE_SYS
 #include "sys-stm32f103.h"
+#endif
+
+#include "stm32f103.h"
 #include "usb_lld.h"
 #include "usb_lld_driver.h"
 
@@ -107,6 +111,50 @@ epbuf_get_rx_count (uint8_t ep_num)
   uint16_t *reg_p = (uint16_t *)(PMA_ADDR + (ep_num*8+6)*2);
 
   return *reg_p & 0x03ff;
+}
+
+
+static void
+usb_lld_shutdown_chip_specific (void)
+{
+  RCC->APB1ENR &= ~RCC_APB1ENR_USBEN;
+  RCC->APB1RSTR = RCC_APB1RSTR_USBRST;
+#ifdef USE_SYS
+  usb_lld_sys_shutdown ();
+#endif
+}
+
+static void
+wait (int count)
+{
+  int i;
+
+  for (i = 0; i < count; i++)
+    asm volatile ("" : : "r" (i) : "memory");
+}
+
+static void
+usb_lld_init_chip_specific (void)
+{
+  if ((RCC->APB1ENR & RCC_APB1ENR_USBEN)
+      && (RCC->APB1RSTR & RCC_APB1RSTR_USBRST) == 0)
+    /* Make sure the device is disconnected, even after core reset.  */
+    {
+      usb_lld_shutdown_chip_specific ();
+      /* Disconnect requires SE0 (>= 2.5uS).  */
+      wait (5*MHZ);
+    }
+
+#ifdef USE_SYS
+  usb_lld_sys_init ();
+#endif
+
+  if ((RCC->APB1ENR & RCC_APB1ENR_USBEN) == 0)
+    {
+      RCC->APB1ENR |= RCC_APB1ENR_USBEN;
+      RCC->APB1RSTR = RCC_APB1RSTR_USBRST;
+      RCC->APB1RSTR = 0;
+    }
 }
 
 #include "usb-st-common.c"
