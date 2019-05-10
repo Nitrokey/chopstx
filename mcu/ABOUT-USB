@@ -7,3 +7,7 @@ powered system, we need to define the hardware interface detecting
 VBUS voltage.  Only after detecting VBUS power, we can enable USB
 driver (D+/D- lines).  For self powered system, driving D+/D- lines
 (by fixed pull-up resistor) violates the USB specification.
+
+This driver can be used without Chopstx.  Please supply
+-DFREE_STANDING when used without Chopstx.  An example can be find
+in gnuk/regnual.

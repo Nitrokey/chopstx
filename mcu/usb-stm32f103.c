@@ -31,6 +31,10 @@
 
 #ifdef USE_SYS
 #include "sys-stm32f103.h"
+#else
+# ifdef FREE_STANDING
+# error "Please compile with -DUSE_SYS"
+# endif
 #endif
 
 #include "stm32f103.h"
