@@ -353,8 +353,8 @@ handler vector[] __attribute__ ((section(".vectors"))) = {
 const uint8_t sys_version[8] __attribute__((section(".sys.version"))) = {
   3*2+2,	     /* bLength */
   0x03,		     /* bDescriptorType = USB_STRING_DESCRIPTOR_TYPE */
-  /* sys version: "3.0" */
-  '3', 0, '.', 0, '0', 0,
+  /* sys version: "4.0" */
+  '4', 0, '.', 0, '0', 0,
 };
 
 const uint32_t __attribute__((section(".sys.board_id")))

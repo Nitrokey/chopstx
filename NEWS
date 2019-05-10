@@ -1,9 +1,23 @@
 NEWS - Noteworthy changes
 
 
-* Major changes in Chopstx 2.0
+* Major changes in Chopstx 1.15
 
-  Released 2019-0X-XX
+  Released 2019-05-10
+
+** SYS version 4.0
+USB initialization/finalization demarcation has been changed.
+Enabling/disabling USB module is done by USB driver.  SYS routines
+only handles USB cable config.  If a board has a fixed pull-up
+resistor, USB driver can omit calling
+usb_lld_sys_init/usb_lld_sys_shutdown.
+
+** USB driver change
+Enabling/disabling USB module is done by USB driver.  Only with
+-DUSE_SYS option, it calls usb_lld_sys_init/usb_lld_sys_shutdown.
+Don't forget having -DUSE_SYS to support boards with non-fixed 1K5
+resistor.  Despite this change, it should work well with SYS 3.0
+routines.
 
 ** Cortex-M4 support
 Cortex-M4 support has been added.  Not supporting use of FPU or DSP,

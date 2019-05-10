@@ -1,3 +1,11 @@
+2019-05-10  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* mcu/sys-stm32f103.c: SYS version 4.0.
+	* mcu/sys-gnu-linux.c: Likewise.
+	* mcu/sys-mkl27z.c: Likewise.
+	* mcu/sys-stm32l4.c: Likewise.
+	* mcu/sys-stm32f0.c: Likewise.
+
 2019-05-08  NIIBE Yutaka  <gniibe@fsij.org>
 
 	* mcu/sys-stm32f103.c (usb_lld_sys_shutdown, usb_lld_sys_init):

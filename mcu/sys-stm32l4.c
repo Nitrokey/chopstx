@@ -35,14 +35,6 @@ set_led (int on)
 #endif
 }
 
-static void wait (int count)
-{
-  int i;
-
-  for (i = 0; i < count; i++)
-    asm volatile ("" : : "r" (i) : "memory");
-}
-
 
 void
 usb_lld_sys_shutdown (void)
@@ -65,8 +57,8 @@ nvic_system_reset (void)
 const uint8_t sys_version[8] __attribute__((section(".sys.version"))) = {
   3*2+2,	     /* bLength */
   0x03,		     /* bDescriptorType = USB_STRING_DESCRIPTOR_TYPE */
-  /* sys version: "3.0" */
-  '3', 0, '.', 0, '0', 0,
+  /* sys version: "4.0" */
+  '4', 0, '.', 0, '0', 0,
 };
 
 #if defined(USE_SYS3) || defined(USE_SYS_BOARD_ID)
