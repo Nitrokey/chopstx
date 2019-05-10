@@ -179,10 +179,13 @@ chx_clr_intr (uint8_t irq_num)
   NVIC_ICPR (irq_num) = 1 << (irq_num & 0x1f);
 }
 
-static void
+static int
 chx_disable_intr (uint8_t irq_num)
 {
+  int already_disabled = !!(NVIC_ICER (irq_num) & (1 << (irq_num & 0x1f)));
+
   NVIC_ICER (irq_num) = 1 << (irq_num & 0x1f);
+  return already_disabled;
 }
 
 static void

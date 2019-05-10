@@ -1,5 +1,12 @@
 2019-05-10  NIIBE Yutaka  <gniibe@fsij.org>
 
+	* chopstx.c (chopstx_claim_irq): Check INTR before the call.
+
+	* chopstx-cortex-m.c (chx_disable_intr): Have return value.
+	* chopstx-gnu-linux.c (chx_disable_intr): Likewise.
+
+2019-05-10  NIIBE Yutaka  <gniibe@fsij.org>
+
 	* mcu/sys-stm32f103.c: SYS version 4.0.
 	* mcu/sys-gnu-linux.c: Likewise.
 	* mcu/sys-mkl27z.c: Likewise.

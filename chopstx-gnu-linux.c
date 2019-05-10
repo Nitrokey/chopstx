@@ -2,7 +2,7 @@
  * chopstx-gnu-linux.c - Threads and only threads: Arch specific code
  *                       for GNU/Linux emulation
  *
- * Copyright (C) 2017, 2018 Flying Stone Technology
+ * Copyright (C) 2017, 2018, 2019 Flying Stone Technology
  * Author: NIIBE Yutaka <gniibe@fsij.org>
  *
  * This file is a part of Chopstx, a thread library for embedded.
@@ -89,10 +89,13 @@ chx_clr_intr (uint8_t irq_num)
   (void)irq_num;
 }
 
-static void
+static int
 chx_disable_intr (uint8_t irq_num)
 {
+  int already_disabled = sigismember (&ss_cur, irq_num);
+
   sigaddset (&ss_cur, irq_num);
+  return already_disabled;
 }
 
 static void

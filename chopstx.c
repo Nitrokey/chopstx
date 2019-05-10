@@ -1005,17 +1005,21 @@ chx_cond_hook (struct chx_px *px, struct chx_poll_head *pd)
 void
 chopstx_claim_irq (chopstx_intr_t *intr, uint8_t irq_num)
 {
+  int intr_before_claim;
+
   intr->type = CHOPSTX_POLL_INTR;
   intr->ready = 0;
   intr->irq_num = irq_num;
 
   chx_cpu_sched_lock ();
   chx_spin_lock (&q_intr.lock);
-  chx_disable_intr (irq_num);
+  intr_before_claim = chx_disable_intr (irq_num);
   chx_clr_intr (irq_num);
   chx_set_intr_prio (irq_num);
   chx_spin_unlock (&q_intr.lock);
   chx_cpu_sched_unlock ();
+  if (intr_before_claim)
+    intr->ready = 1;
 }
 
 
