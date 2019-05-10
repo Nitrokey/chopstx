@@ -1,0 +1,9 @@
+USB driver in Chopstx
+
+Full speed device is assumed.  Bus powered system is assumed.
+
+API-wise, self powered system is not supported (yet).  To support self
+powered system, we need to define the hardware interface detecting
+VBUS voltage.  Only after detecting VBUS power, we can enable USB
+driver (D+/D- lines).  For self powered system, driving D+/D- lines
+(by fixed pull-up resistor) violates the USB specification.
