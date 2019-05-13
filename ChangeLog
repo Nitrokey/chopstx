@@ -1,3 +1,14 @@
+2019-05-13  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* board/board-maple-mini.h: Assert USB D+ pull-up.
+	* board/board-olimex-stm32-h103.h: Likewise.
+	* board/board-stbee.h:Likewise.
+	* board/board-stm32-primer2.h: Likewise.
+
+	* mcu/usb-stm32f103.c: Don't use usb_lld_sys_init and
+	usb_lld_sys_shutdown in SYS.
+	* mcu/usb-stm32l4.c: Ditto.
+
 2019-05-10  NIIBE Yutaka  <gniibe@fsij.org>
 
 	* chopstx.c (chopstx_claim_irq): Check INTR before the call.

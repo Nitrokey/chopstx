@@ -1,13 +1,32 @@
 USB driver in Chopstx
 
 Full speed device is assumed.  Bus powered system is assumed.
+API-wise, self powered system is not supported (yet) by this USB driver.
 
-API-wise, self powered system is not supported (yet).  To support self
-powered system, we need to define the hardware interface detecting
-VBUS voltage.  Only after detecting VBUS power, we can enable USB
-driver (D+/D- lines).  For self powered system, driving D+/D- lines
-(by fixed pull-up resistor) violates the USB specification.
+The driver can be used without Chopstx.  An example can be find in
+Gnuk (gnuk/regnual).
 
-This driver can be used without Chopstx.  Please supply
--DFREE_STANDING when used without Chopstx.  An example can be find
-in gnuk/regnual.
+The USB driver was originally written for STM32F103, which USB
+hardware design is considered not mature.  Modern USB hardware design
+allows crystal-less design, and/or comes with internal 5V->3V3
+regulator, D+-line pull-up support, and VBUS detection.  STM32F103 has
+nothing.
+
+To support self powered system, we need to define a hardware interface
+for a board detecting VBUS voltage.  Only after detecting VBUS power,
+we can enable USB driver (D+/D- lines).  For self powered system,
+driving D+/D- lines by fixed pull-up resistor violates the USB
+specification.
+
+With STM32F103, there is a common hardware practice having a
+gate/transistor for pull-up D+ line.  If it also supports detecting
+VBUS, self powerd system can be supported with the gate/transistor.
+
+Such a gate/transistor can be also used for the board to ask
+re-enumeration of USB device.  Asking re-enumeration, it is enough to
+have SE0 (Single-Ended Zero) state.  
+
+The USB driver doesn't touch such a gate/transistor.  By gpio_init,
+the D+-line should be asserted, USB D+ and D- lines should be drived
+to 0 (SE0).  When the USB module is enabled, it goes into J and K
+state (from SE0 state).

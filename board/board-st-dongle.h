@@ -22,7 +22,7 @@
  * PA9  - Push pull output 50MHz (LED 1:ON 0:OFF)
  * PA11 - Push Pull output 10MHz 0 default (until USB enabled) (USBDM) 
  * PA12 - Push Pull output 10MHz 0 default (until USB enabled) (USBDP)
- * PA15 - Push pull output 50MHz (USB 1:ON 0:OFF)
+ * PA15 - Push pull output 50MHz (USB 1:ON 0:OFF) default 1
  * ------------------------ Default
  * PAx  - input with pull-up
  */

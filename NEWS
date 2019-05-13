@@ -3,21 +3,23 @@ NEWS - Noteworthy changes
 
 * Major changes in Chopstx 1.15
 
-  Released 2019-05-10
+  Released 2019-05-1X
 
 ** SYS version 4.0
 USB initialization/finalization demarcation has been changed.
 Enabling/disabling USB module is done by USB driver.  SYS routines
-only handles USB cable config.  If a board has a fixed pull-up
-resistor, USB driver can omit calling
-usb_lld_sys_init/usb_lld_sys_shutdown.
+only handles USB cable config.  For all boards, USB driver doesn't use
+usb_lld_sys_init/usb_lld_sys_shutdown (those routines only makes sense
+for USB self powered situation, which Chopstx does not support yet).
 
 ** USB driver change
-Enabling/disabling USB module is done by USB driver.  Only with
--DUSE_SYS option, it calls usb_lld_sys_init/usb_lld_sys_shutdown.
-Don't forget having -DUSE_SYS to support boards with non-fixed 1K5
-resistor.  Despite this change, it should work well with SYS 3.0
-routines.
+Enabling/disabling USB module is done by USB driver.  It's
+responsibility of board configuration to enable external transistor
+for pull-up D+-line.
+
+** Board configuration change
+For USB driver change, board-maple-mini.h, board-olimex-stm32-h103.h,
+board-stbee.h, and board-stm32-primer2.h were changed.
 
 ** Cortex-M4 support
 Cortex-M4 support has been added.  Not supporting use of FPU or DSP,

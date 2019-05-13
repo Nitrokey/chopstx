@@ -9,8 +9,8 @@ This document was written when I was porting Chopstx to Kinetis L.
   SYS 2.0: Added clock_init, gpio_init 
   SYS 2.1: Added sys_board_id, sys_board_name 
   SYS 3.0: Don't setup NVIC priority by usb_lld_sys_init
-  SYS 4.0: For USB, only do usb_cable_config, enabling the USB module
-           is the role of USB driver.
+  SYS 4.0: For USB, only do usb_cable_config.  Enabling/disabling the
+           USB module is the role of USB driver.
 
 * Macro definition by DEFS in Makefile
 

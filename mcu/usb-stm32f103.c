@@ -29,14 +29,6 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#ifdef USE_SYS
-#include "sys-stm32f103.h"
-#else
-# ifdef FREE_STANDING
-# error "Please compile with -DUSE_SYS"
-# endif
-#endif
-
 #include "stm32f103.h"
 #include "usb_lld.h"
 #include "usb_lld_driver.h"
@@ -123,9 +115,6 @@ usb_lld_shutdown_chip_specific (void)
 {
   RCC->APB1ENR &= ~RCC_APB1ENR_USBEN;
   RCC->APB1RSTR = RCC_APB1RSTR_USBRST;
-#ifdef USE_SYS
-  usb_lld_sys_shutdown ();
-#endif
 }
 
 static void
@@ -148,10 +137,6 @@ usb_lld_init_chip_specific (void)
       /* Disconnect requires SE0 (>= 2.5uS).  */
       wait (5*MHZ);
     }
-
-#ifdef USE_SYS
-  usb_lld_sys_init ();
-#endif
 
   if ((RCC->APB1ENR & RCC_APB1ENR_USBEN) == 0)
     {

@@ -29,10 +29,6 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#ifdef USE_SYS
-#include "sys-stm32l4.h"
-#endif
-
 #include <mcu/stm32l.h>
 #include "usb_lld.h"
 #include "usb_lld_driver.h"
@@ -120,9 +116,6 @@ usb_lld_shutdown_chip_specific (void)
   USB_STM32L4->BCDR &= 0x7fff;	/* DP disable */
   RCC->APB1ENR1 &= ~(RCC_APB1_1_USB | RCC_APB1_1_CRS);
   RCC->APB1RSTR1 |= (RCC_APB1_1_USB | RCC_APB1_1_CRS);
-#ifdef USE_SYS
-  usb_lld_sys_shutdown ();
-#endif
 }
 
 static void
@@ -157,10 +150,6 @@ usb_lld_init_chip_specific (void)
       /* Disconnect requires SE0 (>= 2.5uS).  */
       wait (5*MHZ);
     }
-
-#ifdef USE_SYS
-  usb_lld_sys_init ();
-#endif
 
   /* Enable USB clock and CRC clock */
   RCC->APB1ENR1 |= (RCC_APB1_1_USB | RCC_APB1_1_CRS);

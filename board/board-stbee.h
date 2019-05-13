@@ -29,9 +29,9 @@
 
 /*
  * Port D setup.
- * PD3  - Push pull output  (USB_DISC 1:USB-DISABLE 0:USB-ENABLE) 2MHz
+ * PD3  - Push pull output  (USB 1:OFF 0:ON) 2MHz default 0
  * PD4  - Open Drain output 2MHz (LED1).
  */
-#define VAL_GPIO_LED_ODR            0xFFFFFFFF
+#define VAL_GPIO_LED_ODR            0xFFFFFFF7
 #define VAL_GPIO_LED_CRL            0x88862888      /*  PD7...PD0 */
 #define VAL_GPIO_LED_CRH            0x88888888      /* PD15...PD8 */
