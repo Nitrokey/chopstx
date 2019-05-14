@@ -1,7 +1,7 @@
 \input texinfo                      @c -*-texinfo-*-
 @c %**start of header
 @setfilename chopstx.info
-@set VERSION 1.14
+@set VERSION 1.15
 @settitle Chopstx Reference Manual
 @c Unify some of the indices.
 @syncodeindex tp fn
@@ -193,7 +193,7 @@ Running CPU clock in MHz.  Used for chopstx_usec_wait.
 @section Honourable poverty
 
 Chopstx is an effort against many features.  It encourages doing
-harder decision earlier.
+harder decision earlier (because of less features).
 
 Along with Moore's law, MCU implementations and their software are
 getting more complex.  It's been getting more flexibile, versatile,
@@ -220,9 +220,9 @@ In this situation, against existing practice, Chopstx is a challenge
 to handle all food by only two wooden sticks.  It's not fork and exec
 nor forks and knives.
 
-In Japan, it is common among families, to have each private chopsticks
-in home.  It's like these chopsticks are father's, these chopsticks
-are mother's... son's and daughter's.
+In Japan, it is common among families, to have private chopsticks for
+each individual at home.  It's like: these chopsticks are father's,
+these chopsticks are mother's... son's and daughter's.
 
 I hope Chopstx is the one for you.
 
@@ -262,8 +262,8 @@ implementation.  To cover all the cases, tests needed can become huge.
 A simple practice like following is good when it's enough: doing all
 initialization at start, then running threads to work.
 
-If possible, avoid supporting fine grain power control and/or dynamic
-clock frequency change.
+If possible, it's better to avoid supporting fine grain power control
+and/or dynamic clock frequency change.
 
 @c ********************************************
 
