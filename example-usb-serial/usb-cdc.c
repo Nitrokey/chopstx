@@ -722,24 +722,8 @@ cdc_main (void *arg)
 
   (void)arg;
 
-#if defined(OLDER_SYS_H)
-  /*
-   * Historically (before sys < 3.0), NVIC priority setting for USB
-   * interrupt was done in usb_lld_sys_init for free standing
-   * application.  Thus this compatibility code.
-   *
-   * We can't call usb_lld_init after chopstx_claim_irq, as
-   * usb_lld_init does its own setting for NVIC, which is incompatible
-   * to Chopstx's interrupt handling.  Calling chopstx_claim_irq after
-   * usb_lld_init overrides that for Chopstx.
-   *
-   */
-  usb_lld_init (&dev, VCOM_FEATURE_BUS_POWERED);
-  chopstx_claim_irq (&usb_intr, INTR_REQ_USB);
-#else
   chopstx_claim_irq (&usb_intr, INTR_REQ_USB);
   usb_lld_init (&dev, VCOM_FEATURE_BUS_POWERED);
-#endif
 
   while (1)
     {
@@ -747,9 +731,7 @@ cdc_main (void *arg)
       if (usb_intr.ready)
 	{
 	  uint8_t ep_num;
-#if defined(OLDER_SYS_H)
-	event_handle:
-#endif
+
 	  /*
 	   * When interrupt is detected, call usb_lld_event_handler.
 	   * The event may be one of following:

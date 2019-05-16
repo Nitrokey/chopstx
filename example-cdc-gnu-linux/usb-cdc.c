@@ -669,9 +669,7 @@ tty_main (void *arg)
       if (usb_intr.ready)
 	{
 	  uint8_t ep_num;
-#if defined(OLDER_SYS_H)
-	event_handle:
-#endif
+
 	  /*
 	   * When interrupt is detected, call usb_lld_event_handler.
 	   * The event may be one of following:
