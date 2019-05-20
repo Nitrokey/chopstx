@@ -347,7 +347,8 @@ handle_intr (struct USART *USARTx, struct rb *rb2a, struct usart_stat *stat)
 
   if (notify_bits)
     {
-      if ((*ss_notify_callback) (stat->dev_no, notify_bits))
+      if (ss_notify_callback
+	  && (*ss_notify_callback) (stat->dev_no, notify_bits))
 	stat->err_notify_overflow++;
     }
 

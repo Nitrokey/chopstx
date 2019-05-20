@@ -128,7 +128,7 @@ struct usart {
 
 static const struct usart usart_array[] =
   {
-   { USART2, &usart2_intr, INTR_REQ_USART3,
+   { USART2, &usart2_intr, INTR_REQ_USART2,
      &usart2_stat, &usart2_rb_a2h, &usart2_rb_h2a, buf_usart2_rb_a2h,
      buf_usart2_rb_h2a, &usart2_app_write_event, &usart2_tx_ready },
    { USART3, &usart3_intr, INTR_REQ_USART3,
@@ -361,7 +361,8 @@ handle_intr (struct USART *USARTx, struct rb *rb2a, struct usart_stat *stat)
 
   if (notify_bits)
     {
-      if ((*ss_notify_callback) (stat->dev_no, notify_bits))
+      if (ss_notify_callback
+	  && (*ss_notify_callback) (stat->dev_no, notify_bits))
 	stat->err_notify_overflow++;
     }
 
