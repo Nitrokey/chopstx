@@ -32,7 +32,7 @@
 /*
  * Port A setup.
  *
- * MODER: 00 10 - 10 10 - 10 11 - 10 10    11 11 - 11 01 - 01 10 - 01 00
+ * MODER: 10 10 - 10 10 - 10 11 - 10 10    11 11 - 11 01 - 01 10 - 01 00
  *
  * PA0  - Input with pull-up: Card insertion detect: 0 when detected
  * PA1  - Output push-pull default 0: Card RST
@@ -45,14 +45,14 @@
  * PA12 - USBDP (AF10): input/output
  * PA13 - SWDIO (AF0)
  * PA14 - SWDCLK (AF0)
- * PA15 - USART2-RX (AF3): input
+ * PA15 - USART2-RX (AF3): input with pull-up
  * ------------------------ Default
  * PAx  - analog input
  */
-#define VAL_GPIO_OTHER_MODER   0x2ABAFD64
+#define VAL_GPIO_OTHER_MODER   0xAABAFD64
 #define VAL_GPIO_OTHER_OTYPER  0x00000200
 #define VAL_GPIO_OTHER_OSPEEDR 0xFFFFFFFF
-#define VAL_GPIO_OTHER_PUPDR   0x00040001
+#define VAL_GPIO_OTHER_PUPDR   0x40040001
 #define VAL_GPIO_OTHER_AFRL    0x00000700
 #define VAL_GPIO_OTHER_AFRH    0x300AA077
 
