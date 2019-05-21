@@ -57,6 +57,7 @@ ackbtn_init (chopstx_intr_t *intr)
     {
     case BOARD_ID_FST_01:
     case BOARD_ID_FST_01G:
+    case BOARD_ID_GNUKEY_DS:
       /* PA2 can be connected to a hall sensor or a switch */
       afio_exticr_index = 0;
       afio_exticr_extiX_pY = AFIO_EXTICR1_EXTI2_PA;
