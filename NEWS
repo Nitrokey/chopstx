@@ -1,6 +1,14 @@
 NEWS - Noteworthy changes
 
 
+* Major changes in Chopstx 1.16
+
+  Released 2019-05-xx
+
+** New board support: Gnukey-DS
+It is contributed by Evangelos Rigas.
+
+
 * Major changes in Chopstx 1.15
 
   Released 2019-05-14

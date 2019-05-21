@@ -2,6 +2,10 @@ Aidan Thornton:
     Added Maple Mini support.
 	board/board-maple-mini.h
 
+Evangelos Rigas:
+    Added Gnukey-DS support.
+	board/board-gnukey-ds.h
+
 Jeremy Drake:
     Modified STM32F103 support.
 	mcu/sys-stm32f103.c

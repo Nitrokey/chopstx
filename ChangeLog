@@ -1,3 +1,7 @@
+2019-05-22  Evangelos Rigas <erigas@rnd2.org>
+
+	* board/board-gnukey-ds.h: New.
+
 2019-05-14  NIIBE Yutaka  <gniibe@fsij.org>
 
 	* VERSION: 1.15.
