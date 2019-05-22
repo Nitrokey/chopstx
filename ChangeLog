@@ -1,3 +1,8 @@
+2019-05-22  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* VERSION: 1.16.
+	* doc/chopstx.texi (VERSION): 1.16.
+
 2019-05-22  Evangelos Rigas <erigas@rnd2.org>
 
 	* board/board-gnukey-ds.h: New.
