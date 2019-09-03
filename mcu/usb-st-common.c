@@ -329,7 +329,7 @@ handle_datastage_out (struct usb_dev *dev)
 static void
 handle_datastage_in (struct usb_dev *dev)
 {
-  uint32_t len = USB_MAX_PACKET_SIZE;;
+  uint32_t len = USB_MAX_PACKET_SIZE;
   struct ctrl_data *data_p = &dev->ctrl_data;
 
   if ((data_p->len == 0) && (dev->state == LAST_IN_DATA))
@@ -887,14 +887,14 @@ usb_lld_ctrl_send (struct usb_dev *dev, const void *buf, size_t buflen)
   data_p->addr = (void *)buf;
   data_p->len = buflen;
 
-  /* Restrict the data length to be the one host asks for */
+  /* Restrict the data length to be the one which host asks for.  */
   if (data_p->len >= len_asked)
     data_p->len = len_asked;
   /* ZLP is only required when host doesn't expect the end of packets.  */
   else if (data_p->len != 0 && (data_p->len % USB_MAX_PACKET_SIZE) == 0)
     data_p->require_zlp = 1;
 
-  if (data_p->len < USB_MAX_PACKET_SIZE)
+  if (data_p->len <= USB_MAX_PACKET_SIZE)
     {
       len = data_p->len;
       dev->state = LAST_IN_DATA;
