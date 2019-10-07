@@ -1,3 +1,8 @@
+2019-10-07  Jeremy Drake  <jeremy@drastrom.science>
+
+	* mcu/usb-st-common.c (usb_lld_init): Move BTABLE initialization
+	after clearing ISTR register.
+
 2019-09-04  NIIBE Yutaka  <gniibe@fsij.org>
 
 	When it was exactly 64-byte, two ZLPs were sent wrongly.

@@ -235,10 +235,9 @@ usb_lld_init (struct usb_dev *dev, uint8_t feature)
   USB->CNTR = CNTR_FRES;
   USB->CNTR = 0;
 
-  USB->BTABLE = 0;
-
   /* Clear Interrupt Status Register, and enable interrupt for USB */
   USB->ISTR = 0;
+  USB->BTABLE = 0;
   USB->CNTR = (CNTR_CTRM | CNTR_OVRM | CNTR_ERRM
 	       | CNTR_WKUPM | CNTR_SUSPM | CNTR_RESETM);
 }
