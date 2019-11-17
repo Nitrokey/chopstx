@@ -33,20 +33,6 @@
 
 #include "board.h"
 
-#ifdef GNU_LINUX_EMULATION
-int emulated_main (int, const char **);
-void chx_init (struct chx_thread *);
-void chx_systick_init (void);
-extern struct chx_thread main_thread;
-
-int
-main (int argc, const char *argv[])
-{
-  chx_init (&main_thread);
-  chx_systick_init ();
-  emulated_main (argc, argv);
-}
-#else
 #if defined(USE_SYS3) || defined(USE_SYS_CLOCK_GPIO_SETTING)
 #define REQUIRE_CLOCK_GPIO_SETTING_IN_SYS
 #include "sys.h"
@@ -258,4 +244,3 @@ handler vector_table[] __attribute__ ((section(".startup.vectors"))) = {
   chx_handle_intr,  chx_handle_intr,  chx_handle_intr,  chx_handle_intr,
 #endif
 };
-#endif

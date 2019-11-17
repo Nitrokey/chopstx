@@ -1,5 +1,11 @@
 2019-11-18  NIIBE Yutaka  <gniibe@fsij.org>
 
+	* rules.mk (CSRC): Change the rule of entry*.c.
+	* entry.c: It's only for Cortex-M, now.
+	* entry-gnu-linux.c: New file.
+
+2019-11-18  NIIBE Yutaka  <gniibe@fsij.org>
+
 	* entry.c: Use chopstx-cortex-m.h.
 	* chopstx.h (CHOPSTX_THREAD_SIZE): Move the definition to ...
 	* chopstx-cortex-m.h (CHOPSTX_THREAD_SIZE): ... here.

@@ -1,6 +1,12 @@
 # Chopstx make rules.
 
-CSRC += $(CHOPSTX)/entry.c $(CHOPSTX)/chopstx.c
+ifeq ($(EMULATION),)
+CSRC += $(CHOPSTX)/entry.c
+else
+CSRC += $(CHOPSTX)/entry-gnu-linux.c
+endif
+
+CSRC += $(CHOPSTX)/chopstx.c
 
 ifneq ($(USE_EVENTFLAG),)
 CSRC += $(CHOPSTX)/eventflag.c
