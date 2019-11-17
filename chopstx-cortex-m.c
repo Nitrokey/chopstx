@@ -141,6 +141,12 @@ static uint32_t usec_to_ticks (uint32_t usec)
   return usec * MHZ;
 }
 
+static uint32_t
+ticks_to_usec (uint32_t ticks)
+{
+  return ticks / MHZ;
+}
+
 /*
  * Interrupt Handling
  */

@@ -688,7 +688,7 @@ chx_snooze (uint32_t state, uint32_t *usec_p)
     *usec_p -= usec0;
   else if (r > 0)
     {
-      *usec_p -= (usec0 - r / MHZ);
+      *usec_p -= (usec0 - ticks_to_usec (r));
       r = 1;
     }
 

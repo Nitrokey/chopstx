@@ -1,5 +1,11 @@
 2019-11-18  NIIBE Yutaka  <gniibe@fsij.org>
 
+	* chopstx-cortex-m.c (ticks_to_usec): New.
+	* chopstx-gnu-linux.c (ticks_to_usec): New.
+	* chopstx.c (chx_snooze): Use ticks_to_usec.
+
+2019-11-18  NIIBE Yutaka  <gniibe@fsij.org>
+
 	* rules.mk (CSRC): Change the rule of entry*.c.
 	* entry.c: It's only for Cortex-M, now.
 	* entry-gnu-linux.c: New file.
