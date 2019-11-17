@@ -1,3 +1,9 @@
+2019-11-18  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* entry.c: Use chopstx-cortex-m.h.
+	* chopstx.h (CHOPSTX_THREAD_SIZE): Move the definition to ...
+	* chopstx-cortex-m.h (CHOPSTX_THREAD_SIZE): ... here.
+
 2019-10-07  Jeremy Drake  <jeremy@drastrom.science>
 
 	* mcu/usb-st-common.c (usb_lld_init): Move BTABLE initialization

@@ -163,5 +163,3 @@ int chopstx_poll (uint32_t *usec_p, int n,
 		  struct chx_poll_head *const pd_array[]);
 
 int chopstx_conf_idle (int enable_sleep);
-
-#define CHOPSTX_THREAD_SIZE 64
