@@ -115,7 +115,7 @@ struct SYST {
 static struct SYST *const SYST = (struct SYST *)0xE000E010;
 
 static void
-chx_systick_reset (void)
+chx_systick_init_arch (void)
 {
   SYST->RVR = 0;
   SYST->CVR = 0;
@@ -211,7 +211,7 @@ static uint32_t *const SHPR2 = (uint32_t *)0xE000ED1C;
 static uint32_t *const SHPR3 = (uint32_t *)0xE000ED20;
 
 static void
-chx_prio_init (void)
+chx_interrupt_controller_init (void)
 {
   *AIRCR = 0x05FA0000 | ( 5 << 8); /* PRIGROUP = 5, 2-bit:2-bit. */
   *SHPR2 = (CPU_EXCEPTION_PRIORITY_SVC << 24);

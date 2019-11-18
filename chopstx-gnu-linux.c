@@ -42,7 +42,7 @@ chx_dmb (void)
 static sigset_t ss_cur;
 
 static void
-chx_systick_reset (void)
+chx_systick_init_arch (void)
 {
   const struct itimerval it = { {0, 0}, {0, 0} };
 
@@ -110,7 +110,7 @@ chx_set_intr_prio (uint8_t n)
 }
 
 static void
-chx_prio_init (void)
+chx_interrupt_controller_init (void)
 {
 }
 

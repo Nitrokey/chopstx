@@ -439,7 +439,7 @@ chx_timer_expired (void)
 void
 chx_systick_init (void)
 {
-  chx_systick_reset ();
+  chx_systick_init_arch ();
 
   if ((CHX_FLAGS_MAIN & CHOPSTX_SCHED_RR))
     {
@@ -456,7 +456,7 @@ chopstx_t chopstx_main;
 void
 chx_init (struct chx_thread *tp)
 {
-  chx_prio_init ();
+  chx_interrupt_controller_init ();
   chx_init_arch (tp);
   chx_spin_init (&chx_enable_sleep_lock);
 
