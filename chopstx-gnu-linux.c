@@ -235,15 +235,7 @@ chx_request_preemption (uint16_t prio)
 
   tp = running = chx_ready_pop ();
   if (tp)
-    {
-      tcp = &tp->tc;
-      if (tp->flag_sched_rr)
-	{
-	  chx_spin_lock (&q_timer.lock);
-	  tp = chx_timer_insert (tp, PREEMPTION_USEC);
-	  chx_spin_unlock (&q_timer.lock);
-	}
-    }
+    tcp = &tp->tc;
   else
     tcp = &idle_tc;
 
@@ -306,12 +298,6 @@ chx_sched (uint32_t yield)
   if (tp)
     {
       v = tp->v;
-      if (tp->flag_sched_rr)
-	{
-	  chx_spin_lock (&q_timer.lock);
-	  tp = chx_timer_insert (tp, PREEMPTION_USEC);
-	  chx_spin_unlock (&q_timer.lock);
-	}
       tcp = &tp->tc;
     }
   else

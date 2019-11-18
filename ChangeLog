@@ -1,5 +1,12 @@
 2019-11-18  NIIBE Yutaka  <gniibe@fsij.org>
 
+	* chopstx.c (chx_ready_pop): Check flag_sched_rr here.
+	* chopstx-cortex-m.c (chx_sched) [__ARM_ARCH_6M__]: Use
+	new interface of chx_ready_pop.
+	(preempt,svc): Likewise.
+
+2019-11-18  NIIBE Yutaka  <gniibe@fsij.org>
+
 	* chopstx-cortex-m.c (ticks_to_usec): New.
 	* chopstx-gnu-linux.c (ticks_to_usec): New.
 	* chopstx.c (chx_snooze): Use ticks_to_usec.

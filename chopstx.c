@@ -271,6 +271,12 @@ chx_ready_pop (void)
     tp->state = THREAD_RUNNING;
   chx_spin_unlock (&q_ready.lock);
 
+  if (tp && tp->flag_sched_rr)
+    {
+      chx_spin_lock (&q_timer.lock);
+      chx_timer_insert (tp, PREEMPTION_USEC);
+      chx_spin_unlock (&q_timer.lock);
+    }
   return tp;
 }
 

@@ -372,12 +372,6 @@ chx_sched (uint32_t yield)
     }
 
   tp = chx_ready_pop ();
-  if (tp && tp->flag_sched_rr)
-    {
-      chx_spin_lock (&q_timer.lock);
-      tp = chx_timer_insert (tp, PREEMPTION_USEC);
-      chx_spin_unlock (&q_timer.lock);
-    }
 
   asm volatile (/* Now, r0 points to the thread to be switched.  */
 		/* Put it to *running.  */
@@ -575,12 +569,6 @@ preempt (void)
   /* Registers on stack (PSP): r0, r1, r2, r3, r12, lr, pc, xpsr */
 
   tp = chx_ready_pop ();
-  if (tp && tp->flag_sched_rr)
-    {
-      chx_spin_lock (&q_timer.lock);
-      tp = chx_timer_insert (tp, PREEMPTION_USEC);
-      chx_spin_unlock (&q_timer.lock);
-    }
 
   asm volatile (
     ".L_CONTEXT_SWITCH:\n\t"
@@ -698,12 +686,6 @@ svc (void)
     }
 
   tp = chx_ready_pop ();
-  if (tp && tp->flag_sched_rr)
-    {
-      chx_spin_lock (&q_timer.lock);
-      chx_timer_insert (tp, PREEMPTION_USEC);
-      chx_spin_unlock (&q_timer.lock);
-    }
 
   asm volatile (
 	"b	.L_CONTEXT_SWITCH"
