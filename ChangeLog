@@ -1,3 +1,16 @@
+2019-11-19  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* chopstx-cortex-m.c (chx_running): New.
+	(chx_init_arch): Set RUNNING.
+
+	* chopstx.c (chx_init): Don't set RUNNING here.
+	(chx_timer_expired): Use chx_running.
+	(chx_systick_init, chx_exit, chx_mutex_unlock, chopstx_create)
+	(chopstx_mutex_lock, chopstx_mutex_unlock, chopstx_cleanup_push)
+	(chopstx_cleanup_pop, chopstx_exit, chopstx_cancel)
+	(chopstx_testcancel, chopstx_setcancelstate, chx_proxy_init)
+	(chopstx_poll, chopstx_setpriority): Likewise.
+
 2019-11-18  NIIBE Yutaka  <gniibe@fsij.org>
 
 	* chopstx-gnu-linux.c (chx_systick_init_arch): Rename.

@@ -28,6 +28,15 @@
  *
  */
 
+static struct chx_thread *running;
+
+static struct chx_thread *
+chx_running (void)
+{
+  return running;
+}
+
+
 /* Data Memory Barrier.  */
 static void
 chx_dmb (void)
@@ -278,6 +287,7 @@ static void
 chx_init_arch (struct chx_thread *tp)
 {
   memset (&tp->tc, 0, sizeof (tp->tc));
+  running = tp;
 }
 
 static void
