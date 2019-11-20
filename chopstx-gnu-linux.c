@@ -32,6 +32,14 @@
 #include <signal.h>
 #include <sys/time.h>
 
+static struct chx_thread *running;
+
+static struct chx_thread *
+chx_running (void)
+{
+  return running;
+}
+
 /* Data Memory Barrier.  */
 static void
 chx_dmb (void)
@@ -205,6 +213,8 @@ chx_init_arch (struct chx_thread *tp)
   makecontext (&idle_tc, idle, 0);
 
   getcontext (&tp->tc);
+
+  running = tp;
 }
 
 static void

@@ -1,3 +1,8 @@
+2019-11-20  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* chopstx-gnu-linux.c (chx_running): New.
+	(chx_init_arch): Set RUNNING.
+
 2019-11-19  NIIBE Yutaka  <gniibe@fsij.org>
 
 	* chopstx-cortex-m.c (chx_running): New.
