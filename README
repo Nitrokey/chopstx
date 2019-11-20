@@ -1,6 +1,6 @@
 Chopstx - Threads and only Threads
-							Version 1.15
-							  2018-05-14
+							Version 1.17
+							  2019-11-20
 							Niibe Yutaka
 					     Flying Stone Technology
 
@@ -59,6 +59,8 @@ For STM32 Primer2, see the directory: example-primer2.
 
 Future Works
 ============
+
+RISC-V port (for GD32VF103) is under development.
 
 Convenience function to determine the bottom of thread stack,
 configuration of thread size by compiler's output would be next things

@@ -1,6 +1,13 @@
 NEWS - Noteworthy changes
 
 
+* Major changes in Chopstx 1.17
+
+  Released 2019-11-20
+
+** USB drivers bug fix for STM32 and ZLP handling for 64-byte packet.
+
+
 * Major changes in Chopstx 1.16
 
   Released 2019-05-22
