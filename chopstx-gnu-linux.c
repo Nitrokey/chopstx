@@ -40,6 +40,13 @@ chx_running (void)
   return running;
 }
 
+static void
+chx_set_running (struct chx_thread *r)
+{
+  running = r;
+}
+
+
 /* Data Memory Barrier.  */
 static void
 chx_dmb (void)
@@ -214,20 +221,21 @@ chx_init_arch (struct chx_thread *tp)
 
   getcontext (&tp->tc);
 
-  running = tp;
+  chx_set_running (tp);
 }
 
 static void
 chx_request_preemption (uint16_t prio)
 {
-  struct chx_thread *tp, *tp_prev;
   ucontext_t *tcp;
+  struct chx_thread *tp_prev;
+  struct chx_thread *tp = chx_running ();
 
-  if (running && (uint16_t)running->prio >= prio)
+  if (tp && (uint16_t)tp->prio >= prio)
     return;
 
   /* Change the context to another thread with higher priority.  */
-  tp = tp_prev = running;
+  tp_prev = tp;
   if (tp)
     {
       if (tp->flag_sched_rr)
@@ -240,15 +248,15 @@ chx_request_preemption (uint16_t prio)
 	}
       else
 	chx_ready_push (tp);
-      running = NULL;
     }
 
-  tp = running = chx_ready_pop ();
+  tp = chx_ready_pop ();
   if (tp)
     tcp = &tp->tc;
   else
     tcp = &idle_tc;
 
+  chx_set_running (tp);
   if (tp_prev)
     {
       /*
@@ -293,10 +301,9 @@ static uintptr_t
 chx_sched (uint32_t yield)
 {
   struct chx_thread *tp, *tp_prev;
-  uintptr_t v;
   ucontext_t *tcp;
 
-  tp = tp_prev = running;
+  tp = tp_prev = chx_running ();
   if (yield)
     {
       if (tp->flag_sched_rr)
@@ -304,21 +311,18 @@ chx_sched (uint32_t yield)
       chx_ready_enqueue (tp);
     }
 
-  running = tp = chx_ready_pop ();
+  tp = chx_ready_pop ();
   if (tp)
-    {
-      v = tp->v;
-      tcp = &tp->tc;
-    }
+    tcp = &tp->tc;
   else
-    {
-      v = 0;
-      tcp = &idle_tc;
-    }
+    tcp = &idle_tc;
 
+  chx_set_running (tp);
   swapcontext (&tp_prev->tc, tcp);
   chx_cpu_sched_unlock ();
-  return v;
+
+  tp = chx_running ();
+  return tp->v;
 }
 
 static void __attribute__((__noreturn__))

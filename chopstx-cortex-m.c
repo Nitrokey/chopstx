@@ -36,6 +36,12 @@ chx_running (void)
   return running;
 }
 
+static void
+chx_set_running (struct chx_thread *r)
+{
+  running = r;
+}
+
 
 /* Data Memory Barrier.  */
 static void
@@ -287,7 +293,7 @@ static void
 chx_init_arch (struct chx_thread *tp)
 {
   memset (&tp->tc, 0, sizeof (tp->tc));
-  running = tp;
+  chx_set_running (tp);
 }
 
 static void
@@ -572,7 +578,6 @@ preempt (void)
 	    }
 	  else
 	    chx_ready_push (tp);
-	  running = NULL;
 	}
     }
 
@@ -692,7 +697,6 @@ svc (void)
       if (tp->flag_sched_rr)
 	chx_timer_dequeue (tp);
       chx_ready_enqueue (tp);
-      running = NULL;
     }
 
   tp = chx_ready_pop ();

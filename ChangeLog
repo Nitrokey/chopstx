@@ -1,3 +1,14 @@
+2019-11-21  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* chopstx-cortex-m.c (chx_set_running): New.
+	(chx_init_arch): Use chx_set_running.
+	(preempt, svc): Remove set to running, not needed.
+
+	* chopstx-gnu-linux.c (chx_set_running): New.
+	(chx_init_arch, chx_request_preemption, chx_sched): Use
+	chx_set_running and chx_running.
+	(chx_sched): Bug fix of return value handling.
+
 2019-11-20  NIIBE Yutaka  <gniibe@fsij.org>
 
 	* VERSION: 1.17.
