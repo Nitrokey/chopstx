@@ -328,9 +328,11 @@ chx_sched (uint32_t yield)
 static void __attribute__((__noreturn__))
 chx_thread_start (voidfunc thread_entry, void *arg)
 {
+  void *ret;
+
   chx_cpu_sched_unlock ();
-  thread_entry (arg);
-  chopstx_exit (0);
+  ret = thread_entry (arg);
+  chopstx_exit (ret);
 }
 
 static struct chx_thread *

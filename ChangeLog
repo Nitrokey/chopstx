@@ -1,3 +1,7 @@
+2019-12-04  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* chopstx-gnu-linux.c (chx_thread_start): Fix return value.
+
 2019-11-21  NIIBE Yutaka  <gniibe@fsij.org>
 
 	* chopstx-cortex-m.c (chx_set_running): New.
