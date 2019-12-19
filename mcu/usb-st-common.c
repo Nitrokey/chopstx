@@ -864,6 +864,8 @@ usb_lld_ctrl_recv (struct usb_dev *dev, void *p, size_t len)
   struct ctrl_data *data_p = &dev->ctrl_data;
   data_p->addr = p;
   data_p->len = len;
+  if (len > USB_MAX_PACKET_SIZE)
+    len = USB_MAX_PACKET_SIZE;
   dev->state = OUT_DATA;
   ep_set_rx_status (ENDP0, EP_RX_VALID);
   return USB_EVENT_OK;
