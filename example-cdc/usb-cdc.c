@@ -780,7 +780,7 @@ tty_main (void *arg)
 	  && t->flag_send_ready)
 	{
 	  uint8_t line[32];
-	  int len = get_chars_from_ringbuffer (t, line, sizeof (len));
+	  int len = get_chars_from_ringbuffer (t, line, sizeof (line));
 
 	  if (len)
 	    {
