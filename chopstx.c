@@ -1393,7 +1393,11 @@ chx_proxy_init (struct chx_px *px, uint32_t *cp)
  * should be one of:
  *           chopstx_poll_cond_t, chopstx_poll_join_t, or chopstx_intr_t.
  *
- * Returns number of active descriptors.
+ * Returns number of active descriptors.  Don't assume no active
+ * descriptors means timeout.  It is possible for chopstx_poll to
+ * return zero (but not because of timeout), when it's woken up but
+ * found no condition matches.  Application should call chopstx_poll
+ * again in this situation.
  */
 int
 chopstx_poll (uint32_t *usec_p, int n, struct chx_poll_head *const pd_array[])
@@ -1472,6 +1476,20 @@ chopstx_poll (uint32_t *usec_p, int n, struct chx_poll_head *const pd_array[])
 	      chx_spin_lock (&pc->cond->lock);
 	      ll_dequeue ((struct chx_pq *)&px[i]);
 	      chx_spin_unlock (&pc->cond->lock);
+	    }
+	  else
+	    { /* Check the condition again after woken up.  */
+	      if (pc->mutex)
+		chopstx_mutex_lock (pc->mutex);
+
+	      if ((*pc->check) (pc->arg) == 0)
+		{ /* Condition doesn't met.  */
+		  pc->ready = 0;
+		  counter--;
+		}
+
+	      if (pc->mutex)
+		chopstx_mutex_unlock (pc->mutex);
 	    }
 	}
       else if (pd->type == CHOPSTX_POLL_INTR)
