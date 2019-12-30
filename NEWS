@@ -1,6 +1,25 @@
 NEWS - Noteworthy changes
 
 
+* Major changes in Chopstx 1.18
+
+  Released 2019-12-30
+
+** Fix of chopstx_poll
+When waiting for a condition variable, we supply CHECK method with a
+descriptor.  Since a condition variable may be fired for multiple
+reasons, old implementation of chopstx_poll may return with wrong
+information saying a condition of CHECK were met but actually not.  It
+should not return when condition is not satisfied and it should not
+give wrong information to application.  Fixed by calling the CHECK
+method again when woken up, and don't return when no condition meet.
+
+** Bug fix for GNU/Linux emulation
+When woken up, return value of chx_sched was wrong.  Because of this,
+timeout handling had problem.  Termination value of a thread was
+wrong.
+
+
 * Major changes in Chopstx 1.17
 
   Released 2019-11-20
