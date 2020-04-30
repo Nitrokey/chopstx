@@ -10,3 +10,5 @@ struct tcontext {
 };
 
 typedef struct tcontext tcontext_t;
+
+#define CHOPSTX_THREAD_SIZE 64

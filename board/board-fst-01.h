@@ -25,7 +25,7 @@
  * PA5  - Alternate Push pull output (SPI1_SCK)
  * PA6  - Alternate Push pull output (SPI1_MISO)
  * PA7  - Alternate Push pull output (SPI1_MOSI)
- * PA10 - Push pull output   (USB 1:ON 0:OFF)
+ * PA10 - Push pull output   (USB 1:ON 0:OFF) default 1
  * PA11 - Push Pull output 10MHz 0 default (until USB enabled) (USBDM)
  * PA12 - Push Pull output 10MHz 0 default (until USB enabled) (USBDP)
  * ------------------------ Default

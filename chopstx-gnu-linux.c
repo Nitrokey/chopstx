@@ -2,7 +2,7 @@
  * chopstx-gnu-linux.c - Threads and only threads: Arch specific code
  *                       for GNU/Linux emulation
  *
- * Copyright (C) 2017, 2018 Flying Stone Technology
+ * Copyright (C) 2017, 2018, 2019 Flying Stone Technology
  * Author: NIIBE Yutaka <gniibe@fsij.org>
  *
  * This file is a part of Chopstx, a thread library for embedded.
@@ -23,7 +23,7 @@
  * As additional permission under GNU GPL version 3 section 7, you may
  * distribute non-source form of the Program without the copy of the
  * GNU GPL normally required by section 4, provided you inform the
- * receipents of GNU GPL by a written offer.
+ * recipients of GNU GPL by a written offer.
  *
  */
 
@@ -31,6 +31,21 @@
 #include <ucontext.h>
 #include <signal.h>
 #include <sys/time.h>
+
+static struct chx_thread *running;
+
+static struct chx_thread *
+chx_running (void)
+{
+  return running;
+}
+
+static void
+chx_set_running (struct chx_thread *r)
+{
+  running = r;
+}
+
 
 /* Data Memory Barrier.  */
 static void
@@ -42,7 +57,7 @@ chx_dmb (void)
 static sigset_t ss_cur;
 
 static void
-chx_systick_reset (void)
+chx_systick_init_arch (void)
 {
   const struct itimerval it = { {0, 0}, {0, 0} };
 
@@ -76,6 +91,11 @@ usec_to_ticks (uint32_t usec)
   return usec * MHZ;
 }
 
+static uint32_t
+ticks_to_usec (uint32_t ticks)
+{
+  return ticks / MHZ;
+}
 
 static void
 chx_enable_intr (uint8_t irq_num)
@@ -89,10 +109,13 @@ chx_clr_intr (uint8_t irq_num)
   (void)irq_num;
 }
 
-static void
+static int
 chx_disable_intr (uint8_t irq_num)
 {
+  int already_disabled = sigismember (&ss_cur, irq_num);
+
   sigaddset (&ss_cur, irq_num);
+  return already_disabled;
 }
 
 static void
@@ -102,7 +125,7 @@ chx_set_intr_prio (uint8_t n)
 }
 
 static void
-chx_prio_init (void)
+chx_interrupt_controller_init (void)
 {
 }
 
@@ -197,19 +220,22 @@ chx_init_arch (struct chx_thread *tp)
   makecontext (&idle_tc, idle, 0);
 
   getcontext (&tp->tc);
+
+  chx_set_running (tp);
 }
 
 static void
 chx_request_preemption (uint16_t prio)
 {
-  struct chx_thread *tp, *tp_prev;
   ucontext_t *tcp;
+  struct chx_thread *tp_prev;
+  struct chx_thread *tp = chx_running ();
 
-  if (running && (uint16_t)running->prio >= prio)
+  if (tp && (uint16_t)tp->prio >= prio)
     return;
 
   /* Change the context to another thread with higher priority.  */
-  tp = tp_prev = running;
+  tp_prev = tp;
   if (tp)
     {
       if (tp->flag_sched_rr)
@@ -222,23 +248,15 @@ chx_request_preemption (uint16_t prio)
 	}
       else
 	chx_ready_push (tp);
-      running = NULL;
     }
 
-  tp = running = chx_ready_pop ();
+  tp = chx_ready_pop ();
   if (tp)
-    {
-      tcp = &tp->tc;
-      if (tp->flag_sched_rr)
-	{
-	  chx_spin_lock (&q_timer.lock);
-	  tp = chx_timer_insert (tp, PREEMPTION_USEC);
-	  chx_spin_unlock (&q_timer.lock);
-	}
-    }
+    tcp = &tp->tc;
   else
     tcp = &idle_tc;
 
+  chx_set_running (tp);
   if (tp_prev)
     {
       /*
@@ -283,10 +301,9 @@ static uintptr_t
 chx_sched (uint32_t yield)
 {
   struct chx_thread *tp, *tp_prev;
-  uintptr_t v;
   ucontext_t *tcp;
 
-  tp = tp_prev = running;
+  tp = tp_prev = chx_running ();
   if (yield)
     {
       if (tp->flag_sched_rr)
@@ -294,35 +311,28 @@ chx_sched (uint32_t yield)
       chx_ready_enqueue (tp);
     }
 
-  running = tp = chx_ready_pop ();
+  tp = chx_ready_pop ();
   if (tp)
-    {
-      v = tp->v;
-      if (tp->flag_sched_rr)
-	{
-	  chx_spin_lock (&q_timer.lock);
-	  tp = chx_timer_insert (tp, PREEMPTION_USEC);
-	  chx_spin_unlock (&q_timer.lock);
-	}
-      tcp = &tp->tc;
-    }
+    tcp = &tp->tc;
   else
-    {
-      v = 0;
-      tcp = &idle_tc;
-    }
+    tcp = &idle_tc;
 
+  chx_set_running (tp);
   swapcontext (&tp_prev->tc, tcp);
   chx_cpu_sched_unlock ();
-  return v;
+
+  tp = chx_running ();
+  return tp->v;
 }
 
 static void __attribute__((__noreturn__))
 chx_thread_start (voidfunc thread_entry, void *arg)
 {
+  void *ret;
+
   chx_cpu_sched_unlock ();
-  thread_entry (arg);
-  chopstx_exit (0);
+  ret = thread_entry (arg);
+  chopstx_exit (ret);
 }
 
 static struct chx_thread *

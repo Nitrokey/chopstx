@@ -20,7 +20,7 @@
 
 #define STM32F0_USE_VECTOR_ON_RAM
 #include "mcu/cortex-m.h"
-#include "mcu/clk_gpio_init-stm32.c"
+#include "mcu/clk_gpio_init-stm32f.c"
 
 
 static void
@@ -69,27 +69,13 @@ static void wait (int count)
 static void
 usb_lld_sys_shutdown (void)
 {
-  RCC->APB1ENR &= ~RCC_APB1ENR_USBEN;
-  RCC->APB1RSTR = RCC_APB1RSTR_USBRST;
   usb_cable_config (0);
 }
 
 static void
 usb_lld_sys_init (void)
 {
-  if ((RCC->APB1ENR & RCC_APB1ENR_USBEN)
-      && (RCC->APB1RSTR & RCC_APB1RSTR_USBRST) == 0)
-    /* Make sure the device is disconnected, even after core reset.  */
-    {
-      usb_lld_sys_shutdown ();
-      /* Disconnect requires SE0 (>= 2.5uS).  */
-      wait (300);
-    }
-
   usb_cable_config (1);
-  RCC->APB1ENR |= RCC_APB1ENR_USBEN;
-  RCC->APB1RSTR = RCC_APB1RSTR_USBRST;
-  RCC->APB1RSTR = 0;
 }
 
 #define FLASH_KEY1               0x45670123UL
@@ -386,8 +372,8 @@ handler vector[] __attribute__ ((section(".vectors"))) = {
 const uint8_t sys_version[8] __attribute__((section(".sys.version"))) = {
   3*2+2,	     /* bLength */
   0x03,		     /* bDescriptorType = USB_STRING_DESCRIPTOR_TYPE */
-  /* sys version: "3.0" */
-  '3', 0, '.', 0, '0', 0,
+  /* sys version: "4.0" */
+  '4', 0, '.', 0, '0', 0,
 };
 
 const uint32_t __attribute__((section(".sys.board_id")))

@@ -1,3 +1,222 @@
+2019-12-30  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* VERSION: 1.18.
+	* doc/chopstx.texi (VERSION): 1.18.
+
+2019-12-27  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* chopstx.c (chopstx_poll): Call CHECK for condition
+	valiable after woken up.
+
+2019-12-20  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* mcu/usb-st-common.c (usb_lld_ctrl_recv): Fix receiving
+	more than one packet.
+
+2019-12-04  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* chopstx-gnu-linux.c (chx_thread_start): Fix return value.
+
+2019-11-21  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* chopstx-cortex-m.c (chx_set_running): New.
+	(chx_init_arch): Use chx_set_running.
+	(preempt, svc): Remove set to running, not needed.
+
+	* chopstx-gnu-linux.c (chx_set_running): New.
+	(chx_init_arch, chx_request_preemption, chx_sched): Use
+	chx_set_running and chx_running.
+	(chx_sched): Bug fix of return value handling.
+
+2019-11-20  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* VERSION: 1.17.
+	* doc/chopstx.texi (VERSION): 1.17.
+
+	* chopstx-gnu-linux.c (chx_running): New.
+	(chx_init_arch): Set RUNNING.
+
+2019-11-19  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* chopstx-cortex-m.c (chx_running): New.
+	(chx_init_arch): Set RUNNING.
+
+	* chopstx.c (chx_init): Don't set RUNNING here.
+	(chx_timer_expired): Use chx_running.
+	(chx_systick_init, chx_exit, chx_mutex_unlock, chopstx_create)
+	(chopstx_mutex_lock, chopstx_mutex_unlock, chopstx_cleanup_push)
+	(chopstx_cleanup_pop, chopstx_exit, chopstx_cancel)
+	(chopstx_testcancel, chopstx_setcancelstate, chx_proxy_init)
+	(chopstx_poll, chopstx_setpriority): Likewise.
+
+2019-11-18  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* chopstx-gnu-linux.c (chx_systick_init_arch): Rename.
+	(chx_interrupt_controller_init): Rename.
+	* chopstx-cortex-m.c (chx_systick_init_arch): Rename.
+	(chx_interrupt_controller_init): Rename.
+	* chopstx.c (chx_systick_init): Use chx_systick_init_arch.
+	(chx_init): Use chx_interrupt_controller_init.
+
+2019-11-18  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* chopstx.c (chx_ready_pop): Check flag_sched_rr here.
+	* chopstx-cortex-m.c (chx_sched) [__ARM_ARCH_6M__]: Use
+	new interface of chx_ready_pop.
+	(preempt,svc): Likewise.
+
+2019-11-18  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* chopstx-cortex-m.c (ticks_to_usec): New.
+	* chopstx-gnu-linux.c (ticks_to_usec): New.
+	* chopstx.c (chx_snooze): Use ticks_to_usec.
+
+2019-11-18  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* rules.mk (CSRC): Change the rule of entry*.c.
+	* entry.c: It's only for Cortex-M, now.
+	* entry-gnu-linux.c: New file.
+
+2019-11-18  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* entry.c: Use chopstx-cortex-m.h.
+	* chopstx.h (CHOPSTX_THREAD_SIZE): Move the definition to ...
+	* chopstx-cortex-m.h (CHOPSTX_THREAD_SIZE): ... here.
+
+2019-10-07  Jeremy Drake  <jeremy@drastrom.science>
+
+	* mcu/usb-st-common.c (usb_lld_init): Move BTABLE initialization
+	after clearing ISTR register.
+
+2019-09-04  NIIBE Yutaka  <gniibe@fsij.org>
+
+	When it was exactly 64-byte, two ZLPs were sent wrongly.
+	* mcu/usb-st-common.c (usb_lld_ctrl_send): Fix for 64-byte.
+	* mcu/usb-usbip.c (usb_lld_ctrl_send): Likewise.
+	* mcu/usb-mkl27z.c (usb_lld_ctrl_send): Likewise.
+
+2019-05-22  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* VERSION: 1.16.
+	* doc/chopstx.texi (VERSION): 1.16.
+
+2019-05-22  Evangelos Rigas <erigas@rnd2.org>
+
+	* board/board-gnukey-ds.h: New.
+
+2019-05-14  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* VERSION: 1.15.
+	* doc/chopstx.texi (VERSION): 1.15.
+
+2019-05-13  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* board/board-maple-mini.h: Assert USB D+ pull-up.
+	* board/board-olimex-stm32-h103.h: Likewise.
+	* board/board-stbee.h:Likewise.
+	* board/board-stm32-primer2.h: Likewise.
+
+	* mcu/usb-stm32f103.c: Don't use usb_lld_sys_init and
+	usb_lld_sys_shutdown in SYS.
+	* mcu/usb-stm32l4.c: Ditto.
+
+2019-05-10  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* chopstx.c (chopstx_claim_irq): Check INTR before the call.
+
+	* chopstx-cortex-m.c (chx_disable_intr): Have return value.
+	* chopstx-gnu-linux.c (chx_disable_intr): Likewise.
+
+2019-05-10  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* mcu/sys-stm32f103.c: SYS version 4.0.
+	* mcu/sys-gnu-linux.c: Likewise.
+	* mcu/sys-mkl27z.c: Likewise.
+	* mcu/sys-stm32l4.c: Likewise.
+	* mcu/sys-stm32f0.c: Likewise.
+
+2019-05-08  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* mcu/sys-stm32f103.c (usb_lld_sys_shutdown, usb_lld_sys_init):
+	Only cable config.
+
+	* mcu/sys-stm32l4.c (usb_lld_sys_shutdown, usb_lld_sys_init):
+	Likewise.
+
+	* mcu/usb-st-common.c (usb_lld_init): Call chip specific routine.
+	(usb_lld_shutdown): Likewise.
+
+	* mcu/usb-stm32l4.c (usb_lld_init_chip_specific)
+	(usb_lld_shutdown_chip_specific): New.
+
+	* mcu/usb-stm32f103.c (usb_lld_init_chip_specific)
+	(usb_lld_shutdown_chip_specific): New.
+
+	* rules.mk (DEFS): Add -DUSE_SYS when USE_SYS.
+
+2019-04-25  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* contrib/usart.h (BSCARD1, BSCARD2...): New.
+	(BSCARD): Remove.
+
+	* contrib/usart-stm32f103.c (usart_config_baud): Rename
+	from usart_config_brr, changing API.
+	* contrib/usart-stm32l4.c (usart_config_baud): Likewise.
+
+2019-04-24  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* mcu/sys-stm32l4.c: New.
+	* mcu/chx-stm32l4.c: New.  Not support suspend yet.
+	* mcu/stm32l.h: New.
+	* mcu/clk_gpio_init-stm32l.c: New.
+
+2019-04-17  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* mcu/usb-stm32l4.c: New.
+	* mcu/usb-st-common.c: Factor out from usb-stm32f103.c.
+
+2019-04-12  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* contrib/usart-stm32l4.c: New.
+	* contrib/usart-common.c: Factor out from usart-stm32f103.c.
+
+	* entry.c [__ARM_ARCH_7EM__] (entry): Fix for Cortex-M4.
+
+2019-04-11  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* chopstx-cortex-m.c: Support Cortex-M4 (not touching FPU).
+
+2019-04-10  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* mcu/clk_gpio_init-stm32f.c: Rename from clk_gpio_init-stm32.c.
+
+	* entry.c: Use STM32F10X_HD.
+	* board/board-stbee.h (STM32F10X_HD): Add.
+	* board/board-stm32-primer2.h (STM32F10X_HD): Add.
+
+2019-04-09  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* contrib/usart-stm32f103.c (usart_block_sendrecv): Support
+	busy-wait when timeout_block_p == 0.
+
+2019-04-08  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* contrib/usart-stm32f103.c (usart_block_sendrecv): New.
+	(usart_init0): New.
+
+2019-03-30  Niibe Yutaka  <gniibe@fsij.org>
+
+	* contrib/usart-stm32f103.c (usart_config_brr): New.
+	(usart_config_re): New internal function.
+	(handle_intr, handle_tx_ready): Use TC for smartcard.
+	(usart_wait_write_completion): New internal function.
+	(usart_write): Support half-duplex smartcard mode.
+
+2019-03-29  NIIBE Yutaka  <gniibe@fsij.org>
+
+	* contrib/usart-stm32f103.c (usart_read_ext): New.
+	(usart_read_prepare_poll): New.
+
 2019-03-02  NIIBE Yutaka  <gniibe@fsij.org>
 
 	* VERSION: 1.14.

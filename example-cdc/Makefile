@@ -3,10 +3,10 @@
 PROJECT = sample
 
 CHOPSTX = ..
-LDSCRIPT= sample.ld
+LDSCRIPT= sample.ld.m4
 CSRC = sample.c usb-cdc.c
 
-CHIP=stm32f103
+CHIP=stm32l4
 
 USE_SYS = yes
 USE_USB = yes
@@ -18,9 +18,9 @@ CC   = $(CROSS)gcc
 LD   = $(CROSS)gcc
 OBJCOPY   = $(CROSS)objcopy
 
-MCU   = cortex-m3
+MCU   = cortex-m4
 CWARN = -Wall -Wextra -Wstrict-prototypes
-DEFS  = -DUSE_SYS3 -DFREE_STANDING -DMHZ=72
+DEFS  = -DUSE_SYS3 -DFREE_STANDING -DMHZ=80
 OPT   = -O3 -Os -g
 LIBS  =
 

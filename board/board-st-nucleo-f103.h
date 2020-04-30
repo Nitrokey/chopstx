@@ -11,8 +11,10 @@
  *
  * At CN10, connect USB cable
  *  Vbus RED   --> 10 NC   ----------> CN7 (6 E5V)
- *  D+   GREEN --> 12 PA11 ---[1K5]--> CN6 (4 3V3)
- *  D-   WHITE --> 14 PA12
+ *  D+   GREEN --> 12 PA12 ---[1K5]--> CN6 (4 3V3)
+ *  D-   WHITE --> 14 PA11
+ *                 16 PB12 (USART3-CK) ---> smartcard CK
+ *                 18
  *  GND  BLACK --> 20 GND
  */
 
@@ -70,5 +72,5 @@
 #define VAL_GPIO_OTHER_CRL          0x82888888      /*  PB7...PB0 */
 #define VAL_GPIO_OTHER_CRH          0x8B8B8F22      /* PB15...PB8 */
 
-#define RCC_ENR_IOP_EN      (RCC_APB2ENR_IOPAEN | RCC_APB2ENR_IOPBEN)
-#define RCC_RSTR_IOP_RST    (RCC_APB2RSTR_IOPARST | RCC_APB2RSTR_IOPBRST)
+#define RCC_ENR_IOP_EN      (RCC_APB2ENR_IOPAEN | RCC_APB2ENR_IOPBEN | RCC_APB2ENR_AFIOEN)
+#define RCC_RSTR_IOP_RST    (RCC_APB2RSTR_IOPARST | RCC_APB2RSTR_IOPBRST | RCC_APB2RSTR_AFIORST)

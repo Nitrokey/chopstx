@@ -1,8 +1,8 @@
 /*
  * chopstx-cortex-m.c - Threads and only threads: Arch specific code
- *                      for Cortex-M0/M3
+ *                      for Cortex-M0/M3/M4
  *
- * Copyright (C) 2013, 2014, 2015, 2016, 2017, 2018
+ * Copyright (C) 2013, 2014, 2015, 2016, 2017, 2018, 2019
  *               Flying Stone Technology
  * Author: NIIBE Yutaka <gniibe@fsij.org>
  *
@@ -24,9 +24,24 @@
  * As additional permission under GNU GPL version 3 section 7, you may
  * distribute non-source form of the Program without the copy of the
  * GNU GPL normally required by section 4, provided you inform the
- * receipents of GNU GPL by a written offer.
+ * recipients of GNU GPL by a written offer.
  *
  */
+
+static struct chx_thread *running;
+
+static struct chx_thread *
+chx_running (void)
+{
+  return running;
+}
+
+static void
+chx_set_running (struct chx_thread *r)
+{
+  running = r;
+}
+
 
 /* Data Memory Barrier.  */
 static void
@@ -84,7 +99,7 @@ struct chx_stack_regs {
 #define CPU_EXCEPTION_PRIORITY_INTERRUPT     0x40
 #define CPU_EXCEPTION_PRIORITY_PENDSV        0x80
 #define CPU_EXCEPTION_PRIORITY_SVC           0x80 /* No use in this arch */
-#elif defined(__ARM_ARCH_7M__)
+#elif defined(__ARM_ARCH_7M__) || defined(__ARM_ARCH_7EM__)
 #define CPU_EXCEPTION_PRIORITY_SVC           0x30
 
 #define CPU_EXCEPTION_PRIORITY_INHIBIT_SCHED 0x40
@@ -106,35 +121,45 @@ struct chx_stack_regs {
  * System tick
  */
 /* SysTick registers.  */
-static volatile uint32_t *const SYST_CSR = (uint32_t *)0xE000E010;
-static volatile uint32_t *const SYST_RVR = (uint32_t *)0xE000E014;
-static volatile uint32_t *const SYST_CVR = (uint32_t *)0xE000E018;
+struct SYST {
+  volatile uint32_t CSR;
+  volatile uint32_t RVR;
+  volatile uint32_t CVR;
+  const uint32_t CALIB;
+};
+static struct SYST *const SYST = (struct SYST *)0xE000E010;
 
 static void
-chx_systick_reset (void)
+chx_systick_init_arch (void)
 {
-  *SYST_RVR = 0;
-  *SYST_CVR = 0;
-  *SYST_CSR = 7;
+  SYST->RVR = 0;
+  SYST->CVR = 0;
+  SYST->CSR = 7;
 }
 
 static void
 chx_systick_reload (uint32_t ticks)
 {
-  *SYST_RVR = ticks;
-  *SYST_CVR = 0;  /* write (any) to clear the counter to reload.  */
-  *SYST_RVR = 0;
+  SYST->RVR = ticks;
+  SYST->CVR = 0;  /* write (any) to clear the counter to reload.  */
+  SYST->RVR = 0;
 }
 
 static uint32_t
 chx_systick_get (void)
 {
-  return *SYST_CVR;
+  return SYST->CVR;
 }
 
 static uint32_t usec_to_ticks (uint32_t usec)
 {
   return usec * MHZ;
+}
+
+static uint32_t
+ticks_to_usec (uint32_t ticks)
+{
+  return ticks / MHZ;
 }
 
 /*
@@ -175,10 +200,13 @@ chx_clr_intr (uint8_t irq_num)
   NVIC_ICPR (irq_num) = 1 << (irq_num & 0x1f);
 }
 
-static void
+static int
 chx_disable_intr (uint8_t irq_num)
 {
+  int already_disabled = !!(NVIC_ICER (irq_num) & (1 << (irq_num & 0x1f)));
+
   NVIC_ICER (irq_num) = 1 << (irq_num & 0x1f);
+  return already_disabled;
 }
 
 static void
@@ -198,7 +226,7 @@ static uint32_t *const SHPR2 = (uint32_t *)0xE000ED1C;
 static uint32_t *const SHPR3 = (uint32_t *)0xE000ED20;
 
 static void
-chx_prio_init (void)
+chx_interrupt_controller_init (void)
 {
   *AIRCR = 0x05FA0000 | ( 5 << 8); /* PRIGROUP = 5, 2-bit:2-bit. */
   *SHPR2 = (CPU_EXCEPTION_PRIORITY_SVC << 24);
@@ -265,6 +293,7 @@ static void
 chx_init_arch (struct chx_thread *tp)
 {
   memset (&tp->tc, 0, sizeof (tp->tc));
+  chx_set_running (tp);
 }
 
 static void
@@ -302,7 +331,7 @@ chx_sched (uint32_t yield)
 {
   register struct chx_thread *tp asm ("r0");
 
-#if defined(__ARM_ARCH_7M__)
+#if defined(__ARM_ARCH_7M__) || defined(__ARM_ARCH_7EM__)
   asm volatile (
 	"svc	#0"
 	: "=r" (tp) : "0" (yield): "memory");
@@ -359,12 +388,6 @@ chx_sched (uint32_t yield)
     }
 
   tp = chx_ready_pop ();
-  if (tp && tp->flag_sched_rr)
-    {
-      chx_spin_lock (&q_timer.lock);
-      tp = chx_timer_insert (tp, PREEMPTION_USEC);
-      chx_spin_unlock (&q_timer.lock);
-    }
 
   asm volatile (/* Now, r0 points to the thread to be switched.  */
 		/* Put it to *running.  */
@@ -555,19 +578,12 @@ preempt (void)
 	    }
 	  else
 	    chx_ready_push (tp);
-	  running = NULL;
 	}
     }
 
   /* Registers on stack (PSP): r0, r1, r2, r3, r12, lr, pc, xpsr */
 
   tp = chx_ready_pop ();
-  if (tp && tp->flag_sched_rr)
-    {
-      chx_spin_lock (&q_timer.lock);
-      tp = chx_timer_insert (tp, PREEMPTION_USEC);
-      chx_spin_unlock (&q_timer.lock);
-    }
 
   asm volatile (
     ".L_CONTEXT_SWITCH:\n\t"
@@ -644,7 +660,7 @@ preempt (void)
 	: /* no output */ : "r" (tp) : "memory");
 }
 
-#if defined(__ARM_ARCH_7M__)
+#if defined(__ARM_ARCH_7M__) || defined(__ARM_ARCH_7EM__)
 /*
  * System call: switch to another thread.
  * There are two cases:
@@ -681,16 +697,9 @@ svc (void)
       if (tp->flag_sched_rr)
 	chx_timer_dequeue (tp);
       chx_ready_enqueue (tp);
-      running = NULL;
     }
 
   tp = chx_ready_pop ();
-  if (tp && tp->flag_sched_rr)
-    {
-      chx_spin_lock (&q_timer.lock);
-      chx_timer_insert (tp, PREEMPTION_USEC);
-      chx_spin_unlock (&q_timer.lock);
-    }
 
   asm volatile (
 	"b	.L_CONTEXT_SWITCH"

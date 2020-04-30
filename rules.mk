@@ -1,6 +1,12 @@
 # Chopstx make rules.
 
-CSRC += $(CHOPSTX)/entry.c $(CHOPSTX)/chopstx.c
+ifeq ($(EMULATION),)
+CSRC += $(CHOPSTX)/entry.c
+else
+CSRC += $(CHOPSTX)/entry-gnu-linux.c
+endif
+
+CSRC += $(CHOPSTX)/chopstx.c
 
 ifneq ($(USE_EVENTFLAG),)
 CSRC += $(CHOPSTX)/eventflag.c
@@ -13,6 +19,7 @@ CSRC += $(CHOPSTX)/mcu/chx-gnu-linux.c
 endif
 
 ifneq ($(USE_SYS),)
+DEFS += -DUSE_SYS
 CSRC += $(CHOPSTX)/mcu/sys-$(CHIP).c
 endif
 ifneq ($(USE_USB),)

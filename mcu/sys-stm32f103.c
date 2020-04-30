@@ -18,9 +18,18 @@
 #include <stdlib.h>
 #include "board.h"
 
-#include "mcu/clk_gpio_init-stm32.c"
+#include "mcu/clk_gpio_init-stm32f.c"
 
 
+/*
+ * When a board supports USB self-powered configuration, there is a
+ * control to enable external pull-up 1K5 resistor.  The voltage
+ * source on the pull-up resistor should be only supplied when VBUS
+ * from the cable is available.  This routine is for such a board.
+ *
+ * For a board for USB bus-powered configuration, it is common that
+ * there is no such control, but 1K5 resistor is fixed to +3V3.
+ */
 static void
 usb_cable_config (int enable)
 {
@@ -55,39 +64,16 @@ set_led (int on)
 #endif
 }
 
-static void wait (int count)
-{
-  int i;
-
-  for (i = 0; i < count; i++)
-    asm volatile ("" : : "r" (i) : "memory");
-}
-
-
 static void
 usb_lld_sys_shutdown (void)
 {
-  RCC->APB1ENR &= ~RCC_APB1ENR_USBEN;
-  RCC->APB1RSTR = RCC_APB1RSTR_USBRST;
   usb_cable_config (0);
 }
 
 static void
 usb_lld_sys_init (void)
 {
-  if ((RCC->APB1ENR & RCC_APB1ENR_USBEN)
-      && (RCC->APB1RSTR & RCC_APB1RSTR_USBRST) == 0)
-    /* Make sure the device is disconnected, even after core reset.  */
-    {
-      usb_lld_sys_shutdown ();
-      /* Disconnect requires SE0 (>= 2.5uS).  */
-      wait (5*MHZ);
-    }
-
   usb_cable_config (1);
-  RCC->APB1ENR |= RCC_APB1ENR_USBEN;
-  RCC->APB1RSTR = RCC_APB1RSTR_USBRST;
-  RCC->APB1RSTR = 0;
 }
 
 #define FLASH_KEY1               0x45670123UL
@@ -367,8 +353,8 @@ handler vector[] __attribute__ ((section(".vectors"))) = {
 const uint8_t sys_version[8] __attribute__((section(".sys.version"))) = {
   3*2+2,	     /* bLength */
   0x03,		     /* bDescriptorType = USB_STRING_DESCRIPTOR_TYPE */
-  /* sys version: "3.0" */
-  '3', 0, '.', 0, '0', 0,
+  /* sys version: "4.0" */
+  '4', 0, '.', 0, '0', 0,
 };
 
 const uint32_t __attribute__((section(".sys.board_id")))

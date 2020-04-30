@@ -52,7 +52,7 @@
  * PA11 - Push Pull output 10MHz 0 default (until USB enabled) (USBDM)
  * PA12 - Push Pull output 10MHz 0 default (until USB enabled) (USBDP)
  * PA13 - Open Drain output (LED1 0:ON 1:OFF)
- * PA14 - Push pull output  (USB ENABLE 0:DISABLE 1:ENABLE)
+ * PA14 - Push pull output  (USB  1:ON 0:OFF) default 1
  * PA15 - Open Drain output (LED2 0:ON 1:OFF)
  */
 #define VAL_GPIO_LED_ODR            0xFFFFE77F

@@ -1,7 +1,7 @@
 /*
  * entry.c - Entry routine when reset and interrupt vectors.
  *
- * Copyright (C) 2013, 2014, 2015, 2016, 2017
+ * Copyright (C) 2013, 2014, 2015, 2016, 2017, 2019
  *               Flying Stone Technology
  * Author: NIIBE Yutaka <gniibe@fsij.org>
  *
@@ -23,30 +23,16 @@
  * As additional permission under GNU GPL version 3 section 7, you may
  * distribute non-source form of the Program without the copy of the
  * GNU GPL normally required by section 4, provided you inform the
- * receipents of GNU GPL by a written offer.
+ * recipients of GNU GPL by a written offer.
  *
  */
 
 #include <stdint.h>
 #include <stdlib.h>
-#include <chopstx.h>
+#include <chopstx-cortex-m.h>
 
 #include "board.h"
 
-#ifdef GNU_LINUX_EMULATION
-int emulated_main (int, const char **);
-void chx_init (struct chx_thread *);
-void chx_systick_init (void);
-extern struct chx_thread main_thread;
-
-int
-main (int argc, const char *argv[])
-{
-  chx_init (&main_thread);
-  chx_systick_init ();
-  emulated_main (argc, argv);
-}
-#else
 #if defined(USE_SYS3) || defined(USE_SYS_CLOCK_GPIO_SETTING)
 #define REQUIRE_CLOCK_GPIO_SETTING_IN_SYS
 #include "sys.h"
@@ -54,12 +40,16 @@ main (int argc, const char *argv[])
  * Avoid medium density specific code and prepare for high density
  * device, too.
  */
-#undef STM32F10X_MD
+#if !defined(MCU_STM32L4)
+#define STM32F10X_HD
+#endif
 #else
 #if defined (MCU_KINETIS_L)
 #include "mcu/clk_gpio_init-mkl27z.c"
+#elif defined (MCU_STM32L4)
+#include "mcu/clk_gpio_init-stm32l.c"
 #else
-#include "mcu/clk_gpio_init-stm32.c"
+#include "mcu/clk_gpio_init-stm32f.c"
 #endif
 #endif
 
@@ -71,7 +61,7 @@ main (int argc, const char *argv[])
 #endif
 
 extern uint8_t __main_stack_end__;
-#if defined(__ARM_ARCH_7M__)
+#if defined(__ARM_ARCH_7M__) || defined(__ARM_ARCH_7EM__)
 extern void svc (void);
 #endif
 extern void preempt (void);
@@ -167,7 +157,7 @@ entry (void)
 		"bl	chx_systick_init\n\t"
 		"bl	gpio_init\n\t"
 		/* Enable interrupts.  */
-#if defined(__ARM_ARCH_7M__)
+#if defined(__ARM_ARCH_7M__) || defined(__ARM_ARCH_7EM__)
 		"mov	r0, #0\n\t"
 		"msr	BASEPRI, r0\n\t"
 #endif
@@ -197,7 +187,7 @@ handler vector_table[] __attribute__ ((section(".startup.vectors"))) = {
   none, none, none,		/* reserved */
 #if defined(__ARM_ARCH_6M__)
   none,				/* SVCall */
-#elif defined(__ARM_ARCH_7M__)
+#elif defined(__ARM_ARCH_7M__) || defined(__ARM_ARCH_7EM__)
   svc,				/* SVCall */
 #endif  
   none,				/* Debug */
@@ -233,12 +223,24 @@ handler vector_table[] __attribute__ ((section(".startup.vectors"))) = {
   chx_handle_intr /* EXT15_10 */,  chx_handle_intr /* RTCAlarm */,
   chx_handle_intr /* USBWakeup */, chx_handle_intr,
 #endif
-#if !defined(STM32F10X_MD)
+#if defined(STM32F10X_HD)
   /* High-density chips have more; ... DMA2_Channel4_5 */
   chx_handle_intr,  chx_handle_intr,  chx_handle_intr,  chx_handle_intr,
   chx_handle_intr,  chx_handle_intr,  chx_handle_intr,  chx_handle_intr,
   chx_handle_intr,  chx_handle_intr,  chx_handle_intr,  chx_handle_intr,
   chx_handle_intr,  chx_handle_intr,  chx_handle_intr,  chx_handle_intr,
+#elif defined(MCU_STM32L4)
+  chx_handle_intr,  chx_handle_intr,  chx_handle_intr,  chx_handle_intr,
+  chx_handle_intr,  chx_handle_intr,  chx_handle_intr,  chx_handle_intr,
+  chx_handle_intr,  chx_handle_intr,  chx_handle_intr,  chx_handle_intr,
+  chx_handle_intr,  chx_handle_intr,  chx_handle_intr,  chx_handle_intr,
+
+  chx_handle_intr,  chx_handle_intr,  chx_handle_intr,  chx_handle_intr,
+  chx_handle_intr,  chx_handle_intr,  chx_handle_intr,  chx_handle_intr,
+  chx_handle_intr,  chx_handle_intr,  chx_handle_intr,  chx_handle_intr,
+  chx_handle_intr,  chx_handle_intr,  chx_handle_intr,  chx_handle_intr,
+
+  chx_handle_intr,  chx_handle_intr,  chx_handle_intr,  chx_handle_intr,
+  chx_handle_intr,  chx_handle_intr,  chx_handle_intr,  chx_handle_intr,
 #endif
 };
-#endif

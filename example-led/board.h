@@ -1,1 +1,1 @@
-../board/board-stm32f0-discovery.h
+../board/board-st-nucleo-l432.h
