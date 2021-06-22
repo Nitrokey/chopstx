@@ -9,7 +9,7 @@
 #define STM32_HSECLK                    12000000
 
 #define GPIO_LED_BASE   GPIOA_BASE
-#define GPIO_LED_SET_TO_EMIT            7
+#define GPIO_LED_SET_TO_EMIT            4
 #define GPIO_USB_BASE   GPIOA_BASE
 #define GPIO_USB_SET_TO_ENABLE          15
 #undef  GPIO_OTHER_BASE
@@ -20,13 +20,13 @@
  * PA1 - input with pull-up: AN1 for NeuG
  * PA2 - floating input
  * PA3 - floating input
- * PA4 - floating input
+ * PA4 - floating input         // LED for the new hardware, drive both for the LED for easier implementation
  * PA5 - floating input
  * PA6 - floating input
  * PA7 - Push pull output   (Red LED1 1:ON 0:OFF)
  * PA8 - floating input (smartcard, SCDSA)
- * PA9 - floating input
- * PA10 - floating input
+ * PA9 - floating input         // was serial line, to disconnect
+ * PA10 - floating input        // was serial line, to disconnect
  * PA11 - Push Pull output 10MHz 0 default (until USB enabled) (USBDM)
  * PA12 - Push Pull output 10MHz 0 default (until USB enabled) (USBDP)
  * PA15 - Push pull output  (USB_EN 1:ON 0:OFF)
@@ -34,8 +34,8 @@
  * PA8  - input with pull-up.
  * PA9  - floating input.
  * PA10 - floating input.
- * PA13 - input with pull-up.
- * PA14 - input with pull-up.
+ * PA13 - input with pull-up.   // SWDIO
+ * PA14 - input with pull-up.   // SWCLK
  * PA15 - Push pull output   (USB 1:ON 0:OFF)
  */
 #define VAL_GPIO_USB_ODR            0xFFFFE77F
