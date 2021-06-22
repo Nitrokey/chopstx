@@ -49,9 +49,19 @@ set_led (int on)
     GPIO_LED->BSRR = (1 << GPIO_LED_CLEAR_TO_EMIT);
 #else
   if (on)
+  {
     GPIO_LED->BSRR = (1 << GPIO_LED_SET_TO_EMIT);
+#ifdef GPIO_LED_SET_TO_EMIT_2
+    GPIO_LED->BSRR = (1 << GPIO_LED_SET_TO_EMIT_2);
+#endif
+  }
   else
+  {
     GPIO_LED->BRR = (1 << GPIO_LED_SET_TO_EMIT);
+#ifdef GPIO_LED_SET_TO_EMIT_2
+    GPIO_LED->BRR = (1 << GPIO_LED_SET_TO_EMIT_2);
+#endif
+  }
 #endif
 }
 
