@@ -39,6 +39,32 @@ usb_cable_config (int enable)
 #endif
 }
 
+typedef unsigned int uint;
+
+uint gpio_read_pin_input(struct GPIO *const GPIO, uint bit){
+    return (GPIO->IDR >> bit) & 1;
+}
+
+enum Hardware {
+    HW_NOT_SET = 0,
+    HW_HW3 = 3,
+    HW_HW4 = 4
+};
+
+static int g_GPIO_LED_pin = GPIO_LED_UNSET;
+
+enum Hardware detect_hardware(void){
+    const uint PB7 = gpio_read_pin_input(GPIO_OTHER, 7);
+    if (PB7 == 1) {
+        g_GPIO_LED_pin = GPIO_LED_HW3;
+        return HW_HW3;
+    } else {
+        g_GPIO_LED_pin = GPIO_LED_HW4;
+        return HW_HW4;
+    }
+    return HW_NOT_SET;
+}
+
 void
 set_led (int on)
 {
@@ -48,10 +74,14 @@ set_led (int on)
   else
     GPIO_LED->BSRR = (1 << GPIO_LED_CLEAR_TO_EMIT);
 #else
+
+  if (g_GPIO_LED_pin == GPIO_LED_UNSET)
+    detect_hardware();
+
   if (on)
-    GPIO_LED->BSRR = (1 << GPIO_LED_SET_TO_EMIT);
+    GPIO_LED->BSRR = (1 << g_GPIO_LED_pin);
   else
-    GPIO_LED->BRR = (1 << GPIO_LED_SET_TO_EMIT);
+    GPIO_LED->BRR = (1 << g_GPIO_LED_pin);
 #endif
 }
 
