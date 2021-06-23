@@ -8,12 +8,15 @@
 #define STM32_PLLMUL_VALUE              6
 #define STM32_HSECLK                    12000000
 
+#define GPIO_LED_UNSET          -1
+#define GPIO_LED_HW3            7
+#define GPIO_LED_HW4            4
+
 #define GPIO_LED_BASE   GPIOA_BASE
-#define GPIO_LED_SET_TO_EMIT            7
-#define GPIO_LED_SET_TO_EMIT_2          4
+#define GPIO_LED_SET_TO_EMIT            GPIO_LED_HW3
 #define GPIO_USB_BASE   GPIOA_BASE
 #define GPIO_USB_SET_TO_ENABLE          15
-#undef  GPIO_OTHER_BASE
+#define GPIO_OTHER_BASE GPIOB_BASE
 
 /*
  * Port A setup.
@@ -24,10 +27,10 @@
  * PA4 - Push pull output   (Red LED1 1:ON 0:OFF; HW4)
  * PA5 - floating input
  * PA6 - floating input
- * PA7 - Push pull output   (Red LED1 1:ON 0:OFF; HW3)
+ * PA7 - Push pull output   (Red LED1 1:ON 0:OFF; HW3; Blue LED on HW4)
  * PA8 - floating input (smartcard, SCDSA)
- * PA9 - floating input         // was serial line, to disconnect
- * PA10 - floating input        // was serial line, to disconnect
+ * PA9 - floating input
+ * PA10 - floating input        
  * PA11 - Push Pull output 10MHz 0 default (until USB enabled) (USBDM)
  * PA12 - Push Pull output 10MHz 0 default (until USB enabled) (USBDP)
  * PA15 - Push pull output  (USB_EN 1:ON 0:OFF)
@@ -35,8 +38,8 @@
  * PA8  - input with pull-up.
  * PA9  - floating input.
  * PA10 - floating input.
- * PA13 - input with pull-up.   // SWDIO
- * PA14 - input with pull-up.   // SWCLK
+ * PA13 - input with pull-up.
+ * PA14 - input with pull-up.
  * PA15 - Push pull output   (USB 1:ON 0:OFF)
  */
 #define VAL_GPIO_USB_ODR            0xFFFFE76F
@@ -58,6 +61,17 @@
 #define VAL_GPIO_LED_ODR            VAL_GPIO_USB_ODR
 #define VAL_GPIO_LED_CRL            VAL_GPIO_USB_CRL      /*  PA7...PA0 */
 #define VAL_GPIO_LED_CRH            VAL_GPIO_USB_CRH      /* PA15...PA8 */
+
+/*
+ * Port B setup.
+ * PB7  - input with pull-up   (HW REVISION 0:HW4 1:HW1-3)
+ * ------------------------ Default
+ * PBx  - input with pull-up.
+ */
+
+#define VAL_GPIO_OTHER_ODR            0xFFFFFFFF
+#define VAL_GPIO_OTHER_CRL            0x84444444  /*  PA7...PA0 */
+#define VAL_GPIO_OTHER_CRH            0x44444444        /* PA15...PA8 */
 
 #define RCC_ENR_IOP_EN      \
 	(RCC_APB2ENR_IOPAEN | RCC_APB2ENR_IOPBEN | RCC_APB2ENR_AFIOEN)
