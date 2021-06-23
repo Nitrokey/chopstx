@@ -41,7 +41,7 @@ usb_cable_config (int enable)
 
 typedef unsigned int uint;
 
-uint read_bit(struct GPIO *const GPIO, uint bit){
+uint gpio_read_pin_input(struct GPIO *const GPIO, uint bit){
     return (GPIO->IDR >> bit) & 1;
 }
 
@@ -54,7 +54,7 @@ enum Hardware {
 static int g_GPIO_LED_pin = GPIO_LED_UNSET;
 
 enum Hardware detect_hardware(void){
-    const uint PB7 = read_bit(GPIO_OTHER, 7);
+    const uint PB7 = gpio_read_pin_input(GPIO_OTHER, 7);
     if (PB7 == 1) {
         g_GPIO_LED_pin = GPIO_LED_HW3;
         return HW_HW3;

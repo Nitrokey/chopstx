@@ -30,7 +30,7 @@
  * PA7 - Push pull output   (Red LED1 1:ON 0:OFF; HW3; Blue LED on HW4)
  * PA8 - floating input (smartcard, SCDSA)
  * PA9 - floating input
- * PA10 - floating input        
+ * PA10 - floating input
  * PA11 - Push Pull output 10MHz 0 default (until USB enabled) (USBDM)
  * PA12 - Push Pull output 10MHz 0 default (until USB enabled) (USBDP)
  * PA15 - Push pull output  (USB_EN 1:ON 0:OFF)
