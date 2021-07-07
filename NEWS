@@ -1,6 +1,78 @@
 NEWS - Noteworthy changes
 
 
+* Major changes in Chopstx 1.18
+
+  Released 2019-12-30
+
+** Fix of chopstx_poll
+When waiting for a condition variable, we supply CHECK method with a
+descriptor.  Since a condition variable may be fired for multiple
+reasons, old implementation of chopstx_poll may return with wrong
+information saying a condition of CHECK were met but actually not.  It
+should not return when condition is not satisfied and it should not
+give wrong information to application.  Fixed by calling the CHECK
+method again when woken up, and don't return when no condition meet.
+
+** Bug fix for GNU/Linux emulation
+When woken up, return value of chx_sched was wrong.  Because of this,
+timeout handling had problem.  Termination value of a thread was
+wrong.
+
+
+* Major changes in Chopstx 1.17
+
+  Released 2019-11-20
+
+** USB drivers bug fix for STM32 and ZLP handling for 64-byte packet.
+
+
+* Major changes in Chopstx 1.16
+
+  Released 2019-05-22
+
+** New board support: Gnukey-DS
+It is contributed by Evangelos Rigas.
+
+
+* Major changes in Chopstx 1.15
+
+  Released 2019-05-14
+
+** SYS version 4.0
+USB initialization/finalization API has been changed.  SYS routines
+only handle USB cable configuration when supported by a board.
+
+** USB driver change
+Enabling/disabling USB module is done by USB driver.  It's
+responsibility of board configuration to enable external transistor
+for pull-up D+-line by board/*.h.  For all boards, USB driver doesn't
+use usb_lld_sys_init or usb_lld_sys_shutdown (those routines only can
+be used for USB self powered system, which Chopstx does not support
+yet).
+
+** Board configuration change
+For USB driver change, board-maple-mini.h, board-olimex-stm32-h103.h,
+board-stbee.h, and board-stm32-primer2.h were changed.  Pull-up is
+enabled at the time of gpio_init.
+
+** Cortex-M4 support
+Cortex-M4 support has been added.  Not supporting use of FPU or DSP,
+yet.  Note that it's not intend to be used by Gnuk.
+
+** STM32L432 support
+USART and USB drivers are added.
+
+** New board support: ST Nucleo-32 L432
+ST Nucleo-32 L432 is a small board with ST-Link/V2-1.
+
+** Minor implementation change: chopstx_claim_irq
+If the interrupt is disabled (possibly by chx_intr) when
+chopstx_claim_irq is called, INTR->ready is set to 1.  This allows
+calling chopstx_claim_irq after hardware initialization which may
+cause an interrupt before the call of chopstx_claim_irq.
+
+
 * Major changes in Chopstx 1.14
 
   Released 2019-03-02

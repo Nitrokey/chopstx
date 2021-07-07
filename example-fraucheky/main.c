@@ -173,7 +173,6 @@ usb_main (void *arg)
   (void)arg;
   chopstx_claim_irq (&interrupt, INTR_REQ_USB);
   usb_lld_init (&dev, FEATURE_BUS_POWERED);
-  goto event_handle;	/* For old SYS < 3.0 */
 
   while (1)
     {
@@ -183,7 +182,6 @@ usb_main (void *arg)
 	{
 	  uint8_t ep_num;
 
-	event_handle:
 	  e = usb_lld_event_handler (&dev);
 	  chopstx_intr_done (&interrupt);
 	  ep_num = USB_EVENT_ENDP (e);

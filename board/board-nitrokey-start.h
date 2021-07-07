@@ -33,7 +33,7 @@
  * PA10 - floating input
  * PA11 - Push Pull output 10MHz 0 default (until USB enabled) (USBDM)
  * PA12 - Push Pull output 10MHz 0 default (until USB enabled) (USBDP)
- * PA15 - Push pull output  (USB_EN 1:ON 0:OFF)
+ * PA15 - Push pull output  (USB_EN 1:ON 0:OFF) default 1
  * ------------------------ Default
  * PA8  - input with pull-up.
  * PA9  - floating input.

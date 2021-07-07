@@ -1,6 +1,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <chopstx.h>
+
+#include "board.h"
 #include "sys.h" /* for set_led */
 
 static chopstx_mutex_t mtx;

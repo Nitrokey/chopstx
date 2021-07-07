@@ -2175,7 +2175,7 @@ usb_lld_ctrl_send (struct usb_dev *dev, const void *buf, size_t buflen)
   else if (data_p->len != 0 && (data_p->len % USB_MAX_PACKET_SIZE) == 0)
     data_p->require_zlp = 1;
 
-  if (data_p->len < USB_MAX_PACKET_SIZE)
+  if (data_p->len <= USB_MAX_PACKET_SIZE)
     {
       len = data_p->len;
       dev->state = LAST_IN_DATA;

@@ -153,7 +153,11 @@ void usb_lld_setup_endp (struct usb_dev *dev, int ep_num, int rx_en, int tx_en);
 void usb_lld_stall_tx (int ep_num);
 void usb_lld_stall_rx (int ep_num);
 #else
+#if defined(MCU_STM32L4)
+#define INTR_REQ_USB 67
+#else
 #define INTR_REQ_USB 20
+#endif
 /* EP_TYPE[1:0] EndPoint TYPE */
 #define EP_BULK        (0x0000) /* EndPoint BULK        */
 #define EP_CONTROL     (0x0200) /* EndPoint CONTROL     */

@@ -22,7 +22,7 @@
  * As additional permission under GNU GPL version 3 section 7, you may
  * distribute non-source form of the Program without the copy of the
  * GNU GPL normally required by section 4, provided you inform the
- * receipents of GNU GPL by a written offer.
+ * recipients of GNU GPL by a written offer.
  *
  */
 
@@ -956,7 +956,7 @@ usb_lld_ctrl_send (struct usb_dev *dev, const void *buf, size_t buflen)
   else if (data_p->len != 0 && (data_p->len % USB_MAX_PACKET_SIZE) == 0)
     data_p->require_zlp = 1;
 
-  if (data_p->len < USB_MAX_PACKET_SIZE)
+  if (data_p->len <= USB_MAX_PACKET_SIZE)
     {
       len = data_p->len;
       dev->state = LAST_IN_DATA;

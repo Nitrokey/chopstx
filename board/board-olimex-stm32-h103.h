@@ -20,12 +20,12 @@
  * PC1  - input with pull-up.  AN11 for NeuG
  * PC6  - input without pull-up/down
  * PC7  - input without pull-up/down
- * PC11 - Open-drain output 50MHz (USB disconnect).
+ * PC11 - Open-drain output 50MHz (USB 0:ON 1:OFF)  default 0
  * PC12 - Push Pull output 50MHz (LED).
  * ------------------------ Default
  * PCx  - input with pull-up
  */
-#define VAL_GPIO_LED_ODR            0xFFFFFFFF
+#define VAL_GPIO_LED_ODR            0xFFFFF7FF
 #define VAL_GPIO_LED_CRL            0x44888888      /*  PC7...PC0 */
 #define VAL_GPIO_LED_CRH            0x88837888      /* PC15...PC8 */
 

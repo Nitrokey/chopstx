@@ -69,8 +69,8 @@ set_led (int on)
 const uint8_t sys_version[8] __attribute__((section(".sys.version"))) = {
   3*2+2,	     /* bLength */
   0x03,		     /* bDescriptorType = STRING_DESCRIPTOR */
-  /* sys version: "3.0" */
-  '3', 0, '.', 0, '0', 0,
+  /* sys version: "4.0" */
+  '4', 0, '.', 0, '0', 0,
 };
 
 static const uint8_t board_name_string[] = BOARD_NAME;

@@ -30,11 +30,11 @@
 /*
  * Port B setup.
  * PB1  - Push pull output 50MHz (LED 1:ON 0:OFF)
- * PB9  - Push pull output 50MHz (USB 1:ON 0:OFF)
+ * PB9  - Push pull output 50MHz (USB 0:ON 1:OFF) default 0
  * ------------------------ Default
  * PBx  - input with pull-up
  */
-#define VAL_GPIO_LED_ODR            0xFFFFFFFF
+#define VAL_GPIO_LED_ODR            0xFFFFFDFF
 #define VAL_GPIO_LED_CRL            0x88888838      /*  PB7...PB0 */
 #define VAL_GPIO_LED_CRH            0x88888838      /* PB15...PB8 */
 

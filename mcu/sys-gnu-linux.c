@@ -16,8 +16,8 @@
 const uint8_t sys_version[8] = {
   3*2+2,	     /* bLength */
   0x03,		     /* bDescriptorType = USB_STRING_DESCRIPTOR_TYPE */
-  /* sys version: "3.0" */
-  '3', 0, '.', 0, '0', 0,
+  /* sys version: "4.0" */
+  '4', 0, '.', 0, '0', 0,
 };
 
 #if defined(USE_SYS3) || defined(USE_SYS_BOARD_ID)
