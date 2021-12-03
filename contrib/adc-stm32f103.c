@@ -239,7 +239,8 @@ adc_start (void)
   ADC2->CR2 = ADC_CR2_EXTTRIG | ADC_CR2_CONT | ADC_CR2_ADON;
   chopstx_usec_wait (1000);
 
-  if (DELIBARATELY_DO_IT_WRONG_START_STOP == 1) {
+  if (DELIBARATELY_DO_IT_WRONG_START_STOP == 1)
+  {
       /*
        * We could just let ADC run continuously always and only enable DMA
        * to receive stable data from ADC.  But our purpose is not to get
@@ -267,7 +268,8 @@ adc_start_conversion (int offset, int count)
   DMA1_Channel1->CNDTR = count;                     /* Counter       */
   DMA1_Channel1->CCR = NEUG_DMA_MODE | DMA_CCR1_EN; /* Mode   */
 
-  if (DELIBARATELY_DO_IT_WRONG_START_STOP) {
+  if (DELIBARATELY_DO_IT_WRONG_START_STOP == 1)
+  {
       /* Power on */
       ADC2->CR2 = ADC_CR2_EXTTRIG | ADC_CR2_CONT | ADC_CR2_ADON;
       ADC1->CR2 = (ADC_CR2_TSVREFE | ADC_CR2_EXTTRIG | ADC_CR2_SWSTART
