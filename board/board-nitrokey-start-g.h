@@ -4,7 +4,7 @@
 //GD32 changes:
 //necessary
 //#define MCU_STM32F1_GD32F1      1
-define DELIBARATELY_DO_IT_WRONG_START_STOP 1
+#define DELIBARATELY_DO_IT_WRONG_START_STOP 1
 #define STM32_USBPRE            STM32_USBPRE_DIV2
 #define STM32_PLLMUL_VALUE      8
 // unnecessary
