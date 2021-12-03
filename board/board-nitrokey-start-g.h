@@ -16,7 +16,7 @@
 #define STM32_PLLXTPRE          STM32_PLLXTPRE_DIV1
 #define STM32_HSECLK            12000000
 
-#define GPIO_LED_UNSET          -1^
+#define GPIO_LED_UNSET          -1
 #define GPIO_LED_HW3            7
 #define GPIO_LED_HW4            4
 
