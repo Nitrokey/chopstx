@@ -3,19 +3,20 @@
 
 //GD32 changes:
 //necessary
-#define MCU_STM32F1_GD32F1 1
-#define STM32_USBPRE                    STM32_USBPRE_DIV2
-#define STM32_PLLMUL_VALUE              8
+//#define MCU_STM32F1_GD32F1      1
+define DELIBARATELY_DO_IT_WRONG_START_STOP 1
+#define STM32_USBPRE            STM32_USBPRE_DIV2
+#define STM32_PLLMUL_VALUE      8
 // unnecessary
-#define STM32_ADCPRE                    STM32_ADCPRE_DIV8
+#define STM32_ADCPRE            STM32_ADCPRE_DIV8
 
 #define MCU_STM32F1 1
 #define STM32F10X_MD		/* Medium-density device */
 
-#define STM32_PLLXTPRE                  STM32_PLLXTPRE_DIV1
-#define STM32_HSECLK                    12000000
+#define STM32_PLLXTPRE          STM32_PLLXTPRE_DIV1
+#define STM32_HSECLK            12000000
 
-#define GPIO_LED_UNSET          -1
+#define GPIO_LED_UNSET          -1^
 #define GPIO_LED_HW3            7
 #define GPIO_LED_HW4            4
 

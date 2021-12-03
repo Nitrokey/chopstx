@@ -71,9 +71,9 @@
 #define ADC_CHANNEL_VREFINT     17
 
 #define DELIBARATELY_DO_IT_WRONG_VREF_SAMPLE_TIME
-#ifndef MCU_STM32F1_GD32F1
-#define DELIBARATELY_DO_IT_WRONG_START_STOP
-#endif
+//#ifndef MCU_STM32F1_GD32F1
+//#define DELIBARATELY_DO_IT_WRONG_START_STOP
+//#endif
 
 #ifdef DELIBARATELY_DO_IT_WRONG_VREF_SAMPLE_TIME
 #define ADC_SAMPLE_VREF ADC_SAMPLE_1P5
@@ -239,21 +239,22 @@ adc_start (void)
   ADC2->CR2 = ADC_CR2_EXTTRIG | ADC_CR2_CONT | ADC_CR2_ADON;
   chopstx_usec_wait (1000);
 
-#ifdef DELIBARATELY_DO_IT_WRONG_START_STOP
-  /*
-   * We could just let ADC run continuously always and only enable DMA
-   * to receive stable data from ADC.  But our purpose is not to get
-   * correct data but noise.  In fact, we can get more noise when we
-   * start/stop ADC each time.
-   */
-  ADC2->CR2 = 0;
-  ADC1->CR2 = 0;
-#else
-  /* Start conversion.  */
-  ADC2->CR2 = ADC_CR2_EXTTRIG | ADC_CR2_CONT | ADC_CR2_ADON;
-  ADC1->CR2 = (ADC_CR2_TSVREFE | ADC_CR2_EXTTRIG | ADC_CR2_SWSTART
-	       | ADC_CR2_EXTSEL | ADC_CR2_DMA | ADC_CR2_CONT | ADC_CR2_ADON);
-#endif
+  if (DELIBARATELY_DO_IT_WRONG_START_STOP == 1) {
+      /*
+       * We could just let ADC run continuously always and only enable DMA
+       * to receive stable data from ADC.  But our purpose is not to get
+       * correct data but noise.  In fact, we can get more noise when we
+       * start/stop ADC each time.
+       */
+      ADC2->CR2 = 0;
+      ADC1->CR2 = 0;
+  }
+  else {
+      /* Start conversion.  */
+      ADC2->CR2 = ADC_CR2_EXTTRIG | ADC_CR2_CONT | ADC_CR2_ADON;
+      ADC1->CR2 = (ADC_CR2_TSVREFE | ADC_CR2_EXTTRIG | ADC_CR2_SWSTART
+                   | ADC_CR2_EXTSEL | ADC_CR2_DMA | ADC_CR2_CONT | ADC_CR2_ADON);
+  }
 }
 
 uint32_t adc_buf[64];
@@ -266,30 +267,30 @@ adc_start_conversion (int offset, int count)
   DMA1_Channel1->CNDTR = count;                     /* Counter       */
   DMA1_Channel1->CCR = NEUG_DMA_MODE | DMA_CCR1_EN; /* Mode   */
 
-#ifdef DELIBARATELY_DO_IT_WRONG_START_STOP
-  /* Power on */
-  ADC2->CR2 = ADC_CR2_EXTTRIG | ADC_CR2_CONT | ADC_CR2_ADON;
-  ADC1->CR2 = (ADC_CR2_TSVREFE | ADC_CR2_EXTTRIG | ADC_CR2_SWSTART
-	       | ADC_CR2_EXTSEL | ADC_CR2_DMA | ADC_CR2_CONT | ADC_CR2_ADON);
-  /*
-   * Start conversion.  tSTAB is 1uS, but we don't follow the spec, to
-   * get more noise.
-   */
-  ADC2->CR2 = ADC_CR2_EXTTRIG | ADC_CR2_CONT | ADC_CR2_ADON;
-  ADC1->CR2 = (ADC_CR2_TSVREFE | ADC_CR2_EXTTRIG | ADC_CR2_SWSTART
-	       | ADC_CR2_EXTSEL | ADC_CR2_DMA | ADC_CR2_CONT | ADC_CR2_ADON);
-#endif
+  if (DELIBARATELY_DO_IT_WRONG_START_STOP) {
+      /* Power on */
+      ADC2->CR2 = ADC_CR2_EXTTRIG | ADC_CR2_CONT | ADC_CR2_ADON;
+      ADC1->CR2 = (ADC_CR2_TSVREFE | ADC_CR2_EXTTRIG | ADC_CR2_SWSTART
+                   | ADC_CR2_EXTSEL | ADC_CR2_DMA | ADC_CR2_CONT | ADC_CR2_ADON);
+      /*
+       * Start conversion.  tSTAB is 1uS, but we don't follow the spec, to
+       * get more noise.
+       */
+      ADC2->CR2 = ADC_CR2_EXTTRIG | ADC_CR2_CONT | ADC_CR2_ADON;
+      ADC1->CR2 = (ADC_CR2_TSVREFE | ADC_CR2_EXTTRIG | ADC_CR2_SWSTART
+                   | ADC_CR2_EXTSEL | ADC_CR2_DMA | ADC_CR2_CONT | ADC_CR2_ADON);
+  }
 }
 
 
 static void adc_stop_conversion (void)
 {
   DMA1_Channel1->CCR &= ~DMA_CCR1_EN;
-
-#ifdef DELIBARATELY_DO_IT_WRONG_START_STOP
-  ADC2->CR2 = 0;
-  ADC1->CR2 = 0;
-#endif
+   if (DELIBARATELY_DO_IT_WRONG_START_STOP == 1)
+   {
+        ADC2->CR2 = 0;
+        ADC1->CR2 = 0;
+   }
 }
 
 void
