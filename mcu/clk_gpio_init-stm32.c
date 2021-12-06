@@ -25,7 +25,7 @@
  * receipents of GNU GPL by a written offer.
  *
  */
-
+//#include "chip_config.h"
 #if defined(MCU_STM32F0)
 #include <mcu/stm32.h>
 #else
