@@ -11,7 +11,7 @@
 // STM32_PLLMUL_VALUE: GD32 -> 8 STM32 -> 6
 #define STM32_PLLMUL_VALUE      (detect_chip()->clock.i_STM32_PLLMUL_VALUE)
 // STM32_ADCPRE: GD32 -> STM32_ADCPRE_DIV8 STM32 -> STM32_ADCPRE_DIV6 ------ unnecessary?
-#define STM32_ADCPRE            (detect_chip()->clock.i_STM32_ADCPRE)
+#define STM32_ADCPRE            STM32_ADCPRE_DIV8 //(detect_chip()->clock.i_STM32_ADCPRE)
 
 #define MCU_STM32F1 1
 #define STM32F10X_MD		/* Medium-density device */
