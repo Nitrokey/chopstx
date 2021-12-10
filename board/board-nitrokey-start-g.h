@@ -9,7 +9,7 @@
 // STM32_USBPRE_DIV1P5: GD32 -> STM32_USBPRE_DIV2 STM32 -> STM32_USBPRE_DIV1P5
 #define STM32_USBPRE            (detect_chip()->clock.i_STM32_USBPRE)
 // STM32_PLLMUL_VALUE: GD32 -> 8 STM32 -> 6
-#define STM32_PLLMUL_VALUE      8 //(detect_chip()->clock.i_STM32_PLLMUL_VALUE)
+#define STM32_PLLMUL_VALUE     (detect_chip()->clock.i_STM32_PLLMUL_VALUE)
 // STM32_ADCPRE: GD32 -> STM32_ADCPRE_DIV8 STM32 -> STM32_ADCPRE_DIV6 ------ unnecessary?
 #define STM32_ADCPRE           (detect_chip()->clock.i_STM32_ADCPRE)
 
