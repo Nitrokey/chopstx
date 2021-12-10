@@ -30,6 +30,7 @@
 #include <mcu/stm32.h>
 #else
 #include <mcu/stm32f103.h>
+#include "chip_config.h"
 #endif
 
 #if defined(MCU_STM32F0)
