@@ -84,6 +84,7 @@ $(BUILDDIR):
 $(OBJS) : $(BUILDDIR)/%.o : %.c Makefile
 	@echo
 	$(CC) -c $(CFLAGS) -I. $(IINCDIR) $< -o $@
+	$(CC) -E $(CFLAGS) -I. $(IINCDIR) $< > $@.prepro
 
 ifeq ($(EMULATION),)
 %.elf: $(OBJS) $(OBJS_ADD) $(LDSCRIPT)
