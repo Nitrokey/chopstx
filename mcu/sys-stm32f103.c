@@ -45,24 +45,22 @@ uint gpio_read_pin_input(struct GPIO *const GPIO, uint bit){
     return (GPIO->IDR >> bit) & 1;
 }
 
-enum Hardware {
-    HW_NOT_SET = 0,
-    HW_HW3 = 3,
-    HW_HW4 = 4
-};
+#define g_GPIO_LED_pin 4 // clean this up or make it ajustable again
+//enum Hardware {
+//    HW_NOT_SET = 0,
+//    HW_HW3 = 3,
+//    HW_HW4 = 4
+//};
 
-static int g_GPIO_LED_pin = GPIO_LED_UNSET;
 
-enum Hardware detect_hardware(void){
-    const uint PB7 = gpio_read_pin_input(GPIO_OTHER, 7);
-    if (PB7 == 1) {
-        g_GPIO_LED_pin = GPIO_LED_HW3;
-        return HW_HW3;
-    } else {
-        g_GPIO_LED_pin = GPIO_LED_HW4;
-        return HW_HW4;
-    }
-    return HW_NOT_SET;
+uint8_t hw_rev = 4;
+//    check if PB1: low -> chip is GD32 (rev5), high -> chip is STM32 (rev4)
+void detect_hardware(void){
+    const uint PB1 = gpio_read_pin_input(GPIO_OTHER, 1);
+    if (PB1 == 1)
+        hw_rev = 4;
+    else
+        hw_rev = 5;
 }
 
 void

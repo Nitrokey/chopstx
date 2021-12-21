@@ -56,7 +56,7 @@
 #define STM32_USBPRE		STM32_USBPRE_DIV1P5
 #endif
 
-#define STM32_PLLMUL		((8 - 2) << 18) //TODO: Replacing the 8 with STM32_PLLMUL_VALUE as it was originally creates an overflow! why?
+#define STM32_PLLMUL		((STM32_PLLMUL_VALUE - 2) << 18) //TODO: Replacing the 8 with STM32_PLLMUL_VALUE as it was originally creates an overflow! why?
 #define STM32_PLLCLKOUT		(STM32_PLLCLKIN * STM32_PLLMUL_VALUE)
 #define STM32_SYSCLK		STM32_PLLCLKOUT
 #define STM32_HCLK		(STM32_SYSCLK / 1)
