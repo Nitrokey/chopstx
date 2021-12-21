@@ -17,6 +17,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include "board.h"
+#include "chip_config.h"
 
 #include "mcu/clk_gpio_init-stm32.c"
 
@@ -51,7 +52,6 @@ uint gpio_read_pin_input(struct GPIO *const GPIO, uint bit){
 //    HW_HW3 = 3,
 //    HW_HW4 = 4
 //};
-
 
 uint8_t hw_rev = 4;
 //    check if PB1: low -> chip is GD32 (rev5), high -> chip is STM32 (rev4)
