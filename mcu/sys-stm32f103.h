@@ -98,6 +98,7 @@ flash_erase_all_and_exec (void (*entry)(void))
 
   (*func) (entry);
 }
+uint8_t detect_hardware (void);
 
 static inline void
 usb_lld_sys_init (void)

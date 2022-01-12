@@ -3,7 +3,7 @@
 #define BOARD_ID    0x8e8266af
 
 //GD32 changes:
-//#define MCU_STM32F1_GD32F1      1
+#define MCU_STM32F1_GD32F1      1
 // DELIBARATELY_DO_IT_WRONG_START_STOP: GD32 -> 0 STM32 -> 1
 #define DELIBARATELY_DO_IT_WRONG_START_STOP (detect_chip()->clock.i_DELIBARATELY_DO_IT_WRONG_START_STOP)
 // STM32_USBPRE_DIV1P5: GD32 -> STM32_USBPRE_DIV2 STM32 -> STM32_USBPRE_DIV1P5
@@ -79,9 +79,9 @@
  * ------------------------ Default
  * PBx  - input with pull-up.
  */
-
+#warning "Hello!!!!"
 #define VAL_GPIO_OTHER_ODR            0xFFFFFFFF
-#define VAL_GPIO_OTHER_CRL            0x84444444  /*  PA7...PA0 */
+#define VAL_GPIO_OTHER_CRL            0x84444484  /*  PA7...PA0 */
 #define VAL_GPIO_OTHER_CRH            0x44444444        /* PA15...PA8 */
 
 #define RCC_ENR_IOP_EN      \

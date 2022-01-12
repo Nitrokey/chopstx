@@ -53,18 +53,19 @@ uint gpio_read_pin_input(struct GPIO *const GPIO, uint bit){
 //    HW_HW4 = 4
 //};
 
-uint8_t hw_rev = 4;
+//uint8_t hw_rev = 5;
 //    check if PB1: low -> chip is GD32 (rev5), high -> chip is STM32 (rev4)
-void detect_hardware(void){
-    const uint PB1 = gpio_read_pin_input(GPIO_OTHER, 1);
+uint8_t detect_hardware (void){
+    uint8_t hw_rev = 4;
+    volatile uint PB1 = gpio_read_pin_input(GPIO_OTHER, 1);
     if (PB1 == 1)
         hw_rev = 4;
     else
         hw_rev = 5;
+    return hw_rev;
 }
 
-void
-set_led (int on)
+void set_led (int on)
 {
 #if defined(GPIO_LED_CLEAR_TO_EMIT)
   if (on)
@@ -73,8 +74,7 @@ set_led (int on)
     GPIO_LED->BSRR = (1 << GPIO_LED_CLEAR_TO_EMIT);
 #else
 
-  if (g_GPIO_LED_pin == GPIO_LED_UNSET)
-    detect_hardware();
+  //detect_hardware();
 
   if (on)
     GPIO_LED->BSRR = (1 << g_GPIO_LED_pin);
