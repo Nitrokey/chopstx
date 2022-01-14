@@ -56,7 +56,7 @@ uint gpio_read_pin_input(struct GPIO *const GPIO, uint bit){
 //uint8_t hw_rev = 5;
 //    check if PB1: low -> chip is GD32 (rev5), high -> chip is STM32 (rev4)
 uint8_t detect_hardware (void){
-    uint8_t hw_rev = 4;
+    uint8_t hw_rev = 5;
     volatile uint PB1 = gpio_read_pin_input(GPIO_OTHER, 1);
     if (PB1 == 1)
         hw_rev = 4;

@@ -32,7 +32,6 @@
 #include <chopstx.h>
 
 #include "board.h"
-//#include "chip_config.h"
 
 #ifdef GNU_LINUX_EMULATION
 int emulated_main (int, const char **);
