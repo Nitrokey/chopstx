@@ -18,7 +18,6 @@
 #include <stdlib.h>
 #include "board.h"
 #include "chip_config.h"
-
 #include "mcu/clk_gpio_init-stm32.c"
 
 
@@ -46,20 +45,14 @@ uint gpio_read_pin_input(struct GPIO *const GPIO, uint bit){
     return (GPIO->IDR >> bit) & 1;
 }
 
-#define g_GPIO_LED_pin 4 // clean this up or make it ajustable again
-//enum Hardware {
-//    HW_NOT_SET = 0,
-//    HW_HW3 = 3,
-//    HW_HW4 = 4
-//};
+#define g_GPIO_LED_pin GPIO_LED_HW3
 
-//uint8_t hw_rev = 5;
-//    check if PB1: low -> chip is GD32 (rev5), high -> chip is STM32 (rev4)
+//    check if PB1: low -> chip is GD32 (rev5), high -> chip is STM32 (rev3)
 uint8_t detect_hardware (void){
-    uint8_t hw_rev = 5;
+    uint8_t hw_rev = 3;
     volatile uint PB1 = gpio_read_pin_input(GPIO_OTHER, 1);
     if (PB1 == 1)
-        hw_rev = 4;
+        hw_rev = 3;
     else
         hw_rev = 5;
     return hw_rev;
@@ -73,8 +66,6 @@ void set_led (int on)
   else
     GPIO_LED->BSRR = (1 << GPIO_LED_CLEAR_TO_EMIT);
 #else
-
-  //detect_hardware();
 
   if (on)
     GPIO_LED->BSRR = (1 << g_GPIO_LED_pin);
