@@ -36,6 +36,15 @@ unique_device_id (void)
   return addr;
 }
 
+static inline const uint8_t *
+cpu_model_id (void)
+{
+  /* STM32F103 has 32-bit CPU model identifier */
+  const uint8_t *addr = (const uint8_t *)0xE0042000;
+
+  return addr;
+}
+
 static inline void
 set_led (int on)
 {
