@@ -102,6 +102,13 @@ $(BUILDDIR)/$(PROJECT): $(OBJS) $(OBJS_ADD)
 	$(CC) $(LDFLAGS) -o $@ $(OBJS) $(OBJS_ADD) $(LIBS)
 endif
 
+# Create extended listing file from ELF output file.
+# testing: option -C
+%.lss: %.elf
+	$(OBJDUMP) -h -S -C $< > $@
+	ln -sf $@ last.lss
+
+
 clean:
 	-rm -f -r .dep $(BUILDDIR)
 
