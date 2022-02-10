@@ -4,13 +4,21 @@
 
 //GD32 changes:
 #define MCU_STM32F1_GD32F1      1
-// DELIBARATELY_DO_IT_WRONG_START_STOP: GD32 -> 0 STM32 -> 1
+// DELIBARATELY_DO_IT_WRONG_START_STOP:
+// GD32 -> 0
+// STM32 -> 1
 #define DELIBARATELY_DO_IT_WRONG_START_STOP (detect_chip()->clock.i_DELIBARATELY_DO_IT_WRONG_START_STOP)
-// STM32_USBPRE_DIV1P5: GD32 -> STM32_USBPRE_DIV2 STM32 -> STM32_USBPRE_DIV1P5
+// STM32_USBPRE_DIV1P5:
+// GD32 -> STM32_USBPRE_DIV2
+// STM32 -> STM32_USBPRE_DIV1P5
 #define STM32_USBPRE            (detect_chip()->clock.i_STM32_USBPRE)
-// STM32_PLLMUL_VALUE: GD32 -> 8 STM32 -> 6
+// STM32_PLLMUL_VALUE:
+// GD32 -> 8
+// STM32 -> 6
 #define STM32_PLLMUL_VALUE     (detect_chip()->clock.i_STM32_PLLMUL_VALUE)
-// STM32_ADCPRE: GD32 -> STM32_ADCPRE_DIV8 STM32 -> STM32_ADCPRE_DIV6 ------ unnecessary?
+// STM32_ADCPRE: (unnecessary?)
+// GD32 -> STM32_ADCPRE_DIV8
+// STM32 -> STM32_ADCPRE_DIV6
 #define STM32_ADCPRE           (detect_chip()->clock.i_STM32_ADCPRE)
 
 #define MCU_STM32F1 1
@@ -19,9 +27,10 @@
 #define STM32_PLLXTPRE          STM32_PLLXTPRE_DIV1
 #define STM32_HSECLK            12000000
 
-#define GPIO_LED_UNSET          -1
+#define GPIO_LED_UNSET          0
 #define GPIO_LED_HW3            7
 #define GPIO_LED_HW4            4
+#define GPIO_LED_HW5            7
 
 #define GPIO_LED_BASE   GPIOA_BASE
 #define GPIO_LED_SET_TO_EMIT            GPIO_LED_HW3
@@ -79,7 +88,6 @@
  * ------------------------ Default
  * PBx  - input with pull-up.
  */
-#warning "Hello!!!!"
 #define VAL_GPIO_OTHER_ODR            0xFFFFFFFF
 #define VAL_GPIO_OTHER_CRL            0x84444484  /*  PA7...PA0 */
 #define VAL_GPIO_OTHER_CRH            0x44444444        /* PA15...PA8 */
