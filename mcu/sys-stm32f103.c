@@ -574,9 +574,12 @@ sys_board_name[] = BOARD_NAME;
     V(C3,41,41,82), V(B0,99,99,29), V(77,2D,2D,5A), V(11,0F,0F,1E), \
     V(CB,B0,B0,7B), V(FC,54,54,A8), V(D6,BB,BB,6D), V(3A,16,16,2C)
 
+// moved out to make space for the hardware detection code
+/*
 #define V(a,b,c,d) 0x##a##b##c##d
 const uint32_t FT0[256] __attribute__((section(".sys.0"))) = { FT };
 #undef V
+*/
 
 #define V(a,b,c,d) 0x##b##c##d##a
 const uint32_t FT1[256] __attribute__((section(".sys.1"))) = { FT };
