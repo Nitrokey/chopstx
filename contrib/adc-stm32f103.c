@@ -36,7 +36,7 @@
 #include "adc.h"
 #include "board.h"
 #include "sys.h"
-#include "chip_config.h"
+#include "sys-chip_config.h"
 
 #define STM32_ADC_ADC1_DMA_PRIORITY         2
 

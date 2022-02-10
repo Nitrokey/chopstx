@@ -17,7 +17,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include "board.h"
-#include "chip_config.h"
+#include "sys-chip_config.h"
 #include "mcu/clk_gpio_init-stm32.c"
 
 

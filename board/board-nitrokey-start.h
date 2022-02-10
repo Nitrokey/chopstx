@@ -1,4 +1,4 @@
-#include "chip_config.h"
+#include "sys-chip_config.h"
 #define BOARD_NAME "NITROKEY-START"
 #define BOARD_ID    0xad1e7ebd
 
