@@ -9,6 +9,11 @@
 #define GET_VALUE_FOR_GD32_OR_STM32(GD_VAL, STM_VAL)      ( CHECK_GD32()? (GD_VAL) : (STM_VAL) )
 
 
+#define STM32_USBPRE_DIV1P5     (0 << 22)
+#define STM32_USBPRE_DIV2       (3 << 22)
+#define STM32_ADCPRE_DIV8       (3 << 14)
+#define STM32_ADCPRE_DIV6       (2 << 14)
+
 //GD32 changes:
 #define MCU_STM32F1_GD32F1      1
 // DELIBARATELY_DO_IT_WRONG_START_STOP:
