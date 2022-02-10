@@ -39,13 +39,14 @@ usb_cable_config (int enable)
 #endif
 }
 
-typedef unsigned int uint;
 
-uint gpio_read_pin_input(struct GPIO *const GPIO, uint bit){
+static inline uint8_t
+gpio_read_pin_input(struct GPIO *const GPIO, uint8_t bit){
     return (GPIO->IDR >> bit) & 1;
 }
 
-#define g_GPIO_LED_pin GPIO_LED_HW3
+//#define g_GPIO_LED_pin GPIO_LED_HW3
+static uint8_t g_GPIO_LED_pin = GPIO_LED_UNSET;
 
 #define CPU_MODEL_HW3_4     (0x20036410)
 #define CPU_MODEL_HW5       (0x13030410)
@@ -59,22 +60,44 @@ cpu_model_id (void)
     return addr;
 }
 
-//    check if PB1: low -> chip is GD32 (rev5), high -> chip is STM32 (rev3)
+//enum Hardware {
+//    HW_NOT_SET = 0,
+//    HW_HW3 = 3,
+//    HW_HW4 = 4
+//};
+
+//__attribute__((noinline))
+static inline void
+select_led_out (void){
+    const uint8_t PB7 = gpio_read_pin_input(GPIO_OTHER, 7);
+    if (PB7 == 1) {
+        g_GPIO_LED_pin = GPIO_LED_HW3;
+//        return HW_HW3;
+    } else {
+        g_GPIO_LED_pin = GPIO_LED_HW4;
+//        return HW_HW4;
+    }
+}
+
 uint8_t detect_hardware (void){
     uint8_t hw_rev = 3;
 
+//    check if PB1:
+//    low -> chip is GD32 (rev5),
+//    high -> chip is STM32 (rev3)
 //    volatile uint PB1 = gpio_read_pin_input(GPIO_OTHER, 1);
 //    if (PB1 == 1)
 //        hw_rev = 3;
 //    else
 //        hw_rev = 5;
 
+    // Check the cpu model and decide about HW revision with that
     const uint32_t cpumodel = *cpu_model_id();
     switch (cpumodel) {
         case CPU_MODEL_HW3_4: hw_rev = 3; break;
         case CPU_MODEL_HW5: hw_rev = 5; break;
         default:
-            // GD32 executes with STM32's settings, except for the USB
+            // GD32 executes successfully with STM32's settings, except for the USB
             // no sensible defaults available
             hw_rev = 3; break;
     }
@@ -90,6 +113,9 @@ void set_led (int on)
   else
     GPIO_LED->BSRR = (1 << GPIO_LED_CLEAR_TO_EMIT);
 #else
+
+    if (g_GPIO_LED_pin == GPIO_LED_UNSET)
+        select_led_out();
 
   if (on)
     GPIO_LED->BSRR = (1 << g_GPIO_LED_pin);
