@@ -46,7 +46,6 @@ gpio_read_pin_input(struct GPIO *const GPIO, uint8_t bit){
 }
 
 //#define g_GPIO_LED_pin GPIO_LED_HW3
-static uint8_t g_GPIO_LED_pin = GPIO_LED_UNSET;
 
 #define CPU_MODEL_HW3_4     (0x20036410)
 #define CPU_MODEL_HW5       (0x13030410)
@@ -66,16 +65,18 @@ cpu_model_id (void)
 //    HW_HW4 = 4
 //};
 
-//__attribute__((noinline))
-static inline void
+static inline uint8_t
 select_led_out (void){
+    // make the reads volatile
+    const uint8_t PB1 = gpio_read_pin_input(GPIO_OTHER, 1);
+    if (PB1 == 0 && CHECK_GD32()) {
+        return  GPIO_LED_HW5;
+    }
     const uint8_t PB7 = gpio_read_pin_input(GPIO_OTHER, 7);
     if (PB7 == 1) {
-        g_GPIO_LED_pin = GPIO_LED_HW3;
-//        return HW_HW3;
+        return  GPIO_LED_HW3;
     } else {
-        g_GPIO_LED_pin = GPIO_LED_HW4;
-//        return HW_HW4;
+        return  GPIO_LED_HW4;
     }
 }
 
@@ -114,8 +115,7 @@ void set_led (int on)
     GPIO_LED->BSRR = (1 << GPIO_LED_CLEAR_TO_EMIT);
 #else
 
-    if (g_GPIO_LED_pin == GPIO_LED_UNSET)
-        select_led_out();
+  const uint8_t g_GPIO_LED_pin = select_led_out();
 
   if (on)
     GPIO_LED->BSRR = (1 << g_GPIO_LED_pin);
