@@ -6,6 +6,7 @@
 #define CPU_MODEL_STM32     (0x20036410)
 #define CPU_MODEL_GD32       (0x13030410)
 #define CHECK_GD32()   ( *((volatile uint32_t *)0xE0042000) == CPU_MODEL_GD32 )
+//#define CHECK_STM32()   ( *((volatile uint32_t *)0xE0042000) == CPU_MODEL_STM32 )
 #define GET_VALUE_FOR_GD32_OR_STM32(GD_VAL, STM_VAL)      ( CHECK_GD32()? (GD_VAL) : (STM_VAL) )
 
 
@@ -39,13 +40,13 @@
 #define STM32_PLLXTPRE          STM32_PLLXTPRE_DIV1
 #define STM32_HSECLK            12000000
 
-#define GPIO_LED_UNSET          0
+//#define GPIO_LED_UNSET          0
 #define GPIO_LED_HW3            7
 #define GPIO_LED_HW4            4
 #define GPIO_LED_HW5            7
 
 #define GPIO_LED_BASE   GPIOA_BASE
-#define GPIO_LED_SET_TO_EMIT            GPIO_LED_HW3
+//#define GPIO_LED_SET_TO_EMIT            GPIO_LED_HW3
 #define GPIO_USB_BASE   GPIOA_BASE
 #define GPIO_USB_SET_TO_ENABLE          15
 #define GPIO_OTHER_BASE GPIOB_BASE
