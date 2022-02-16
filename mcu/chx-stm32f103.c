@@ -1,7 +1,6 @@
 #include <stdint.h>
 #include <mcu/stm32f103.h>
 #include "board.h"
-#include "sys-chip_config.h"
 
 extern int chx_allow_sleep;
 

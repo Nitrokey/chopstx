@@ -17,7 +17,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include "board.h"
-#include "sys-chip_config.h"
+
 #include "mcu/clk_gpio_init-stm32.c"
 
 
@@ -58,12 +58,6 @@ cpu_model_id (void)
 
     return addr;
 }
-
-//enum Hardware {
-//    HW_NOT_SET = 0,
-//    HW_HW3 = 3,
-//    HW_HW4 = 4
-//};
 
 static inline uint8_t
 select_led_out (void){
