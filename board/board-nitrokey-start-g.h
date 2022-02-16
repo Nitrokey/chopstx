@@ -59,7 +59,7 @@
  * PA4 - Push pull output   (Red LED1 1:ON 0:OFF; HW4)
  * PA5 - floating input
  * PA6 - floating input
- * PA7 - Push pull output   (Red LED1 1:ON 0:OFF; HW3; Blue LED on HW4)
+ * PA7 - Push pull output   (Red LED1 1:ON 0:OFF; HW3; HW5; Blue LED on HW4)
  * PA8 - floating input (smartcard, SCDSA)
  * PA9 - floating input
  * PA10 - floating input

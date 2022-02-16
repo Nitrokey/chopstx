@@ -80,31 +80,6 @@ select_led_out (void){
     }
 }
 
-uint8_t detect_hardware (void){
-    uint8_t hw_rev = 3;
-
-//    check if PB1:
-//    low -> chip is GD32 (rev5),
-//    high -> chip is STM32 (rev3)
-//    volatile uint PB1 = gpio_read_pin_input(GPIO_OTHER, 1);
-//    if (PB1 == 1)
-//        hw_rev = 3;
-//    else
-//        hw_rev = 5;
-
-    // Check the cpu model and decide about HW revision with that
-    const uint32_t cpumodel = *cpu_model_id();
-    switch (cpumodel) {
-        case CPU_MODEL_HW3_4: hw_rev = 3; break;
-        case CPU_MODEL_HW5: hw_rev = 5; break;
-        default:
-            // GD32 executes successfully with STM32's settings, except for the USB
-            // no sensible defaults available
-            hw_rev = 3; break;
-    }
-
-    return hw_rev;
-}
 
 void set_led (int on)
 {
