@@ -61,7 +61,6 @@ cpu_model_id (void)
 
 static inline uint8_t
 select_led_out (void){
-    // make the reads volatile
     const uint8_t PB1 = gpio_read_pin_input(GPIO_OTHER, 1);
     if (PB1 == 0 && CHECK_GD32()) {
         return  GPIO_LED_HW5;
