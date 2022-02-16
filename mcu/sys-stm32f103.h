@@ -12,6 +12,7 @@
 #define BOARD_ID_ST_DONGLE         0x2cd4e471
 #define BOARD_ID_ST_NUCLEO_F103    0x9b87c16d
 #define BOARD_ID_NITROKEY_START    0xad1e7ebd
+#define BOARD_ID_NITROKEY_STARTG   0x8e8266af
 
 extern const uint8_t sys_version[8];
 #if defined(USE_SYS3) || defined(USE_SYS_BOARD_ID)
@@ -35,6 +36,7 @@ unique_device_id (void)
 
   return addr;
 }
+
 
 static inline void
 set_led (int on)

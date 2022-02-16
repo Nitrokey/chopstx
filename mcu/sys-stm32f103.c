@@ -39,34 +39,42 @@ usb_cable_config (int enable)
 #endif
 }
 
-typedef unsigned int uint;
 
-uint gpio_read_pin_input(struct GPIO *const GPIO, uint bit){
+static inline uint8_t
+gpio_read_pin_input(struct GPIO *const GPIO, uint8_t bit){
     return (GPIO->IDR >> bit) & 1;
 }
 
-enum Hardware {
-    HW_NOT_SET = 0,
-    HW_HW3 = 3,
-    HW_HW4 = 4
-};
+//#define g_GPIO_LED_pin GPIO_LED_HW3
 
-static int g_GPIO_LED_pin = GPIO_LED_UNSET;
+#define CPU_MODEL_HW3_4     (0x20036410)
+#define CPU_MODEL_HW5       (0x13030410)
 
-enum Hardware detect_hardware(void){
-    const uint PB7 = gpio_read_pin_input(GPIO_OTHER, 7);
-    if (PB7 == 1) {
-        g_GPIO_LED_pin = GPIO_LED_HW3;
-        return HW_HW3;
-    } else {
-        g_GPIO_LED_pin = GPIO_LED_HW4;
-        return HW_HW4;
-    }
-    return HW_NOT_SET;
+static inline const uint32_t *
+cpu_model_id (void)
+{
+    /* STM32F103 has 32-bit CPU model identifier */
+    const uint32_t *addr = (const uint32_t *)0xE0042000;
+
+    return addr;
 }
 
-void
-set_led (int on)
+static inline uint8_t
+select_led_out (void){
+    const uint8_t PB1 = gpio_read_pin_input(GPIO_OTHER, 1);
+    if (PB1 == 0 && CHECK_GD32()) {
+        return  GPIO_LED_HW5;
+    }
+    const uint8_t PB7 = gpio_read_pin_input(GPIO_OTHER, 7);
+    if (PB7 == 1) {
+        return  GPIO_LED_HW3;
+    } else {
+        return  GPIO_LED_HW4;
+    }
+}
+
+
+void set_led (int on)
 {
 #if defined(GPIO_LED_CLEAR_TO_EMIT)
   if (on)
@@ -75,8 +83,7 @@ set_led (int on)
     GPIO_LED->BSRR = (1 << GPIO_LED_CLEAR_TO_EMIT);
 #else
 
-  if (g_GPIO_LED_pin == GPIO_LED_UNSET)
-    detect_hardware();
+  const uint8_t g_GPIO_LED_pin = select_led_out();
 
   if (on)
     GPIO_LED->BSRR = (1 << g_GPIO_LED_pin);
@@ -535,9 +542,12 @@ sys_board_name[] = BOARD_NAME;
     V(C3,41,41,82), V(B0,99,99,29), V(77,2D,2D,5A), V(11,0F,0F,1E), \
     V(CB,B0,B0,7B), V(FC,54,54,A8), V(D6,BB,BB,6D), V(3A,16,16,2C)
 
+// moved out to make space for the hardware detection code
+/*
 #define V(a,b,c,d) 0x##a##b##c##d
 const uint32_t FT0[256] __attribute__((section(".sys.0"))) = { FT };
 #undef V
+*/
 
 #define V(a,b,c,d) 0x##b##c##d##a
 const uint32_t FT1[256] __attribute__((section(".sys.1"))) = { FT };

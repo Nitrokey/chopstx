@@ -1,20 +1,51 @@
-#include "sys-chip_config.h"
-#define BOARD_NAME "NITROKEY-START"
-#define BOARD_ID    0xad1e7ebd
+#define BOARD_NAME "NITROKEY-START-G"
+#define BOARD_ID    0x8e8266af
+
+
+#define CPU_MODEL_STM32     (0x20036410)
+#define CPU_MODEL_GD32       (0x13030410)
+#define CHECK_GD32()   ( *((volatile uint32_t *)0xE0042000) == CPU_MODEL_GD32 )
+//#define CHECK_STM32()   ( *((volatile uint32_t *)0xE0042000) == CPU_MODEL_STM32 )
+#define GET_VALUE_FOR_GD32_OR_STM32(GD_VAL, STM_VAL)      ( CHECK_GD32()? (GD_VAL) : (STM_VAL) )
+
+
+#define STM32_USBPRE_DIV1P5     (0 << 22)
+#define STM32_USBPRE_DIV2       (3 << 22)
+#define STM32_ADCPRE_DIV8       (3 << 14)
+#define STM32_ADCPRE_DIV6       (2 << 14)
+
+//GD32 changes:
+#define MCU_STM32F1_GD32F1      1
+// DELIBARATELY_DO_IT_WRONG_START_STOP:
+// GD32 -> 0
+// STM32 -> 1
+#define DELIBARATELY_DO_IT_WRONG_START_STOP     GET_VALUE_FOR_GD32_OR_STM32(0, 1)
+// STM32_USBPRE_DIV1P5:
+// GD32 -> STM32_USBPRE_DIV2
+// STM32 -> STM32_USBPRE_DIV1P5
+#define STM32_USBPRE            GET_VALUE_FOR_GD32_OR_STM32(STM32_USBPRE_DIV2, STM32_USBPRE_DIV1P5)
+// STM32_PLLMUL_VALUE:
+// GD32 -> 8
+// STM32 -> 6
+#define STM32_PLLMUL_VALUE     GET_VALUE_FOR_GD32_OR_STM32(8, 6)
+// STM32_ADCPRE: (required for RNG)
+// GD32 -> STM32_ADCPRE_DIV8
+// STM32 -> STM32_ADCPRE_DIV6
+#define STM32_ADCPRE           GET_VALUE_FOR_GD32_OR_STM32(STM32_ADCPRE_DIV8, STM32_ADCPRE_DIV6)
 
 #define MCU_STM32F1 1
 #define STM32F10X_MD		/* Medium-density device */
 
-#define STM32_PLLXTPRE                  STM32_PLLXTPRE_DIV1
-#define STM32_PLLMUL_VALUE              6
-#define STM32_HSECLK                    12000000
+#define STM32_PLLXTPRE          STM32_PLLXTPRE_DIV1
+#define STM32_HSECLK            12000000
 
-#define GPIO_LED_UNSET          -1
+//#define GPIO_LED_UNSET          0
 #define GPIO_LED_HW3            7
 #define GPIO_LED_HW4            4
+#define GPIO_LED_HW5            7
 
 #define GPIO_LED_BASE   GPIOA_BASE
-#define GPIO_LED_SET_TO_EMIT            GPIO_LED_HW3
+//#define GPIO_LED_SET_TO_EMIT            GPIO_LED_HW3
 #define GPIO_USB_BASE   GPIOA_BASE
 #define GPIO_USB_SET_TO_ENABLE          15
 #define GPIO_OTHER_BASE GPIOB_BASE
@@ -28,7 +59,7 @@
  * PA4 - Push pull output   (Red LED1 1:ON 0:OFF; HW4)
  * PA5 - floating input
  * PA6 - floating input
- * PA7 - Push pull output   (Red LED1 1:ON 0:OFF; HW3; Blue LED on HW4)
+ * PA7 - Push pull output   (Red LED1 1:ON 0:OFF; HW3; HW5; Blue LED on HW4)
  * PA8 - floating input (smartcard, SCDSA)
  * PA9 - floating input
  * PA10 - floating input
@@ -69,9 +100,8 @@
  * ------------------------ Default
  * PBx  - input with pull-up.
  */
-
 #define VAL_GPIO_OTHER_ODR            0xFFFFFFFF
-#define VAL_GPIO_OTHER_CRL            0x84444444  /*  PA7...PA0 */
+#define VAL_GPIO_OTHER_CRL            0x84444484  /*  PA7...PA0 */
 #define VAL_GPIO_OTHER_CRH            0x44444444        /* PA15...PA8 */
 
 #define RCC_ENR_IOP_EN      \
